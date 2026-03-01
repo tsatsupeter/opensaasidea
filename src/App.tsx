@@ -49,7 +49,7 @@ function App() {
                   <Route path="/profile" element={<ProfilePage />} />
                   <Route path="/stats" element={<StatsPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
-                  <Route path="/idea/:id" element={<IdeaDetailPage />} />
+                  <Route path="/idea/:slug" element={<IdeaDetailPage />} />
                   <Route path="/admin" element={<AdminPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                   <Route path="/terms" element={<TermsPage />} />

@@ -8,6 +8,7 @@ import { Logo } from '@/components/ui/logo'
 
 interface SearchResult {
   id: string
+  slug: string | null
   title: string
   category: string
   tagline: string
@@ -30,7 +31,7 @@ export function SearchBar() {
     setLoading(true)
     const { data } = await supabase
       .from('saas_ideas')
-      .select('id, title, category, tagline')
+      .select('id, slug, title, category, tagline')
       .eq('is_public', true)
       .or(`title.ilike.%${q}%,tagline.ilike.%${q}%,category.ilike.%${q}%,description.ilike.%${q}%`)
       .limit(8)
@@ -69,8 +70,8 @@ export function SearchBar() {
     return () => document.removeEventListener('keydown', handleKey)
   }, [])
 
-  const handleSelect = (id: string) => {
-    navigate(`/idea/${id}`)
+  const handleSelect = (result: SearchResult) => {
+    navigate(`/idea/${result.slug || result.id}`)
     setOpen(false)
     setQuery('')
   }
@@ -121,7 +122,7 @@ export function SearchBar() {
                 {results.map(r => (
                   <button
                     key={r.id}
-                    onClick={() => handleSelect(r.id)}
+                    onClick={() => handleSelect(r)}
                     className="w-full text-left px-4 py-2.5 hover:bg-surface-2 transition-colors cursor-pointer"
                   >
                     <p className="text-sm font-medium text-text-primary line-clamp-1">{r.title}</p>

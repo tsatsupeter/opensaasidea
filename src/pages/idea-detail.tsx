@@ -21,7 +21,7 @@ const platformIcons: Record<string, typeof Globe> = {
 }
 
 export function IdeaDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const { slug } = useParams<{ slug: string }>()
   const { user } = useAuth()
   const { addRecent } = useRecent()
   const { categories } = useCategories()
@@ -34,13 +34,25 @@ export function IdeaDetailPage() {
   const { toast } = useToast()
 
   useEffect(() => {
-    if (!id) return
+    if (!slug) return
     const fetchData = async () => {
-      const { data } = await supabase
+      // Try slug first, fall back to id for old links
+      let { data } = await supabase
         .from('saas_ideas')
         .select('*')
-        .eq('id', id)
+        .eq('slug', slug)
         .single()
+
+      // Fallback: if slug looks like a UUID, try by id
+      if (!data && /^[0-9a-f]{8}-/.test(slug)) {
+        const res = await supabase
+          .from('saas_ideas')
+          .select('*')
+          .eq('id', slug)
+          .single()
+        data = res.data
+      }
+
       const ideaData = data as SaasIdea | null
       setIdea(ideaData)
 
@@ -50,32 +62,32 @@ export function IdeaDetailPage() {
           id: ideaData.id,
           title: ideaData.title,
           category: ideaData.category || 'SaaS',
-          path: `/idea/${ideaData.id}`,
+          path: `/idea/${ideaData.slug || ideaData.id}`,
           upvotes: ideaData.upvotes || 0,
         })
         // Increment view count (deduplicate per session)
-        const viewKey = `viewed_${id}`
+        const viewKey = `viewed_${ideaData.id}`
         if (!sessionStorage.getItem(viewKey)) {
           sessionStorage.setItem(viewKey, '1')
-          ;(supabase.rpc as any)('increment_views', { idea_id: id }).then(() => {
+          ;(supabase.rpc as any)('increment_views', { idea_id: ideaData.id }).then(() => {
             setIdea(prev => prev ? { ...prev, views: (prev.views || 0) + 1 } : prev)
           })
         }
       }
 
-      if (user) {
+      if (user && ideaData) {
         const { data: voteData } = await supabase
           .from('votes')
           .select('vote_type')
           .eq('user_id', user.id)
-          .eq('idea_id', id)
+          .eq('idea_id', ideaData.id)
           .single()
         if (voteData) setUserVote((voteData as any).vote_type)
       }
       setLoading(false)
     }
     fetchData()
-  }, [id, user, addRecent])
+  }, [slug, user, addRecent])
 
   if (loading) {
     return (

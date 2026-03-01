@@ -315,7 +315,7 @@ export function ProfilePage() {
                         ) : (
                           <ThumbsDown className="h-4 w-4 text-rose shrink-0" />
                         )}
-                        <a href={`/idea/${idea.id}`} className="min-w-0 flex-1 hover:opacity-80 transition-opacity">
+                        <a href={`/idea/${idea.slug || idea.id}`} className="min-w-0 flex-1 hover:opacity-80 transition-opacity">
                           <p className="text-sm font-medium truncate">{idea.title}</p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <Badge variant="default" className="text-[10px] px-1.5 py-0">{idea.category}</Badge>

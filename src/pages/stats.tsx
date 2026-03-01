@@ -265,7 +265,7 @@ export function StatsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <a href={`/idea/${topIdea.id}`} className="group">
+                <a href={`/idea/${topIdea.slug || topIdea.id}`} className="group">
                   <h3 className="font-semibold group-hover:text-brand transition-colors">{topIdea.title}</h3>
                   <p className="text-xs text-text-muted mt-1 line-clamp-2">{topIdea.tagline}</p>
                   <div className="flex items-center gap-3 mt-2">

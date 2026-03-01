@@ -31,7 +31,7 @@ export function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicT
   const colors = categoryColor(slug)
 
   const handleCardClick = () => {
-    navigate(`/idea/${idea.id}`)
+    navigate(`/idea/${idea.slug || idea.id}`)
   }
 
   const handleTogglePublic = async () => {
@@ -114,7 +114,7 @@ export function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicT
               onVoteChange={onVoteChange}
             />
             <Link
-              to={`/idea/${idea.id}`}
+              to={`/idea/${idea.slug || idea.id}`}
               className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-text-muted hover:bg-surface-2 transition-colors"
               title="Full Breakdown"
             >
@@ -142,7 +142,7 @@ export function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicT
             )}
             <button
               onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/idea/${idea.id}`)
+                navigator.clipboard.writeText(`${window.location.origin}/idea/${idea.slug || idea.id}`)
                 toast('Link copied to clipboard')
               }}
               className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-text-muted hover:bg-surface-2 transition-colors cursor-pointer"
