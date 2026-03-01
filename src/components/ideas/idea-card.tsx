@@ -35,6 +35,7 @@ export function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicT
   }
 
   const handleTogglePublic = async () => {
+    if (!user || idea.generated_for !== user.id) return
     setSharing(true)
     const newVal = !isPublic
     const { error } = await (supabase
@@ -121,24 +122,26 @@ export function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicT
               <ArrowRight className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Details</span>
             </Link>
-            {!isPublic ? (
-              <button
-                onClick={handleTogglePublic}
-                disabled={sharing}
-                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-emerald hover:bg-emerald/10 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <Globe className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{sharing ? 'Publishing...' : 'Share'}</span>
-              </button>
-            ) : idea.generated_for && (
-              <button
-                onClick={handleTogglePublic}
-                disabled={sharing}
-                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-text-muted hover:bg-surface-2 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <Lock className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{sharing ? 'Updating...' : 'Private'}</span>
-              </button>
+            {user && idea.generated_for === user.id && (
+              !isPublic ? (
+                <button
+                  onClick={handleTogglePublic}
+                  disabled={sharing}
+                  className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-emerald hover:bg-emerald/10 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  <Globe className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{sharing ? 'Publishing...' : 'Share'}</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleTogglePublic}
+                  disabled={sharing}
+                  className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-text-muted hover:bg-surface-2 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  <Lock className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{sharing ? 'Updating...' : 'Private'}</span>
+                </button>
+              )
             )}
             <button
               onClick={() => {
