@@ -1,17 +1,16 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Flame, Clock, TrendingUp, Loader2, Zap } from 'lucide-react'
+import { Loader2, Zap } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { IdeaCard } from '@/components/ideas/idea-card'
 import { Logo } from '@/components/ui/logo'
+import { SortDropdown, type SortBy } from '@/components/ui/sort-dropdown'
 import type { SaasIdea } from '@/types/database'
-
-type SortBy = 'best' | 'newest' | 'top'
 
 function getDefaultSort(path: string): SortBy {
   if (path === '/popular') return 'top'
-  if (path === '/trending') return 'best'
+  if (path === '/trending') return 'hot'
   return 'best'
 }
 
@@ -25,22 +24,45 @@ export function HomePage() {
 
   const fetchIdeas = useCallback(async () => {
     setLoading(true)
-    let query = supabase
+
+    let orderCol = 'vote_score'
+    let ascending = false
+    if (sortBy === 'newest') orderCol = 'created_at'
+    else if (sortBy === 'top') orderCol = 'upvotes'
+    else if (sortBy === 'hot' || sortBy === 'rising') orderCol = 'views'
+    else if (sortBy === 'mrr_high') orderCol = 'estimated_mrr_high'
+    else if (sortBy === 'mrr_low') { orderCol = 'estimated_mrr_low'; ascending = true }
+
+    const { data } = await supabase
       .from('saas_ideas')
       .select('*')
       .eq('is_public', true)
+      .order(orderCol, { ascending })
+      .limit(100)
 
-    if (sortBy === 'best') {
-      query = query.order('vote_score', { ascending: false }).order('created_at', { ascending: false })
-    } else if (sortBy === 'newest') {
-      query = query.order('created_at', { ascending: false })
-    } else {
-      query = query.order('upvotes', { ascending: false })
+    let results = (data as SaasIdea[]) || []
+
+    // Client-side sort refinements
+    if (sortBy === 'hot') {
+      results.sort((a, b) => {
+        const aAge = (Date.now() - new Date(a.created_at).getTime()) / 3600000
+        const bAge = (Date.now() - new Date(b.created_at).getTime()) / 3600000
+        return (b.vote_score || 0) / Math.pow(bAge + 2, 1.5) - (a.vote_score || 0) / Math.pow(aAge + 2, 1.5)
+      })
+    } else if (sortBy === 'rising') {
+      results.sort((a, b) => {
+        const aAge = (Date.now() - new Date(a.created_at).getTime()) / 3600000
+        const bAge = (Date.now() - new Date(b.created_at).getTime()) / 3600000
+        return ((b.upvotes || 0) + (b.views || 0)) / (bAge + 1) - ((a.upvotes || 0) + (a.views || 0)) / (aAge + 1)
+      })
+    } else if (sortBy === 'mrr_low') {
+      results = results.filter(i => i.estimated_mrr_low != null)
+      results.sort((a, b) => (a.estimated_mrr_low || 0) - (b.estimated_mrr_low || 0))
+    } else if (sortBy === 'mrr_high') {
+      results.sort((a, b) => (b.estimated_mrr_high || 0) - (a.estimated_mrr_high || 0))
     }
 
-    query = query.limit(50)
-    const { data } = await query
-    setIdeas((data as SaasIdea[]) || [])
+    setIdeas(results)
     setLoading(false)
   }, [sortBy])
 
@@ -60,33 +82,14 @@ export function HomePage() {
   useEffect(() => { fetchIdeas() }, [fetchIdeas])
   useEffect(() => { fetchUserVotes() }, [fetchUserVotes])
 
-  const sortOptions: { value: SortBy; label: string; icon: typeof Flame }[] = [
-    { value: 'best', label: 'Best', icon: Flame },
-    { value: 'newest', label: 'New', icon: Clock },
-    { value: 'top', label: 'Top', icon: TrendingUp },
-  ]
-
   return (
     <div className="w-full">
       {/* Next generation countdown */}
       <NextGenCountdown />
 
-      {/* Sort tabs - Reddit style */}
-      <div className="flex items-center gap-1 px-2 py-2 border-b border-border mb-0">
-        {sortOptions.map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => setSortBy(opt.value)}
-            className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[13px] font-medium transition-all duration-150 cursor-pointer ${
-              sortBy === opt.value
-                ? 'bg-surface-2 text-text-primary'
-                : 'text-text-muted hover:bg-surface-2 hover:text-text-secondary'
-            }`}
-          >
-            <opt.icon className="h-4 w-4" />
-            {opt.label}
-          </button>
-        ))}
+      {/* Sort dropdown */}
+      <div className="flex items-center gap-2 px-2 py-2 border-b border-border mb-0">
+        <SortDropdown value={sortBy} onChange={setSortBy} />
       </div>
 
       {/* Feed */}
