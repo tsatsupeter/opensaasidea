@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/hooks/use-auth'
 import { ThemeProvider } from '@/hooks/use-theme'
 import { RecentProvider } from '@/hooks/use-recent'
+import { ToastProvider } from '@/components/ui/toast'
 import { RootLayout } from '@/components/layout/root-layout'
 import { HomePage } from '@/pages/home'
 import { ExplorePage } from '@/pages/explore'
@@ -12,6 +13,10 @@ import { OnboardingPage } from '@/pages/onboarding'
 import { DashboardPage } from '@/pages/dashboard'
 import { IdeaDetailPage } from '@/pages/idea-detail'
 import { AdminPage } from '@/pages/admin'
+import { ProfilePage } from '@/pages/profile'
+import { StatsPage } from '@/pages/stats'
+import { SettingsPage } from '@/pages/settings'
+import { PrivacyPage, TermsPage, AccessibilityPage } from '@/pages/legal'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +33,7 @@ function App() {
       <ThemeProvider>
         <AuthProvider>
           <RecentProvider>
+            <ToastProvider>
             <BrowserRouter>
               <Routes>
                 <Route element={<RootLayout />}>
@@ -40,11 +46,18 @@ function App() {
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/onboarding" element={<OnboardingPage />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/stats" element={<StatsPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/idea/:id" element={<IdeaDetailPage />} />
                   <Route path="/admin" element={<AdminPage />} />
+                  <Route path="/privacy" element={<PrivacyPage />} />
+                  <Route path="/terms" element={<TermsPage />} />
+                  <Route path="/accessibility" element={<AccessibilityPage />} />
                 </Route>
               </Routes>
             </BrowserRouter>
+            </ToastProvider>
           </RecentProvider>
         </AuthProvider>
       </ThemeProvider>

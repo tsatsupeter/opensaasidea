@@ -59,6 +59,7 @@ export interface Database {
           unique_differentiators: string[]
           pros: string[]
           cons: string[]
+          views: number
           upvotes: number
           downvotes: number
           vote_score: number

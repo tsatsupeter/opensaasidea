@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Loader2, Sparkles, ArrowLeft, Flame, Clock, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Loader2, ArrowLeft, Flame, Clock, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { IdeaCard } from '@/components/ideas/idea-card'
+import { Logo } from '@/components/ui/logo'
 import { Button } from '@/components/ui/button'
 import type { SaasIdea } from '@/types/database'
 import { useCategories, categoryColor, toSlug, type DynamicCategory } from '@/lib/categories'
@@ -46,7 +47,7 @@ function CommunitiesGrid() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="w-full">
       {/* Header */}
       <h1 className="text-[22px] font-bold mb-4">Explore Categories</h1>
 
@@ -141,7 +142,7 @@ function CommunitiesGrid() {
           {categories.length === 0 && (
             <div className="text-center py-20">
               <div className="h-14 w-14 rounded-2xl bg-brand/10 flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="h-7 w-7 text-brand" />
+                <Logo className="h-7 w-7" />
               </div>
               <h3 className="text-lg font-semibold mb-2">No categories yet</h3>
               <p className="text-sm text-text-secondary max-w-sm mx-auto">
@@ -243,7 +244,7 @@ function CategoryFeedPage({ categorySlug }: { categorySlug: string }) {
   ]
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="w-full">
       {/* Category header */}
       <div className="flex items-center gap-3 mb-4">
         <Link to="/explore" className="text-text-muted hover:text-text-primary transition-colors">
@@ -284,7 +285,7 @@ function CategoryFeedPage({ categorySlug }: { categorySlug: string }) {
       ) : ideas.length === 0 ? (
         <div className="text-center py-20">
           <div className={`h-14 w-14 rounded-2xl ${colors.bgColor} flex items-center justify-center mx-auto mb-4`}>
-            <Sparkles className={`h-7 w-7 ${colors.color}`} />
+            <Logo className="h-7 w-7" />
           </div>
           <h3 className="text-lg font-semibold mb-2">No ideas in {catLabel} yet</h3>
           <p className="text-sm text-text-secondary max-w-sm mx-auto">
@@ -299,7 +300,6 @@ function CategoryFeedPage({ categorySlug }: { categorySlug: string }) {
               idea={idea}
               index={i}
               currentVote={userVotes[idea.id] || null}
-              onVoteChange={() => { fetchIdeas(); fetchUserVotes() }}
             />
           ))}
         </div>

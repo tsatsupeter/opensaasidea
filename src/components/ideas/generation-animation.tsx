@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Brain, Search, Globe, FlaskConical, ChefHat, DollarSign,
-  Wrench, Rocket, Sparkles, CheckCircle2, Loader2
+  Wrench, Rocket, CheckCircle2, Loader2, PartyPopper
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -16,7 +16,7 @@ const THINKING_STEPS = [
   { icon: Wrench, text: "Crafting the tech stack...", subtext: "Picking the shiniest tools", color: 'text-accent' },
   { icon: ChefHat, text: "Cooking the full breakdown...", subtext: "Baking pricing tiers & team roles", color: 'text-brand' },
   { icon: Rocket, text: "Polishing the launch strategy...", subtext: "Almost ready for takeoff!", color: 'text-rose' },
-  { icon: Sparkles, text: "Finalizing your SaaS idea...", subtext: "This one's going to be fire", color: 'text-brand' },
+  { icon: PartyPopper, text: "Finalizing your SaaS idea...", subtext: "This one's going to be fire", color: 'text-brand' },
 ]
 
 interface GenerationAnimationProps {

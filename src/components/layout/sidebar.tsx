@@ -1,8 +1,9 @@
 import { Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Zap, Compass, LayoutDashboard, Home, Moon, Sun,
-  LogIn, LogOut, Shield, ChevronDown, Flame, TrendingUp
+  Compass, LayoutDashboard, Home, Moon, Sun,
+  LogIn, LogOut, Shield, ChevronDown, Flame, TrendingUp,
+  BarChart3, User, Camera, Settings, ChevronRight
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
@@ -29,6 +30,9 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const { categories } = useCategories()
   const [catOpen, setCatOpen] = useState(true)
   const [yourOpen, setYourOpen] = useState(true)
+  const [profileOpen, setProfileOpen] = useState(
+    ['/profile', '/settings'].some(p => location.pathname.startsWith(p))
+  )
 
   const isAdmin = (profile as any)?.is_admin === true
 
@@ -95,7 +99,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                 transition={{ duration: 0.2 }}
                 className="overflow-hidden"
               >
-                {categories.slice(0, 12).map((cat: DynamicCategory) => {
+                {categories.slice(0, 5).map((cat: DynamicCategory) => {
                   const CatBadge = () => (
                     <div className={`h-[18px] w-[18px] rounded-full ${cat.bgColor} flex items-center justify-center shrink-0`}>
                       <span className={`text-[9px] font-bold ${cat.color}`}>{cat.label[0]}</span>
@@ -140,6 +144,41 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                     className="overflow-hidden"
                   >
                     <NavLink href="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+                    <NavLink href="/stats" icon={BarChart3} label="Stats" />
+
+                    {/* Profile sub-nav */}
+                    <button
+                      onClick={() => setProfileOpen(!profileOpen)}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 w-full',
+                        ['/profile', '/settings'].some(p => location.pathname.startsWith(p))
+                          ? 'bg-surface-2 text-text-primary'
+                          : 'text-text-secondary hover:bg-surface-2 hover:text-text-primary'
+                      )}
+                    >
+                      <User className="h-[18px] w-[18px] shrink-0" />
+                      <span className="truncate flex-1 text-left">Profile</span>
+                      <ChevronRight className={cn(
+                        'h-3.5 w-3.5 text-text-muted transition-transform duration-200',
+                        profileOpen && 'rotate-90'
+                      )} />
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {profileOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.15 }}
+                          className="overflow-hidden pl-4"
+                        >
+                          <NavLink href="/profile" icon={User} label="View Profile" />
+                          <NavLink href="/settings" icon={Settings} label="Settings" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     {isAdmin && <NavLink href="/admin" icon={Shield} label="Admin" />}
                   </motion.div>
                 )}
@@ -179,10 +218,14 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         {/* User card */}
         {user && (
           <div className="px-2 pb-2">
-            <Link to="/dashboard" onClick={onMobileClose}>
+            <Link to="/profile" onClick={onMobileClose}>
               <div className="flex items-center gap-2.5 rounded-lg bg-surface-2 px-3 py-2 hover:bg-surface-3 transition-colors">
-                <div className="h-7 w-7 rounded-full gradient-brand flex items-center justify-center text-white text-[11px] font-bold shrink-0">
-                  {(profile?.full_name || user.email || '?')[0].toUpperCase()}
+                <div className="h-7 w-7 rounded-full gradient-brand flex items-center justify-center text-white text-[11px] font-bold shrink-0 overflow-hidden">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    (profile?.full_name || user.email || '?')[0].toUpperCase()
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium truncate">{profile?.full_name || 'User'}</p>

@@ -73,9 +73,14 @@ export function RightSidebar() {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-border px-4 py-3">
-        <p className="text-[10px] text-text-muted leading-relaxed">
-          OpenSaaSIdea · AI-Powered SaaS Ideas
+      <div className="border-t border-border px-4 py-3 space-y-2">
+        <div className="flex flex-wrap gap-x-3 gap-y-1">
+          <Link to="/privacy" className="text-[11px] text-text-muted hover:text-text-secondary hover:underline">Privacy Policy</Link>
+          <Link to="/terms" className="text-[11px] text-text-muted hover:text-text-secondary hover:underline">User Agreement</Link>
+          <Link to="/accessibility" className="text-[11px] text-text-muted hover:text-text-secondary hover:underline">Accessibility</Link>
+        </div>
+        <p className="text-[10px] text-text-muted">
+          OpenSaaSIdea, Inc. © {new Date().getFullYear()}. All rights reserved.
         </p>
       </div>
     </aside>

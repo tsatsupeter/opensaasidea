@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
-import { Flame, Clock, TrendingUp, Loader2, Sparkles } from 'lucide-react'
+import { Flame, Clock, TrendingUp, Loader2, Zap } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { IdeaCard } from '@/components/ideas/idea-card'
+import { Logo } from '@/components/ui/logo'
 import type { SaasIdea } from '@/types/database'
 
 type SortBy = 'best' | 'newest' | 'top'
@@ -66,7 +67,10 @@ export function HomePage() {
   ]
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="w-full">
+      {/* Next generation countdown */}
+      <NextGenCountdown />
+
       {/* Sort tabs - Reddit style */}
       <div className="flex items-center gap-1 px-2 py-2 border-b border-border mb-0">
         {sortOptions.map((opt) => (
@@ -93,7 +97,7 @@ export function HomePage() {
       ) : ideas.length === 0 ? (
         <div className="text-center py-20">
           <div className="h-14 w-14 rounded-2xl bg-brand/10 flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="h-7 w-7 text-brand" />
+            <Logo className="h-7 w-7" />
           </div>
           <h3 className="text-lg font-semibold mb-2">No ideas yet</h3>
           <p className="text-sm text-text-secondary max-w-sm mx-auto">
@@ -108,11 +112,46 @@ export function HomePage() {
               idea={idea}
               index={i}
               currentVote={userVotes[idea.id] || null}
-              onVoteChange={() => { fetchIdeas(); fetchUserVotes() }}
             />
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function NextGenCountdown() {
+  const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0 })
+
+  useEffect(() => {
+    const calc = () => {
+      const now = new Date()
+      const nextMidnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0))
+      const diff = nextMidnight.getTime() - now.getTime()
+      setTimeLeft({
+        h: Math.floor(diff / 3600000),
+        m: Math.floor((diff % 3600000) / 60000),
+        s: Math.floor((diff % 60000) / 1000),
+      })
+    }
+    calc()
+    const id = setInterval(calc, 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  const pad = (n: number) => String(n).padStart(2, '0')
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-2.5 border-b border-border bg-surface-1/50">
+      <div className="flex items-center gap-1.5">
+        <Zap className="h-3.5 w-3.5 text-brand" />
+        <span className="text-[12px] font-medium text-text-secondary">Next AI Generation</span>
+      </div>
+      <div className="flex items-center gap-1 ml-auto">
+        <span className="text-[13px] font-mono font-bold text-brand tabular-nums">
+          {pad(timeLeft.h)}:{pad(timeLeft.m)}:{pad(timeLeft.s)}
+        </span>
+      </div>
     </div>
   )
 }

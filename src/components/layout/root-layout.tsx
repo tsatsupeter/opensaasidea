@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { Menu, Zap, Plus } from 'lucide-react'
+import { Menu, Plus } from 'lucide-react'
 import { Sidebar } from './sidebar'
 import { RightSidebar } from './right-sidebar'
 import { SearchBar } from '@/components/ui/search-bar'
@@ -38,9 +38,7 @@ export function RootLayout() {
             <Menu className="h-4 w-4 text-text-secondary" />
           </button>
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-brand shadow-sm">
-              <Zap className="h-4 w-4 text-white" />
-            </div>
+            <img src="/logo.png" alt="OpenSaaSIdea" className="h-8 w-8 rounded-lg object-contain" />
             <span className="text-sm font-bold hidden sm:block">
               Open<span className="text-brand">SaaS</span>Idea
             </span>

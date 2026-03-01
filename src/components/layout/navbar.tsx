@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Zap, Compass, LayoutDashboard, LogIn, Menu, X, LogOut, User } from 'lucide-react'
+import { Compass, LayoutDashboard, LogIn, Menu, X, LogOut, User } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
@@ -24,9 +24,7 @@ export function Navbar() {
     >
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-brand">
-            <Zap className="h-5 w-5 text-white" />
-          </div>
+          <img src="/logo.png" alt="OpenSaaSIdea" className="h-9 w-9 rounded-lg object-contain" />
           <span className="text-lg font-bold tracking-tight">
             Open<span className="text-brand">SaaS</span>Idea
           </span>

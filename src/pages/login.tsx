@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Zap, Mail, Lock, Loader2, ArrowRight } from 'lucide-react'
+import { Mail, Lock, Loader2, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -43,9 +43,7 @@ export function LoginPage() {
       >
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-brand">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
+            <img src="/logo.png" alt="OpenSaaSIdea" className="h-10 w-10 rounded-xl object-contain" />
             <span className="text-xl font-bold">
               Open<span className="text-brand">SaaS</span>Idea
             </span>

@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Shield, Sparkles, Loader2, Zap, BarChart3, Clock } from 'lucide-react'
+import { Shield, Loader2, Zap, BarChart3, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { GenerationAnimation } from '@/components/ideas/generation-animation'
+import { Logo } from '@/components/ui/logo'
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase'
 import { generateSaasIdea, saveIdeaToSupabase } from '@/lib/ai'
@@ -113,7 +114,7 @@ export function AdminPage() {
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-brand" />
+              <Logo className="h-4 w-4" />
               Force Generate Public Idea
             </CardTitle>
           </CardHeader>
@@ -124,7 +125,7 @@ export function AdminPage() {
 
             {!generating && (
               <Button onClick={handleForceGenerate} disabled={generating}>
-                <Sparkles className="h-4 w-4" />
+                <Logo className="h-4 w-4" />
                 Force Generate Now
               </Button>
             )}

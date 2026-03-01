@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, Loader2, Sparkles } from 'lucide-react'
+import { Search, X, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
+import { Logo } from '@/components/ui/logo'
 
 interface SearchResult {
   id: string
@@ -112,7 +113,7 @@ export function SearchBar() {
           >
             {results.length === 0 ? (
               <div className="flex items-center gap-2 px-4 py-6 text-sm text-text-muted justify-center">
-                <Sparkles className="h-4 w-4" />
+                <Logo className="h-4 w-4" />
                 {query.length < 2 ? 'Type to search...' : 'No ideas found'}
               </div>
             ) : (
