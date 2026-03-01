@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+/* ──────────────── Light mode (default) ──────────────── */
+:root {
+  --s0: #FFFFFF;
+  --s1: #F8FAFC;
+  --s2: #F1F5F9;
+  --s3: #E2E8F0;
+  --s4: #CBD5E1;
+  --s5: #94A3B8;
+  --tx1: #0F172A;
+  --tx2: #475569;
+  --tx3: #94A3B8;
+  --bd: #E2E8F0;
+  --bd-h: #CBD5E1;
+  --ring: rgba(249,115,22,0.25);
+  --sidebar-bg: #FFFFFF;
+  --sidebar-bd: #F1F5F9;
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --card-hover-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+/* ──────────────── Dark mode ──────────────── */
+.dark {
+  --s0: #09090B;
+  --s1: #0C0C0F;
+  --s2: #151518;
+  --s3: #1E1E22;
+  --s4: #2A2A2F;
+  --s5: #52525B;
+  --tx1: #F8FAFC;
+  --tx2: #A1A1AA;
+  --tx3: #71717A;
+  --bd: #1E1E22;
+  --bd-h: #2A2A2F;
+  --ring: rgba(249,115,22,0.35);
+  --sidebar-bg: #0C0C0F;
+  --sidebar-bd: #151518;
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --card-hover-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* ── 4-color palette ── */
+  --color-brand: #F97316;
+  --color-brand-light: #FB923C;
+  --color-brand-dark: #EA580C;
+  --color-accent: #06B6D4;
+  --color-accent-light: #22D3EE;
+  --color-accent-dark: #0891B2;
+  --color-emerald: #10B981;
+  --color-emerald-light: #34D399;
+  --color-rose: #F43F5E;
+  --color-rose-light: #FB7185;
+  --color-amber: #F59E0B;
+
+  /* ── Dynamic surfaces ── */
+  --color-surface-0: var(--s0);
+  --color-surface-1: var(--s1);
+  --color-surface-2: var(--s2);
+  --color-surface-3: var(--s3);
+  --color-surface-4: var(--s4);
+  --color-surface-5: var(--s5);
+
+  /* ── Dynamic text ── */
+  --color-text-primary: var(--tx1);
+  --color-text-secondary: var(--tx2);
+  --color-text-muted: var(--tx3);
+
+  /* ── Dynamic borders ── */
+  --color-border: var(--bd);
+  --color-border-hover: var(--bd-h);
+
+  /* ── Semantic (alias for compat) ── */
+  --color-success: var(--color-emerald);
+  --color-error: var(--color-rose);
+  --color-warning: var(--color-amber);
+
+  /* ── Radii ── */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--s4) transparent;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--s0);
+  color: var(--tx1);
+  margin: 0;
+  min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+::selection {
+  background-color: color-mix(in srgb, var(--color-brand) 30%, transparent);
+  color: var(--tx1);
+}
+
+/* ──────────────── Utility classes ──────────────── */
+.glass {
+  background: color-mix(in srgb, var(--s1) 80%, transparent);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid var(--bd);
+}
+
+.gradient-brand {
+  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-light) 100%);
+}
+
+.gradient-accent {
+  background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-light) 100%);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--color-brand) 0%, var(--color-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glow-brand {
+  box-shadow: 0 0 20px color-mix(in srgb, var(--color-brand) 15%, transparent),
+              0 0 60px color-mix(in srgb, var(--color-brand) 8%, transparent);
+}
+
+.glow-accent {
+  box-shadow: 0 0 20px color-mix(in srgb, var(--color-accent) 15%, transparent),
+              0 0 60px color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
+/* ──────────────── Sidebar scrollbar ──────────────── */
+.sidebar-scroll::-webkit-scrollbar { width: 3px; }
+.sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+.sidebar-scroll::-webkit-scrollbar-thumb { background: var(--s4); border-radius: 10px; }
+
+/* ──────────────── Pulse keyframes for generation ──────────────── */
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 1; }
+  80%, 100% { transform: scale(2.2); opacity: 0; }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+.animate-typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  animation: typewriter 1.2s steps(30) forwards;
+}
