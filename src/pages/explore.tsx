@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Loader2, ArrowLeft, Flame, Clock, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Loader2, ArrowLeft, Flame, Clock, TrendingUp, ChevronLeft, ChevronRight, ChevronDown, Zap, DollarSign, ArrowUpRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { IdeaCard } from '@/components/ideas/idea-card'
@@ -10,7 +10,75 @@ import { Button } from '@/components/ui/button'
 import type { SaasIdea } from '@/types/database'
 import { useCategories, categoryColor, toSlug, type DynamicCategory } from '@/lib/categories'
 
-type SortBy = 'best' | 'newest' | 'top'
+type SortBy = 'best' | 'hot' | 'newest' | 'top' | 'rising' | 'mrr_high' | 'mrr_low'
+
+const sortOptions: { value: SortBy; label: string; icon: typeof Flame }[] = [
+  { value: 'best', label: 'Best', icon: Flame },
+  { value: 'hot', label: 'Hot', icon: Zap },
+  { value: 'newest', label: 'New', icon: Clock },
+  { value: 'top', label: 'Top', icon: TrendingUp },
+  { value: 'rising', label: 'Rising', icon: ArrowUpRight },
+  { value: 'mrr_high', label: 'Highest MRR', icon: DollarSign },
+  { value: 'mrr_low', label: 'Lowest MRR', icon: DollarSign },
+]
+
+function SortDropdown({ value, onChange }: { value: SortBy; onChange: (v: SortBy) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const current = sortOptions.find(o => o.value === value)!
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 rounded-full bg-surface-2 border border-border px-4 py-1.5 text-[13px] font-semibold text-text-primary hover:bg-surface-3 transition-colors cursor-pointer"
+      >
+        <current.icon className="h-4 w-4 text-brand" />
+        {current.label}
+        <ChevronDown className={`h-3.5 w-3.5 text-text-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-0 top-full mt-1.5 z-50 w-48 rounded-xl border border-border bg-surface-1 shadow-xl overflow-hidden"
+          >
+            <div className="px-4 py-2.5 border-b border-border">
+              <p className="text-[13px] font-semibold text-text-primary">Sort by</p>
+            </div>
+            <div className="py-1">
+              {sortOptions.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => { onChange(opt.value); setOpen(false) }}
+                  className={`flex items-center gap-3 w-full px-4 py-2.5 text-[14px] font-medium transition-colors cursor-pointer ${
+                    value === opt.value
+                      ? 'bg-surface-2 text-text-primary'
+                      : 'text-text-secondary hover:bg-surface-2 hover:text-text-primary'
+                  }`}
+                >
+                  <opt.icon className={`h-4 w-4 ${value === opt.value ? 'text-brand' : 'text-text-muted'}`} />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
 
 export function ExplorePage() {
   const { category } = useParams<{ category?: string }>()
@@ -209,16 +277,53 @@ function CategoryFeedPage({ categorySlug }: { categorySlug: string }) {
 
   const fetchIdeas = useCallback(async () => {
     setLoading(true)
+
+    // Determine DB sort column
+    let orderCol = 'vote_score'
+    let ascending = false
+    if (sortBy === 'newest') orderCol = 'created_at'
+    else if (sortBy === 'top') orderCol = 'upvotes'
+    else if (sortBy === 'hot' || sortBy === 'rising') orderCol = 'views'
+    else if (sortBy === 'mrr_high') orderCol = 'estimated_mrr_high'
+    else if (sortBy === 'mrr_low') { orderCol = 'estimated_mrr_low'; ascending = true }
+
     const { data: allData } = await supabase
       .from('saas_ideas')
       .select('*')
       .eq('is_public', true)
-      .order(sortBy === 'newest' ? 'created_at' : sortBy === 'top' ? 'upvotes' : 'vote_score', { ascending: false })
+      .order(orderCol, { ascending })
       .limit(200)
 
-    const filtered = ((allData as SaasIdea[]) || []).filter(idea => {
+    let filtered = ((allData as SaasIdea[]) || []).filter(idea => {
       return toSlug(idea.category || '') === categorySlug
     })
+
+    // Client-side sort refinements
+    if (sortBy === 'hot') {
+      // Hot = high votes + recent
+      filtered.sort((a, b) => {
+        const aAge = (Date.now() - new Date(a.created_at).getTime()) / 3600000
+        const bAge = (Date.now() - new Date(b.created_at).getTime()) / 3600000
+        const aScore = (a.vote_score || 0) / Math.pow(aAge + 2, 1.5)
+        const bScore = (b.vote_score || 0) / Math.pow(bAge + 2, 1.5)
+        return bScore - aScore
+      })
+    } else if (sortBy === 'rising') {
+      // Rising = newest with positive votes
+      filtered.sort((a, b) => {
+        const aAge = (Date.now() - new Date(a.created_at).getTime()) / 3600000
+        const bAge = (Date.now() - new Date(b.created_at).getTime()) / 3600000
+        const aScore = ((a.upvotes || 0) + (a.views || 0)) / (aAge + 1)
+        const bScore = ((b.upvotes || 0) + (b.views || 0)) / (bAge + 1)
+        return bScore - aScore
+      })
+    } else if (sortBy === 'mrr_low') {
+      // Filter out ideas without MRR, sort ascending
+      filtered = filtered.filter(i => i.estimated_mrr_low != null)
+      filtered.sort((a, b) => (a.estimated_mrr_low || 0) - (b.estimated_mrr_low || 0))
+    } else if (sortBy === 'mrr_high') {
+      filtered.sort((a, b) => (b.estimated_mrr_high || 0) - (a.estimated_mrr_high || 0))
+    }
 
     setIdeas(filtered)
     setLoading(false)
@@ -237,12 +342,6 @@ function CategoryFeedPage({ categorySlug }: { categorySlug: string }) {
   useEffect(() => { fetchIdeas() }, [fetchIdeas])
   useEffect(() => { fetchUserVotes() }, [fetchUserVotes])
 
-  const sortOptions: { value: SortBy; label: string; icon: typeof Flame }[] = [
-    { value: 'best', label: 'Best', icon: Flame },
-    { value: 'newest', label: 'New', icon: Clock },
-    { value: 'top', label: 'Top', icon: TrendingUp },
-  ]
-
   return (
     <div className="w-full">
       {/* Category header */}
@@ -259,22 +358,9 @@ function CategoryFeedPage({ categorySlug }: { categorySlug: string }) {
         </div>
       </div>
 
-      {/* Sort tabs */}
-      <div className="flex items-center gap-1 px-2 py-2 border-b border-border mb-0">
-        {sortOptions.map((opt) => (
-          <button
-            key={opt.value}
-            onClick={() => setSortBy(opt.value)}
-            className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[13px] font-medium transition-all duration-150 cursor-pointer ${
-              sortBy === opt.value
-                ? 'bg-surface-2 text-text-primary'
-                : 'text-text-muted hover:bg-surface-2 hover:text-text-secondary'
-            }`}
-          >
-            <opt.icon className="h-4 w-4" />
-            {opt.label}
-          </button>
-        ))}
+      {/* Sort dropdown */}
+      <div className="flex items-center gap-2 px-2 py-2 border-b border-border mb-0">
+        <SortDropdown value={sortBy} onChange={setSortBy} />
       </div>
 
       {/* Feed */}
