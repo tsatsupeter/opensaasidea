@@ -508,8 +508,8 @@ export function IdeaDetailPage() {
                   <p className="text-[10px] text-text-muted">Upvotes</p>
                 </div>
                 <div>
-                  <p className="text-[13px] font-bold">{catData?.count || 0}</p>
-                  <p className="text-[10px] text-text-muted">Ideas in Category</p>
+                  <p className="text-[13px] font-bold">{idea.comment_count || 0}</p>
+                  <p className="text-[10px] text-text-muted">Comments</p>
                 </div>
               </div>
             </div>

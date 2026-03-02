@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   User, Globe, Lock, Bookmark, Clock, ThumbsUp, ThumbsDown,
-  Loader2, MapPin, Calendar, Briefcase, FileText
+  Loader2, MapPin, Calendar, Briefcase, FileText, MessageSquare
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -14,7 +14,7 @@ import { useRecent } from '@/hooks/use-recent'
 import { supabase } from '@/lib/supabase'
 import type { SaasIdea } from '@/types/database'
 
-type ProfileTab = 'public' | 'private' | 'saved' | 'history' | 'votes'
+type ProfileTab = 'public' | 'private' | 'saved' | 'history' | 'votes' | 'comments'
 
 const TABS: { id: ProfileTab; label: string; icon: typeof Globe }[] = [
   { id: 'public', label: 'Public', icon: Globe },
@@ -22,6 +22,7 @@ const TABS: { id: ProfileTab; label: string; icon: typeof Globe }[] = [
   { id: 'saved', label: 'Saved', icon: Bookmark },
   { id: 'history', label: 'History', icon: Clock },
   { id: 'votes', label: 'Votes', icon: ThumbsUp },
+  { id: 'comments', label: 'Comments', icon: MessageSquare },
 ]
 
 export function ProfilePage() {
@@ -35,7 +36,8 @@ export function ProfilePage() {
   const [savedIdeas, setSavedIdeas] = useState<SaasIdea[]>([])
   const [votedIdeas, setVotedIdeas] = useState<{ idea: SaasIdea; vote_type: 'up' | 'down' }[]>([])
   const [loading, setLoading] = useState(true)
-  const [stats, setStats] = useState({ total: 0, public: 0, private: 0, saved: 0, upvotes: 0, downvotes: 0 })
+  const [userComments, setUserComments] = useState<{ id: string; content: string; idea_id: string; idea_title: string; idea_slug: string | null; upvotes: number; created_at: string }[]>([])
+  const [stats, setStats] = useState({ total: 0, public: 0, private: 0, saved: 0, upvotes: 0, downvotes: 0, comments: 0 })
 
   const fetchData = useCallback(async () => {
     if (!user) return
@@ -86,6 +88,29 @@ export function ProfilePage() {
       setVotedIdeas(merged)
     }
 
+    // Fetch user comments
+    const { data: rawComments } = await (supabase.from('comments') as any)
+      .select('id, content, idea_id, upvotes, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(50)
+
+    if (rawComments && rawComments.length > 0) {
+      const commentIdeaIds = [...new Set(rawComments.map((c: any) => c.idea_id))]
+      const { data: commentIdeas } = await supabase
+        .from('saas_ideas')
+        .select('id, title, slug')
+        .in('id', commentIdeaIds as string[])
+      const ideaMap = new Map((commentIdeas || []).map((i: any) => [i.id, i]))
+      setUserComments(rawComments.map((c: any) => ({
+        ...c,
+        idea_title: ideaMap.get(c.idea_id)?.title || 'Unknown idea',
+        idea_slug: ideaMap.get(c.idea_id)?.slug || null,
+      })))
+    } else {
+      setUserComments([])
+    }
+
     // Stats
     const upVotes = (votes || []).filter((v: any) => v.vote_type === 'up').length
     const downVotes = (votes || []).filter((v: any) => v.vote_type === 'down').length
@@ -96,6 +121,7 @@ export function ProfilePage() {
       saved: bookmarkedIds.size,
       upvotes: upVotes,
       downvotes: downVotes,
+      comments: (rawComments || []).length,
     })
 
     setLoading(false)
@@ -161,8 +187,8 @@ export function ProfilePage() {
                   <p className="text-[10px] text-text-muted">Likes</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-rose">{stats.downvotes}</p>
-                  <p className="text-[10px] text-text-muted">Dislikes</p>
+                  <p className="text-lg font-bold text-amber">{stats.comments}</p>
+                  <p className="text-[10px] text-text-muted">Comments</p>
                 </div>
                 <div>
                   <p className="text-lg font-bold text-accent">{stats.saved}</p>
@@ -220,6 +246,7 @@ export function ProfilePage() {
                 {tab.id === 'saved' && stats.saved}
                 {tab.id === 'history' && historyIdeas.length}
                 {tab.id === 'votes' && (stats.upvotes + stats.downvotes)}
+                {tab.id === 'comments' && stats.comments}
               </span>
             </button>
           ))}
@@ -286,6 +313,46 @@ export function ProfilePage() {
                         <span className="text-xs text-text-muted ml-3">{item.upvotes} votes</span>
                       )}
                     </motion.a>
+                  ))}
+                </div>
+              )}
+            </TabPanel>
+          )}
+
+          {activeTab === 'comments' && (
+            <TabPanel key="comments">
+              {userComments.length === 0 ? (
+                <EmptyState icon={MessageSquare} text="No comments yet" sub="Share your thoughts on ideas in the community" />
+              ) : (
+                <div className="divide-y divide-border rounded-xl border border-border bg-surface-0 overflow-hidden">
+                  {userComments.map((comment, i) => (
+                    <motion.div
+                      key={comment.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: i * 0.03 }}
+                    >
+                      <a href={`/idea/${comment.idea_slug || comment.idea_id}`} className="block px-4 py-3 hover:bg-surface-2 transition-colors">
+                        <div className="flex items-start gap-3">
+                          <MessageSquare className="h-4 w-4 text-amber shrink-0 mt-0.5" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm text-text-primary line-clamp-2">{comment.content}</p>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <span className="text-[11px] text-text-muted">on</span>
+                              <span className="text-[11px] font-medium text-brand truncate">{comment.idea_title}</span>
+                              <span className="text-[11px] text-text-muted">·</span>
+                              <span className="text-[11px] text-text-muted flex items-center gap-1">
+                                <ThumbsUp className="h-3 w-3" /> {comment.upvotes}
+                              </span>
+                              <span className="text-[11px] text-text-muted">·</span>
+                              <span className="text-[11px] text-text-muted">
+                                {new Date(comment.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </a>
+                    </motion.div>
                   ))}
                 </div>
               )}

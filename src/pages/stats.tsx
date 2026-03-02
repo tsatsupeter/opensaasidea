@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   BarChart3, TrendingUp, Eye, ThumbsUp, ThumbsDown, Calendar,
-  Loader2, Lightbulb, Globe, Lock, Bookmark, Zap
+  Loader2, Lightbulb, Globe, Lock, Bookmark, Zap, MessageSquare
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -27,12 +27,13 @@ export function StatsPage() {
   const [voteStats, setVoteStats] = useState({ up: 0, down: 0 })
   const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([])
   const [streakDays, setStreakDays] = useState(0)
+  const [commentStats, setCommentStats] = useState({ written: 0, received: 0, commentUpvotes: 0 })
 
   const fetchStats = useCallback(async () => {
     if (!user) return
     setLoading(true)
 
-    const [ideasRes, votesRes] = await Promise.all([
+    const [ideasRes, votesRes, myCommentsRes] = await Promise.all([
       supabase
         .from('saas_ideas')
         .select('*')
@@ -41,6 +42,9 @@ export function StatsPage() {
         .limit(200),
       (supabase.from('votes') as any)
         .select('vote_type')
+        .eq('user_id', user.id),
+      (supabase.from('comments') as any)
+        .select('id, upvotes')
         .eq('user_id', user.id),
     ])
 
@@ -52,6 +56,13 @@ export function StatsPage() {
       up: votes.filter((v: any) => v.vote_type === 'up').length,
       down: votes.filter((v: any) => v.vote_type === 'down').length,
     })
+
+    // Comment stats
+    const myComments = myCommentsRes.data || []
+    const commentsWritten = myComments.length
+    const commentUpvotesTotal = myComments.reduce((s: number, c: any) => s + (c.upvotes || 0), 0)
+    const totalCommentsReceived = allIdeas.reduce((s, i) => s + (i.comment_count || 0), 0)
+    setCommentStats({ written: commentsWritten, received: totalCommentsReceived, commentUpvotes: commentUpvotesTotal })
 
     // Category breakdown
     const catMap: Record<string, { count: number; totalVotes: number }> = {}
@@ -108,6 +119,7 @@ export function StatsPage() {
   const avgMRR = ideas.filter(i => i.estimated_mrr_high).length > 0
     ? Math.round(ideas.reduce((s, i) => s + ((i.estimated_mrr_low || 0) + (i.estimated_mrr_high || 0)) / 2, 0) / ideas.filter(i => i.estimated_mrr_high).length)
     : 0
+  const totalComments = ideas.reduce((s, i) => s + (i.comment_count || 0), 0)
   const topIdea = [...ideas].sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0))[0]
 
   return (
@@ -159,9 +171,9 @@ export function StatsPage() {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
             <Card className="border-amber/20 bg-gradient-to-br from-amber/5 to-transparent">
               <CardContent className="p-5 text-center">
-                <Zap className="h-6 w-6 text-amber mx-auto mb-2" />
-                <p className="text-3xl font-extrabold text-amber">{streakDays}d</p>
-                <p className="text-xs text-text-muted mt-1">Streak</p>
+                <MessageSquare className="h-6 w-6 text-amber mx-auto mb-2" />
+                <p className="text-3xl font-extrabold text-amber">{totalComments}</p>
+                <p className="text-xs text-text-muted mt-1">Comments Received</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -225,6 +237,18 @@ export function StatsPage() {
                   <span className="flex items-center gap-2 text-sm"><TrendingUp className="h-4 w-4 text-emerald" /> Avg Est. MRR</span>
                   <span className="text-lg font-bold">{avgMRR > 0 ? `$${avgMRR.toLocaleString()}` : '—'}</span>
                 </div>
+                <div className="flex items-center justify-between py-2 border-b border-border">
+                  <span className="flex items-center gap-2 text-sm"><MessageSquare className="h-4 w-4 text-amber" /> Comments Written</span>
+                  <span className="text-lg font-bold text-amber">{commentStats.written}</span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-border">
+                  <span className="flex items-center gap-2 text-sm"><MessageSquare className="h-4 w-4 text-brand" /> Comments Received</span>
+                  <span className="text-lg font-bold">{commentStats.received}</span>
+                </div>
+                <div className="flex items-center justify-between py-2 border-b border-border">
+                  <span className="flex items-center gap-2 text-sm"><ThumbsUp className="h-4 w-4 text-emerald" /> Comment Upvotes</span>
+                  <span className="text-lg font-bold text-emerald">{commentStats.commentUpvotes}</span>
+                </div>
                 {/* Like/Dislike ratio bar */}
                 <div className="pt-2">
                   <p className="text-[11px] text-text-muted mb-2">Like / Dislike Ratio</p>
@@ -275,6 +299,9 @@ export function StatsPage() {
                     </span>
                     <span className="text-xs text-text-muted flex items-center gap-1">
                       <Eye className="h-3 w-3" /> {topIdea.views} views
+                    </span>
+                    <span className="text-xs text-text-muted flex items-center gap-1">
+                      <MessageSquare className="h-3 w-3" /> {topIdea.comment_count || 0}
                     </span>
                   </div>
                 </a>
