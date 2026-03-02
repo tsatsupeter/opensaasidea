@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, Loader2, Globe, Smartphone, Monitor,
-  Puzzle, Code2, Layers, Share2, Bookmark, BookmarkCheck, Calendar, Eye, Users, TrendingUp, DollarSign, Zap, Lock
+  Puzzle, Code2, Layers, Share2, Bookmark, BookmarkCheck, Calendar, Eye, Users, TrendingUp, DollarSign, Zap, Lock, MessageSquare
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
@@ -11,6 +11,7 @@ import { useRecent } from '@/hooks/use-recent'
 import { useBookmarks } from '@/hooks/use-bookmarks'
 import { useToast } from '@/components/ui/toast'
 import { VoteButton } from '@/components/ideas/vote-button'
+import { CommentSection } from '@/components/comments/comment-section'
 import { formatCurrency, formatNumber, timeAgo } from '@/lib/utils'
 import { categoryColor, toSlug, useCategories } from '@/lib/categories'
 import type { SaasIdea, PricingTier, TeamRole, TechStack, Competitor } from '@/types/database'
@@ -406,6 +407,17 @@ export function IdeaDetailPage() {
             {/* Bottom action bar */}
             <div className="flex items-center gap-1 px-2 py-2 border-t border-border">
               <VoteButton ideaId={idea.id} upvotes={idea.upvotes} downvotes={idea.downvotes} currentVote={userVote} />
+              <a
+                href="#comments"
+                onClick={(e) => {
+                  e.preventDefault()
+                  document.querySelector('#comments')?.scrollIntoView({ behavior: 'smooth' })
+                }}
+                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-text-muted hover:bg-surface-2 transition-colors cursor-pointer"
+              >
+                <MessageSquare className="h-3.5 w-3.5" />
+                {idea.comment_count || 0}
+              </a>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href)
@@ -451,6 +463,11 @@ export function IdeaDetailPage() {
               )}
             </div>
           </article>
+
+          {/* Comments Section */}
+          <div id="comments" className="rounded-xl border border-border bg-surface-0 p-4 sm:p-6">
+            <CommentSection ideaId={idea.id} commentCount={idea.comment_count || 0} />
+          </div>
         </motion.div>
       </div>
 

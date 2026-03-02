@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Share2, DollarSign, ArrowRight, Globe, Lock, Bookmark, BookmarkCheck } from 'lucide-react'
+import { Share2, DollarSign, ArrowRight, Globe, Lock, Bookmark, BookmarkCheck, MessageSquare } from 'lucide-react'
 import { VoteButton } from './vote-button'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import { categoryColor, toSlug } from '@/lib/categories'
@@ -114,6 +114,14 @@ export function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicT
               currentVote={currentVote}
               onVoteChange={onVoteChange}
             />
+            <Link
+              to={`/idea/${idea.slug || idea.id}`}
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-text-muted hover:bg-surface-2 transition-colors"
+              title="Comments"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span>{idea.comment_count || 0}</span>
+            </Link>
             <Link
               to={`/idea/${idea.slug || idea.id}`}
               className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-text-muted hover:bg-surface-2 transition-colors"

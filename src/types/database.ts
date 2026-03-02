@@ -60,6 +60,7 @@ export interface Database {
           pros: string[]
           cons: string[]
           slug: string | null
+          comment_count: number
           views: number
           upvotes: number
           downvotes: number
@@ -86,6 +87,33 @@ export interface Database {
         }
         Insert: Omit<Database['public']['Tables']['votes']['Row'], 'id' | 'created_at'>
         Update: Partial<Database['public']['Tables']['votes']['Row']>
+      }
+      comments: {
+        Row: {
+          id: string
+          idea_id: string
+          user_id: string
+          parent_id: string | null
+          content: string
+          upvotes: number
+          downvotes: number
+          is_edited: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['comments']['Row'], 'id' | 'upvotes' | 'downvotes' | 'is_edited' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['comments']['Row']>
+      }
+      comment_votes: {
+        Row: {
+          id: string
+          comment_id: string
+          user_id: string
+          vote_type: 'up' | 'down'
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['comment_votes']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['comment_votes']['Row']>
       }
       generation_feedback: {
         Row: {
@@ -170,3 +198,5 @@ export type SaasIdea = Database['public']['Tables']['saas_ideas']['Row']
 export type Profile = Database['public']['Tables']['profiles']['Row']
 export type Vote = Database['public']['Tables']['votes']['Row']
 export type UserSkill = Database['public']['Tables']['user_skills']['Row']
+export type Comment = Database['public']['Tables']['comments']['Row']
+export type CommentVote = Database['public']['Tables']['comment_votes']['Row']
