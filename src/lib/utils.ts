@@ -20,6 +20,26 @@ export function formatNumber(num: number): string {
   return num.toString()
 }
 
+// Strip HTML tags and script content from user input
+export function sanitizeInput(input: string): string {
+  return input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '')
+    .trim()
+}
+
+// Sanitize search queries to prevent PostgREST filter injection
+// Strips characters that could manipulate filter syntax: , ( ) .eq .neq etc.
+export function sanitizeSearchQuery(query: string): string {
+  return query
+    .replace(/[(),]/g, '')
+    .replace(/\.(eq|neq|gt|gte|lt|lte|like|ilike|is|in|cs|cd|sl|sr|nxl|nxr|adj|ov|fts|plfts|phfts|wfts|not|or|and)\./gi, ' ')
+    .trim()
+    .slice(0, 100)
+}
+
 export function timeAgo(date: string): string {
   const now = new Date()
   const past = new Date(date)

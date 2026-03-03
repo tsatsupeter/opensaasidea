@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { cn } from '@/lib/utils'
+import { cn, sanitizeSearchQuery } from '@/lib/utils'
 import { Logo } from '@/components/ui/logo'
 
 interface SearchResult {
@@ -29,11 +29,13 @@ export function SearchBar() {
       return
     }
     setLoading(true)
+    const safeQ = sanitizeSearchQuery(q)
+    if (!safeQ) { setResults([]); setLoading(false); return }
     const { data } = await supabase
       .from('saas_ideas')
       .select('id, slug, title, category, tagline')
       .eq('is_public', true)
-      .or(`title.ilike.%${q}%,tagline.ilike.%${q}%,category.ilike.%${q}%,description.ilike.%${q}%`)
+      .or(`title.ilike.%${safeQ}%,tagline.ilike.%${safeQ}%,category.ilike.%${safeQ}%,description.ilike.%${safeQ}%`)
       .limit(8)
     setResults((data as SearchResult[]) || [])
     setLoading(false)

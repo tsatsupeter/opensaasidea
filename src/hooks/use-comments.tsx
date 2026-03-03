@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
+import { sanitizeInput } from '@/lib/utils'
 import type { Comment } from '@/types/database'
 
 export interface CommentWithAuthor extends Comment {
@@ -92,7 +93,7 @@ export function useComments(ideaId: string) {
       idea_id: ideaId,
       user_id: user.id,
       parent_id: parentId,
-      content: content.trim(),
+      content: sanitizeInput(content),
     })
 
     setSubmitting(false)
@@ -107,7 +108,7 @@ export function useComments(ideaId: string) {
     if (!user || !content.trim()) return false
 
     const { error } = await (supabase.from('comments') as any)
-      .update({ content: content.trim(), is_edited: true, updated_at: new Date().toISOString() })
+      .update({ content: sanitizeInput(content), is_edited: true, updated_at: new Date().toISOString() })
       .eq('id', commentId)
       .eq('user_id', user.id)
 
