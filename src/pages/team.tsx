@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import {
   Users, Plus, Trash2, Crown, Shield, UserPlus, Loader2,
   Check, X, ThumbsUp, ThumbsDown, Minus, Copy, Key, Tag,
-  LayoutDashboard, Settings, ChevronDown, ExternalLink, Headphones,
+  LayoutDashboard, Settings, ExternalLink, Headphones, Mail,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useSubscription } from '@/hooks/use-subscription'
@@ -15,10 +15,11 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { TeamSkeleton } from '@/components/ui/skeleton'
 import { formatCurrency } from '@/lib/utils'
 import type { TeamIdea, TeamMember } from '@/hooks/use-team'
 
-type Tab = 'ideas' | 'members' | 'categories' | 'api' | 'support'
+type Tab = 'ideas' | 'members' | 'settings'
 
 export function TeamPage() {
   const { user } = useAuth()
@@ -40,9 +41,6 @@ export function TeamPage() {
   const [inviting, setInviting] = useState(false)
   const [newCatName, setNewCatName] = useState('')
   const [newCatDesc, setNewCatDesc] = useState('')
-  const [apiKeyName, setApiKeyName] = useState('')
-  const [generatingKey, setGeneratingKey] = useState(false)
-  const [newApiKey, setNewApiKey] = useState<string | null>(null)
 
   if (!user) {
     return (
@@ -63,18 +61,14 @@ export function TeamPage() {
         <h2 className="text-xl font-bold">Team Workspace</h2>
         <p className="text-text-muted">Upgrade to the Team plan to collaborate with up to 5 members, share ideas, vote on them, and more.</p>
         <Link to="/pricing">
-          <Button className="mt-2"><Crown className="h-4 w-4 mr-1.5" /> Upgrade to Team — $45/mo</Button>
+          <Button className="mt-2"><Crown className="h-4 w-4 mr-1.5" /> Upgrade to Team - $45/mo</Button>
         </Link>
       </div>
     )
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-accent" />
-      </div>
-    )
+    return <TeamSkeleton />
   }
 
   // --- CREATE TEAM ---
@@ -86,7 +80,7 @@ export function TeamPage() {
             <Users className="h-8 w-8 text-accent" />
           </div>
           <h2 className="text-xl font-bold">Create Your Team</h2>
-          <p className="text-sm text-text-muted">Set up a shared workspace for your team.</p>
+          <p className="text-sm text-text-muted">Give your team a name to get started. You can invite members after.</p>
         </div>
         <Card>
           <CardContent className="p-6 space-y-4">
@@ -94,8 +88,10 @@ export function TeamPage() {
               placeholder="Team name (e.g. Acme Labs)"
               value={teamName}
               onChange={e => setTeamName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && teamName.trim() && !creatingTeam && document.getElementById('create-team-btn')?.click()}
             />
             <Button
+              id="create-team-btn"
               className="w-full"
               disabled={!teamName.trim() || creatingTeam}
               onClick={async () => {
@@ -118,13 +114,12 @@ export function TeamPage() {
   const isOwner = team.owner_id === user.id
   const myMembership = members.find(m => m.user_id === user.id)
   const isAdmin = myMembership?.role === 'owner' || myMembership?.role === 'admin'
+  const activeMembers = members.filter(m => m.status === 'active').length
 
-  const tabs: { id: Tab; label: string; icon: typeof Users }[] = [
-    { id: 'ideas', label: 'Ideas', icon: LayoutDashboard },
-    { id: 'members', label: 'Members', icon: Users },
-    { id: 'categories', label: 'Categories', icon: Tag },
-    { id: 'api', label: 'API Keys', icon: Key },
-    { id: 'support', label: 'Support', icon: Headphones },
+  const tabs: { id: Tab; label: string; icon: typeof Users; count?: string }[] = [
+    { id: 'ideas', label: 'Shared Ideas', icon: LayoutDashboard, count: teamIdeas.length > 0 ? String(teamIdeas.length) : undefined },
+    { id: 'members', label: 'Members', icon: Users, count: `${activeMembers}/5` },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ]
 
   return (
@@ -137,7 +132,7 @@ export function TeamPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold">{team.name}</h1>
-            <p className="text-xs text-text-muted">{members.filter(m => m.status === 'active').length} members · Team plan</p>
+            <p className="text-xs text-text-muted">{activeMembers} member{activeMembers !== 1 ? 's' : ''} - Team plan</p>
           </div>
           <Badge variant="accent" className="ml-auto">Team</Badge>
         </div>
@@ -157,11 +152,10 @@ export function TeamPage() {
           >
             <t.icon className="h-3.5 w-3.5" />
             {t.label}
-            {t.id === 'ideas' && teamIdeas.length > 0 && (
-              <span className="ml-1 text-[10px] bg-accent/10 text-accent rounded-full px-1.5">{teamIdeas.length}</span>
-            )}
-            {t.id === 'members' && (
-              <span className="ml-1 text-[10px] bg-surface-2 rounded-full px-1.5">{members.filter(m => m.status === 'active').length}/5</span>
+            {t.count && (
+              <span className={`ml-1 text-[10px] rounded-full px-1.5 ${
+                t.id === 'ideas' ? 'bg-accent/10 text-accent' : 'bg-surface-2'
+              }`}>{t.count}</span>
             )}
           </button>
         ))}
@@ -175,13 +169,27 @@ export function TeamPage() {
             members={members} isOwner={isOwner} isAdmin={isAdmin} userId={user.id}
             inviteEmail={inviteEmail} setInviteEmail={setInviteEmail}
             inviting={inviting}
+            onCopyLink={(token) => {
+              const link = `${window.location.origin}/team/invite/${token}`
+              navigator.clipboard.writeText(link)
+              toast('Invite link copied!')
+            }}
             onInvite={async () => {
               if (!inviteEmail.trim()) return
               setInviting(true)
               const result = await inviteMember(inviteEmail.trim())
               if (result === 'limit') toast('Team member limit reached (5 max)')
               else if (result === 'exists') toast('Already invited')
-              else if (result === true) { toast('Member invited!'); setInviteEmail('') }
+              else if (typeof result === 'object' && result.success) {
+                setInviteEmail('')
+                if (result.token) {
+                  const link = `${window.location.origin}/team/invite/${result.token}`
+                  await navigator.clipboard.writeText(link)
+                  toast('Invited! Invite link copied to clipboard - send it to them.')
+                } else {
+                  toast('Member added to team!')
+                }
+              }
               else toast('Failed to invite')
               setInviting(false)
             }}
@@ -195,42 +203,23 @@ export function TeamPage() {
             }}
           />
         )}
-        {tab === 'categories' && (
-          <CategoriesTab
+        {tab === 'settings' && (
+          <SettingsTab
             categories={customCategories} isAdmin={isAdmin}
-            newName={newCatName} setNewName={setNewCatName}
-            newDesc={newCatDesc} setNewDesc={setNewCatDesc}
-            onAdd={async () => {
+            newCatName={newCatName} setNewCatName={setNewCatName}
+            newCatDesc={newCatDesc} setNewCatDesc={setNewCatDesc}
+            onAddCategory={async () => {
               if (!newCatName.trim()) return
               const ok = await addCustomCategory(newCatName.trim(), newCatDesc.trim() || undefined)
               if (ok) { toast('Category added!'); setNewCatName(''); setNewCatDesc('') }
               else toast('Failed to add category')
             }}
-            onDelete={async (id) => {
+            onDeleteCategory={async (id) => {
               await deleteCustomCategory(id)
               toast('Category deleted')
             }}
           />
         )}
-        {tab === 'api' && (
-          <ApiKeysTab
-            apiKeys={apiKeys} newApiKey={newApiKey}
-            keyName={apiKeyName} setKeyName={setApiKeyName}
-            generating={generatingKey}
-            onGenerate={async () => {
-              if (!apiKeyName.trim()) return
-              setGeneratingKey(true)
-              const key = await generateApiKey(apiKeyName.trim())
-              if (key) { setNewApiKey(key); setApiKeyName(''); toast('API key generated! Copy it now — it won\'t be shown again.') }
-              else toast('Failed to generate key')
-              setGeneratingKey(false)
-            }}
-            onRevoke={async (id) => { await revokeApiKey(id); toast('Key revoked') }}
-            onDelete={async (id) => { await deleteApiKey(id); toast('Key deleted') }}
-            onCopy={(key) => { navigator.clipboard.writeText(key); toast('Copied to clipboard') }}
-          />
-        )}
-        {tab === 'support' && <SupportTab />}
       </motion.div>
     </div>
   )
@@ -256,11 +245,16 @@ function IdeasTab({ teamIdeas, members, user, isAdmin, updateTeamIdeaStatus, ass
 
   if (teamIdeas.length === 0) {
     return (
-      <div className="text-center py-16 space-y-3">
+      <div className="text-center py-16 space-y-4">
         <LayoutDashboard className="h-10 w-10 text-text-muted mx-auto" />
         <h3 className="text-[15px] font-bold">No shared ideas yet</h3>
-        <p className="text-sm text-text-muted max-w-md mx-auto">Share ideas from any idea detail page using the "Share to Team" button.</p>
-        <Link to="/explore"><Button variant="outline" className="mt-2">Browse Ideas</Button></Link>
+        <p className="text-sm text-text-muted max-w-sm mx-auto">
+          When you find an idea you like, use the <strong>"Share to Team"</strong> button on the idea page. Your team can then vote and discuss it here.
+        </p>
+        <div className="flex items-center justify-center gap-3 pt-1">
+          <Link to="/explore"><Button variant="outline">Browse Ideas</Button></Link>
+          <Link to="/dashboard"><Button>Generate New Idea</Button></Link>
+        </div>
       </div>
     )
   }
@@ -303,26 +297,25 @@ function IdeasTab({ teamIdeas, members, user, isAdmin, updateTeamIdeaStatus, ass
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     onClick={() => voteOnTeamIdea(ti.id, 'approve')}
-                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${myVote?.vote === 'approve' ? 'bg-emerald/20 text-emerald' : 'text-text-muted hover:bg-surface-2'}`}
-                    title="Approve"
+                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${myVote?.vote === 'approve' ? 'bg-emerald/20 text-emerald' : 'text-text-muted hover:bg-surface-2'}`}
                   >
-                    <ThumbsUp className="h-3.5 w-3.5" />
+                    <ThumbsUp className="h-3 w-3" />
+                    {approves > 0 && <span>{approves}</span>}
                   </button>
                   <button
                     onClick={() => voteOnTeamIdea(ti.id, 'maybe')}
-                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${myVote?.vote === 'maybe' ? 'bg-amber/20 text-amber' : 'text-text-muted hover:bg-surface-2'}`}
-                    title="Maybe"
+                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${myVote?.vote === 'maybe' ? 'bg-amber/20 text-amber' : 'text-text-muted hover:bg-surface-2'}`}
                   >
-                    <Minus className="h-3.5 w-3.5" />
+                    <Minus className="h-3 w-3" />
+                    {maybes > 0 && <span>{maybes}</span>}
                   </button>
                   <button
                     onClick={() => voteOnTeamIdea(ti.id, 'reject')}
-                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${myVote?.vote === 'reject' ? 'bg-rose/20 text-rose' : 'text-text-muted hover:bg-surface-2'}`}
-                    title="Reject"
+                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors cursor-pointer ${myVote?.vote === 'reject' ? 'bg-rose/20 text-rose' : 'text-text-muted hover:bg-surface-2'}`}
                   >
-                    <ThumbsDown className="h-3.5 w-3.5" />
+                    <ThumbsDown className="h-3 w-3" />
+                    {rejects > 0 && <span>{rejects}</span>}
                   </button>
-                  <span className="text-[10px] text-text-muted ml-1">{approves}/{maybes}/{rejects}</span>
                 </div>
               </div>
 
@@ -366,11 +359,12 @@ function IdeasTab({ teamIdeas, members, user, isAdmin, updateTeamIdeaStatus, ass
 // ============================================================
 // MEMBERS TAB
 // ============================================================
-function MembersTab({ members, isOwner, isAdmin, userId, inviteEmail, setInviteEmail, inviting, onInvite, onRemove, onRoleChange }: {
+function MembersTab({ members, isOwner, isAdmin, userId, inviteEmail, setInviteEmail, inviting, onInvite, onRemove, onRoleChange, onCopyLink }: {
   members: TeamMember[]; isOwner: boolean; isAdmin: boolean; userId: string
   inviteEmail: string; setInviteEmail: (v: string) => void
   inviting: boolean; onInvite: () => void
   onRemove: (id: string) => void; onRoleChange: (id: string, role: 'admin' | 'member') => void
+  onCopyLink: (token: string) => void
 }) {
   const roleIcons: Record<string, typeof Crown> = { owner: Crown, admin: Shield, member: Users }
 
@@ -419,15 +413,30 @@ function MembersTab({ members, isOwner, isAdmin, userId, inviteEmail, setInviteE
                   <p className="text-[11px] text-text-muted truncate">{m.profile?.email || m.invited_email}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {m.status === 'pending' && <Badge variant="secondary" className="text-[10px]">Pending</Badge>}
-                  <span className={`flex items-center gap-1 text-[11px] font-medium capitalize ${
-                    m.role === 'owner' ? 'text-brand' : m.role === 'admin' ? 'text-accent' : 'text-text-muted'
-                  }`}>
-                    <RoleIcon className="h-3 w-3" />
-                    {m.role}
-                  </span>
+                  {m.status === 'pending' && (
+                    <>
+                      <Badge variant="secondary" className="text-[10px]">Pending</Badge>
+                      {m.invite_token && (
+                        <button
+                          onClick={() => onCopyLink(m.invite_token!)}
+                          className="flex items-center gap-1 text-[11px] text-accent hover:text-accent/80 font-medium transition-colors cursor-pointer"
+                          title="Copy invite link"
+                        >
+                          <Copy className="h-3 w-3" /> Copy Link
+                        </button>
+                      )}
+                    </>
+                  )}
+                  {m.status === 'active' && (
+                    <span className={`flex items-center gap-1 text-[11px] font-medium capitalize ${
+                      m.role === 'owner' ? 'text-brand' : m.role === 'admin' ? 'text-accent' : 'text-text-muted'
+                    }`}>
+                      <RoleIcon className="h-3 w-3" />
+                      {m.role}
+                    </span>
+                  )}
                   {/* Role change dropdown */}
-                  {isOwner && m.role !== 'owner' && m.user_id !== userId && (
+                  {isOwner && m.role !== 'owner' && m.user_id !== userId && m.status === 'active' && (
                     <select
                       value={m.role}
                       onChange={e => onRoleChange(m.id, e.target.value as 'admin' | 'member')}
@@ -454,183 +463,102 @@ function MembersTab({ members, isOwner, isAdmin, userId, inviteEmail, setInviteE
 }
 
 // ============================================================
-// CATEGORIES TAB
+// SETTINGS TAB (Categories + API Keys + Support combined)
 // ============================================================
-function CategoriesTab({ categories, isAdmin, newName, setNewName, newDesc, setNewDesc, onAdd, onDelete }: {
+function SettingsTab({ categories, isAdmin, newCatName, setNewCatName, newCatDesc, setNewCatDesc, onAddCategory, onDeleteCategory }: {
   categories: any[]; isAdmin: boolean
-  newName: string; setNewName: (v: string) => void
-  newDesc: string; setNewDesc: (v: string) => void
-  onAdd: () => void; onDelete: (id: string) => void
+  newCatName: string; setNewCatName: (v: string) => void
+  newCatDesc: string; setNewCatDesc: (v: string) => void
+  onAddCategory: () => void; onDeleteCategory: (id: string) => void
 }) {
   return (
-    <div className="space-y-4">
-      {isAdmin && (
-        <Card>
-          <CardContent className="p-4 space-y-3">
-            <h3 className="text-[13px] font-semibold">Add Custom Category</h3>
-            <Input placeholder="Category name" value={newName} onChange={e => setNewName(e.target.value)} />
-            <Input placeholder="Description (optional)" value={newDesc} onChange={e => setNewDesc(e.target.value)} />
-            <Button onClick={onAdd} disabled={!newName.trim()} className="w-full">
-              <Plus className="h-4 w-4 mr-1" /> Add Category
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {categories.length === 0 ? (
-        <div className="text-center py-12 space-y-2">
-          <Tag className="h-8 w-8 text-text-muted mx-auto" />
-          <p className="text-sm text-text-muted">No custom categories yet</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {categories.map(cat => (
-            <Card key={cat.id}>
-              <CardContent className="p-3 flex items-center gap-3">
-                <Tag className="h-4 w-4 text-accent shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium">{cat.name}</p>
-                  {cat.description && <p className="text-[11px] text-text-muted truncate">{cat.description}</p>}
-                </div>
-                <Badge variant="secondary" className="text-[10px]">{cat.slug}</Badge>
-                {isAdmin && (
-                  <button onClick={() => onDelete(cat.id)} className="p-1 text-text-muted hover:text-rose transition-colors cursor-pointer">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ============================================================
-// API KEYS TAB
-// ============================================================
-function ApiKeysTab({ apiKeys, newApiKey, keyName, setKeyName, generating, onGenerate, onRevoke, onDelete, onCopy }: {
-  apiKeys: any[]; newApiKey: string | null
-  keyName: string; setKeyName: (v: string) => void
-  generating: boolean; onGenerate: () => void
-  onRevoke: (id: string) => void; onDelete: (id: string) => void; onCopy: (key: string) => void
-}) {
-  return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* API Keys - Link to dedicated page */}
       <Card>
-        <CardContent className="p-4 space-y-3">
-          <h3 className="text-[13px] font-semibold">Generate API Key</h3>
-          <p className="text-[11px] text-text-muted">API keys let you access ideas programmatically. Keys are shown only once — save them securely.</p>
-          <div className="flex gap-2">
-            <Input placeholder="Key name (e.g. My App)" value={keyName} onChange={e => setKeyName(e.target.value)} />
-            <Button onClick={onGenerate} disabled={generating || !keyName.trim()}>
-              {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4 mr-1" />}
-              Generate
-            </Button>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+              <Key className="h-4 w-4 text-accent" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold">API Keys & Credits</p>
+              <p className="text-[11px] text-text-muted">Manage API keys, view usage, and top up credits.</p>
+            </div>
+            <Link to="/developer-api">
+              <Button variant="outline" className="text-[12px] h-8 px-3">
+                <ExternalLink className="h-3 w-3 mr-1.5" /> Open Dashboard
+              </Button>
+            </Link>
           </div>
         </CardContent>
       </Card>
 
-      {/* Show newly generated key */}
-      {newApiKey && (
-        <Card className="border-emerald/30 bg-emerald/5">
-          <CardContent className="p-4 space-y-2">
-            <p className="text-[12px] font-semibold text-emerald">New API Key Created — Copy it now!</p>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 text-[11px] bg-surface-2 rounded-lg px-3 py-2 font-mono break-all">{newApiKey}</code>
-              <button onClick={() => onCopy(newApiKey)} className="p-2 bg-surface-2 rounded-lg hover:bg-surface-3 transition-colors cursor-pointer">
-                <Copy className="h-4 w-4" />
-              </button>
-            </div>
-            <p className="text-[10px] text-text-muted">This key will not be shown again. Store it securely.</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {apiKeys.length === 0 ? (
-        <div className="text-center py-12 space-y-2">
-          <Key className="h-8 w-8 text-text-muted mx-auto" />
-          <p className="text-sm text-text-muted">No API keys yet</p>
+      {/* Custom Categories */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-[14px] font-semibold">Custom Categories</h3>
+            <p className="text-[11px] text-text-muted">Create custom categories to organize your team's ideas.</p>
+          </div>
         </div>
-      ) : (
-        <div className="space-y-2">
-          {apiKeys.map(key => (
-            <Card key={key.id}>
-              <CardContent className="p-3 flex items-center gap-3">
-                <Key className={`h-4 w-4 shrink-0 ${key.is_active ? 'text-accent' : 'text-text-muted'}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium">{key.name}</p>
-                  <p className="text-[11px] text-text-muted font-mono">{key.key_prefix}••••••••</p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {!key.is_active && <Badge variant="secondary" className="text-[10px] text-rose">Revoked</Badge>}
-                  {key.is_active && (
-                    <button onClick={() => onRevoke(key.id)} className="text-[11px] text-text-muted hover:text-amber transition-colors cursor-pointer">
-                      Revoke
+
+        {isAdmin && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex gap-2">
+                <Input placeholder="Category name" value={newCatName} onChange={e => setNewCatName(e.target.value)} className="flex-1" />
+                <Input placeholder="Description (optional)" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} className="flex-1" />
+                <Button onClick={onAddCategory} disabled={!newCatName.trim()} className="shrink-0">
+                  <Plus className="h-4 w-4 mr-1" /> Add
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {categories.length === 0 ? (
+          <div className="text-center py-8 space-y-2">
+            <Tag className="h-7 w-7 text-text-muted mx-auto" />
+            <p className="text-[12px] text-text-muted">No custom categories yet</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {categories.map(cat => (
+              <Card key={cat.id}>
+                <CardContent className="p-3 flex items-center gap-3">
+                  <Tag className="h-4 w-4 text-accent shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium">{cat.name}</p>
+                    {cat.description && <p className="text-[11px] text-text-muted truncate">{cat.description}</p>}
+                  </div>
+                  {isAdmin && (
+                    <button onClick={() => onDeleteCategory(cat.id)} className="p-1 text-text-muted hover:text-rose transition-colors cursor-pointer">
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   )}
-                  <button onClick={() => onDelete(key.id)} className="p-1 text-text-muted hover:text-rose transition-colors cursor-pointer">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* API Docs */}
-      <Card>
-        <CardContent className="p-4 space-y-2">
-          <h3 className="text-[13px] font-semibold">API Usage</h3>
-          <div className="bg-surface-2 rounded-lg p-3 text-[11px] font-mono space-y-1">
-            <p className="text-text-muted"># Fetch public ideas</p>
-            <p>curl -H "x-api-key: YOUR_API_KEY" \</p>
-            <p className="pl-4">https://{siteConfig.domain}/v1/api/ideas</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-          <p className="text-[10px] text-text-muted">Include your API key in the x-api-key header. Read-only access.</p>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
+        )}
+      </div>
 
-// ============================================================
-// SUPPORT TAB
-// ============================================================
-function SupportTab() {
-  return (
-    <div className="space-y-4">
+      {/* Support */}
       <Card className="border-accent/20 bg-accent/5">
-        <CardContent className="p-6 text-center space-y-3">
-          <div className="mx-auto h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center">
-            <Headphones className="h-6 w-6 text-accent" />
+        <CardContent className="p-4 flex items-center gap-4">
+          <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+            <Headphones className="h-5 w-5 text-accent" />
           </div>
-          <h3 className="text-[15px] font-bold">Priority Support</h3>
-          <p className="text-[13px] text-text-muted max-w-md mx-auto">
-            As a Team plan member, you get priority support. Reach out to us anytime and we'll respond within 24 hours.
-          </p>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-semibold">Priority Support</p>
+            <p className="text-[11px] text-text-muted">24-hour response time, feature requests, onboarding help.</p>
+          </div>
           <a
             href={`mailto:support@${siteConfig.domain}?subject=Team Support Request`}
-            className="inline-flex items-center gap-1.5 bg-accent text-white rounded-full px-5 py-2 text-[13px] font-semibold hover:bg-accent/90 transition-colors"
+            className="inline-flex items-center gap-1.5 bg-accent text-white rounded-lg px-4 py-2 text-[12px] font-semibold hover:bg-accent/90 transition-colors shrink-0"
           >
-            <Headphones className="h-3.5 w-3.5" /> Contact Priority Support
+            <Mail className="h-3.5 w-3.5" /> Contact
           </a>
-          <p className="text-[11px] text-text-muted">support@{siteConfig.domain}</p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-4 space-y-2">
-          <h4 className="text-[13px] font-semibold">What's included with Priority Support:</h4>
-          <ul className="space-y-1.5 text-[12px] text-text-secondary">
-            <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald shrink-0" /> 24-hour response time guarantee</li>
-            <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald shrink-0" /> Dedicated support channel</li>
-            <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald shrink-0" /> Feature request prioritization</li>
-            <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald shrink-0" /> Custom integration assistance</li>
-            <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald shrink-0" /> Onboarding help for new team members</li>
-          </ul>
         </CardContent>
       </Card>
     </div>

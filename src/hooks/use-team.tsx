@@ -22,6 +22,7 @@ export interface TeamMember {
   status: 'pending' | 'active' | 'removed'
   invited_by: string
   invited_email: string | null
+  invite_token: string | null
   created_at: string
   profile?: { full_name: string | null; email: string | null; avatar_url: string | null }
 }
@@ -192,8 +193,8 @@ export function useTeam() {
     return teamData as Team
   }, [user, fetchMembers])
 
-  const inviteMember = useCallback(async (email: string): Promise<boolean | 'limit' | 'exists'> => {
-    if (!team || !user) return false
+  const inviteMember = useCallback(async (email: string): Promise<{ success: boolean; token?: string } | 'limit' | 'exists'> => {
+    if (!team || !user) return { success: false }
     const activeMembers = members.filter(m => m.status === 'active' || m.status === 'pending')
     if (activeMembers.length >= 5) return 'limit'
 
@@ -202,18 +203,24 @@ export function useTeam() {
 
     const { data: existingProfile } = await db('profiles').select('id, email').eq('email', email).single()
 
+    // Generate a unique invite token
+    const tokenArray = new Uint8Array(16)
+    crypto.getRandomValues(tokenArray)
+    const inviteToken = Array.from(tokenArray).map(b => b.toString(16).padStart(2, '0')).join('')
+
     const { error } = await db('team_members').insert({
       team_id: team.id, user_id: existingProfile?.id || null,
       role: 'member', status: existingProfile ? 'active' : 'pending',
       invited_by: user.id, invited_email: email,
+      invite_token: existingProfile ? null : inviteToken,
     })
-    if (error) return false
+    if (error) return { success: false }
 
     if (existingProfile) {
       await db('profiles').update({ team_id: team.id }).eq('id', existingProfile.id)
     }
     await fetchMembers()
-    return true
+    return { success: true, token: existingProfile ? undefined : inviteToken }
   }, [team, user, members, fetchMembers])
 
   const removeMember = useCallback(async (memberId: string) => {
@@ -298,6 +305,34 @@ export function useTeam() {
     return rawKey
   }, [user, fetchApiKeys])
 
+  const acceptInvite = useCallback(async (token: string): Promise<{ success: boolean; teamName?: string }> => {
+    if (!user) return { success: false }
+
+    // Look up the invite by token
+    const { data: invite } = await db('team_members')
+      .select('id, team_id, status')
+      .eq('invite_token', token)
+      .eq('status', 'pending')
+      .single()
+
+    if (!invite) return { success: false }
+
+    // Activate the member
+    await db('team_members')
+      .update({ user_id: user.id, status: 'active', invite_token: null })
+      .eq('id', invite.id)
+
+    // Link profile to team
+    await db('profiles').update({ team_id: invite.team_id }).eq('id', user.id)
+
+    // Get team name for confirmation
+    const { data: teamData } = await db('teams').select('name').eq('id', invite.team_id).single()
+
+    // Re-fetch everything
+    await fetchTeam()
+    return { success: true, teamName: teamData?.name || 'your team' }
+  }, [user, fetchTeam])
+
   const revokeApiKey = useCallback(async (keyId: string) => {
     await db('api_keys').update({ is_active: false }).eq('id', keyId)
     await fetchApiKeys()
@@ -314,6 +349,6 @@ export function useTeam() {
     shareIdeaToTeam, updateTeamIdeaStatus, assignTeamIdea, voteOnTeamIdea,
     addCustomCategory, deleteCustomCategory,
     generateApiKey, revokeApiKey, deleteApiKey,
-    fetchTeamIdeas,
+    acceptInvite, fetchTeamIdeas,
   }
 }
