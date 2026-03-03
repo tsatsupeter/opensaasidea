@@ -46,7 +46,7 @@ export function VoteButton({ ideaId, upvotes, downvotes, currentVote: initialVot
         [oldType]: prev[oldType as 'up' | 'down'] - 1,
         [type]: prev[type] + 1,
       } as { up: number; down: number }))
-      await supabase.from('votes').update({ vote_type: type } as any).eq('user_id', user.id).eq('idea_id', ideaId)
+      await (supabase.from('votes') as any).update({ vote_type: type }).eq('user_id', user.id).eq('idea_id', ideaId)
     } else {
       // New vote
       setVote(type)

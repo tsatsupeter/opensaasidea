@@ -100,8 +100,7 @@ export function OnboardingPage() {
     setLoading(true)
 
     try {
-      await supabase
-        .from('profiles')
+      await (supabase.from('profiles') as any)
         .update({
           experience_level: experienceLevel,
           interests,
@@ -110,7 +109,7 @@ export function OnboardingPage() {
           cv_text: cvText || null,
           onboarding_completed: true,
           updated_at: new Date().toISOString(),
-        } as any)
+        })
         .eq('id', user.id)
 
       const skillCategory = (skill: string): string => {
