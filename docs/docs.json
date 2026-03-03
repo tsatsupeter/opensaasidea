@@ -1,0 +1,118 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "maple",
+  "name": "OpenSaaSIdea API",
+  "description": "Developer documentation for the OpenSaaSIdea API — programmatic access to AI-generated SaaS ideas.",
+  "colors": {
+    "primary": "#F97316",
+    "light": "#F8FAFC",
+    "dark": "#09090B"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "authentication",
+              "credits",
+              "scopes"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Ideas",
+            "pages": [
+              "api-reference/ideas/list-ideas",
+              "api-reference/ideas/search-ideas",
+              "api-reference/ideas/get-idea"
+            ]
+          },
+          {
+            "group": "Categories",
+            "pages": [
+              "api-reference/categories/list-categories"
+            ]
+          },
+          {
+            "group": "Account",
+            "pages": [
+              "api-reference/account/get-credits"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/errors",
+              "reference/rate-limits"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "api": {
+    "mdx": {
+      "server": "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api",
+      "auth": {
+        "method": "bearer"
+      }
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "type": "github",
+        "href": "https://github.com/tsatsupeter/opensaasidea"
+      },
+      {
+        "label": "Dashboard",
+        "href": "https://opensaasidea.com/developer/api"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get API Key",
+      "href": "https://opensaasidea.com/developer/api"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/tsatsupeter/opensaasidea",
+      "x": "https://x.com/opensaasidea"
+    },
+    "links": [
+      {
+        "header": "Product",
+        "items": [
+          { "label": "Home", "href": "https://opensaasidea.com" },
+          { "label": "Pricing", "href": "https://opensaasidea.com/pricing" },
+          { "label": "Explore Ideas", "href": "https://opensaasidea.com/explore" }
+        ]
+      },
+      {
+        "header": "Legal",
+        "items": [
+          { "label": "Privacy Policy", "href": "https://opensaasidea.com/privacy" },
+          { "label": "Terms of Service", "href": "https://opensaasidea.com/terms" }
+        ]
+      }
+    ]
+  },
+  "variables": {
+    "api-url": "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api"
+  }
+}

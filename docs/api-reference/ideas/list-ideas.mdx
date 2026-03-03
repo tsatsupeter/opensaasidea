@@ -1,0 +1,110 @@
+---
+title: "List Ideas"
+api: "GET /ideas"
+description: "Retrieve a paginated list of public SaaS ideas."
+---
+
+# List Ideas
+
+Returns a paginated list of public SaaS ideas. Supports filtering by category and sorting by newest, popularity, or estimated MRR.
+
+**Cost:** $0.01 per call | **Scope:** `ideas:read`
+
+## Query Parameters
+
+<ParamField query="limit" type="integer" default="20">
+  Number of results per page (1–50).
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Pagination offset.
+</ParamField>
+
+<ParamField query="category" type="string">
+  Filter by category name (e.g. `AI/ML`, `Developer Tools`).
+</ParamField>
+
+<ParamField query="sort" type="string" default="newest">
+  Sort order. One of `newest`, `popular`, or `mrr`.
+</ParamField>
+
+## Response
+
+<ResponseField name="ideas" type="array" required>
+  Array of idea objects.
+  <Expandable title="Idea object">
+    <ResponseField name="id" type="string">UUID of the idea.</ResponseField>
+    <ResponseField name="title" type="string">Title of the idea.</ResponseField>
+    <ResponseField name="slug" type="string">URL-friendly slug.</ResponseField>
+    <ResponseField name="tagline" type="string">Short tagline.</ResponseField>
+    <ResponseField name="category" type="string">Category name.</ResponseField>
+    <ResponseField name="difficulty" type="string">Difficulty level (Easy, Medium, Hard).</ResponseField>
+    <ResponseField name="estimated_mrr_low" type="integer">Low MRR estimate in USD.</ResponseField>
+    <ResponseField name="estimated_mrr_high" type="integer">High MRR estimate in USD.</ResponseField>
+    <ResponseField name="upvotes" type="integer">Number of upvotes.</ResponseField>
+    <ResponseField name="created_at" type="string">ISO 8601 timestamp.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="total" type="integer" required>
+  Total number of matching ideas.
+</ResponseField>
+
+<ResponseField name="limit" type="integer" required>
+  Number of results returned.
+</ResponseField>
+
+<ResponseField name="offset" type="integer" required>
+  Current pagination offset.
+</ResponseField>
+
+## Example
+
+<CodeGroup>
+
+```bash cURL
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas?limit=5&sort=popular"
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas?limit=5&sort=popular",
+  { headers: { Authorization: "Bearer YOUR_API_KEY" } }
+);
+const data = await res.json();
+```
+
+```python Python
+import requests
+
+res = requests.get(
+    "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    params={"limit": 5, "sort": "popular"}
+)
+```
+
+</CodeGroup>
+
+```json Response — 200 OK
+{
+  "ideas": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "title": "AI Resume Builder",
+      "slug": "ai-resume-builder",
+      "tagline": "Create tailored resumes in seconds with AI",
+      "category": "AI/ML",
+      "difficulty": "Medium",
+      "estimated_mrr_low": 5000,
+      "estimated_mrr_high": 25000,
+      "upvotes": 42,
+      "created_at": "2025-01-15T10:30:00.000Z"
+    }
+  ],
+  "total": 342,
+  "limit": 5,
+  "offset": 0
+}
+```

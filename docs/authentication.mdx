@@ -1,0 +1,84 @@
+---
+title: "Authentication"
+description: "Secure your API requests with Bearer token authentication."
+---
+
+# Authentication
+
+All API requests must include a valid API key in the `Authorization` header using the Bearer scheme.
+
+```
+Authorization: Bearer osk_your_api_key_here
+```
+
+## Generating Keys
+
+Create API keys from the [Developer Dashboard](https://opensaasidea.com/developer/api). Each key:
+
+- Starts with `osk_` prefix
+- Is shown **only once** at creation — store it securely
+- Is hashed with SHA-256 before storage (we never store raw keys)
+- Can be revoked at any time from the dashboard
+
+<Tip>
+Your first API key automatically grants **$5.00 free credit** to test the API. No credit card required.
+</Tip>
+
+## Example Request
+
+<CodeGroup>
+
+```bash cURL
+curl -H "Authorization: Bearer osk_abc123def456..." \
+  https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas?limit=5
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas?limit=5",
+  {
+    headers: {
+      Authorization: "Bearer osk_abc123def456..."
+    }
+  }
+);
+```
+
+```python Python
+import requests
+
+res = requests.get(
+    "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas",
+    headers={"Authorization": "Bearer osk_abc123def456..."},
+    params={"limit": 5}
+)
+```
+
+</CodeGroup>
+
+## Error Responses
+
+If authentication fails, you'll receive one of these responses:
+
+| Status | Error | Description |
+|---|---|---|
+| `401` | `invalid_api_key` | Missing, malformed, or unknown API key |
+| `403` | `key_revoked` | The API key has been revoked |
+
+```json 401 — Invalid API Key
+{
+  "error": "invalid_api_key",
+  "message": "Provide a valid API key via Authorization: Bearer osk_..."
+}
+```
+
+```json 403 — Revoked Key
+{
+  "error": "key_revoked",
+  "message": "This API key has been revoked"
+}
+```
+
+<Warning>
+**Never expose API keys in client-side code.** Use server-to-server requests only. If a key is compromised, revoke it immediately from the Developer Dashboard.
+</Warning>

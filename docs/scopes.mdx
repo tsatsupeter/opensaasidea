@@ -1,0 +1,47 @@
+---
+title: "OAuth Scopes"
+description: "Permissions granted to each API key."
+---
+
+# OAuth Scopes
+
+API keys are scoped to control which endpoints they can access. Currently, all keys receive full read access across all scopes.
+
+## Available Scopes
+
+<AccordionGroup>
+  <Accordion title="ideas:read" icon="lightbulb">
+    Read public SaaS ideas, search, and retrieve full details.
+
+    **Endpoints:**
+    - `GET /ideas` — List ideas with pagination and filtering
+    - `GET /ideas/search` — Full-text search across ideas
+    - `GET /ideas/:slug` — Get detailed information for a single idea
+  </Accordion>
+
+  <Accordion title="categories:read" icon="tag">
+    List all available idea categories with counts.
+
+    **Endpoints:**
+    - `GET /categories` — List categories (free endpoint)
+  </Accordion>
+
+  <Accordion title="account:read" icon="wallet">
+    View your API credit balance and usage statistics.
+
+    **Endpoints:**
+    - `GET /account/credits` — Get credit balance (free endpoint)
+  </Accordion>
+</AccordionGroup>
+
+## Scope Matrix
+
+| Scope | Endpoints | Billed |
+|---|---|---|
+| `ideas:read` | `/ideas`, `/ideas/search`, `/ideas/:slug` | Yes |
+| `categories:read` | `/categories` | No |
+| `account:read` | `/account/credits` | No |
+
+<Info>
+All API keys created from the Developer Dashboard are granted all available scopes by default. Scope restrictions for granular access control are coming in a future update.
+</Info>

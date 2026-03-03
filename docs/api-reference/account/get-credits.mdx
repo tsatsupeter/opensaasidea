@@ -1,0 +1,74 @@
+---
+title: "Get Credits"
+api: "GET /account/credits"
+description: "Check your current API credit balance and usage."
+---
+
+# Get Credits
+
+Check your current API credit balance, lifetime purchases, and lifetime usage. This is a **free endpoint** — no credits are charged.
+
+**Cost:** Free | **Scope:** `account:read`
+
+## Response
+
+<ResponseField name="balance" type="number" required>
+  Current balance in dollars (e.g. `4.50`).
+</ResponseField>
+
+<ResponseField name="balance_cents" type="integer" required>
+  Current balance in cents (e.g. `450`).
+</ResponseField>
+
+<ResponseField name="lifetime_purchased" type="number" required>
+  Total amount purchased in dollars.
+</ResponseField>
+
+<ResponseField name="lifetime_used" type="number" required>
+  Total amount used in dollars.
+</ResponseField>
+
+<ResponseField name="currency" type="string" required>
+  Always `"USD"`.
+</ResponseField>
+
+## Example
+
+<CodeGroup>
+
+```bash cURL
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/account/credits"
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/account/credits",
+  { headers: { Authorization: "Bearer YOUR_API_KEY" } }
+);
+const credits = await res.json();
+console.log(`Balance: $${credits.balance}`);
+```
+
+```python Python
+import requests
+
+res = requests.get(
+    "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/account/credits",
+    headers={"Authorization": "Bearer YOUR_API_KEY"}
+)
+credits = res.json()
+print(f"Balance: ${credits['balance']}")
+```
+
+</CodeGroup>
+
+```json Response — 200 OK
+{
+  "balance": 4.50,
+  "balance_cents": 450,
+  "lifetime_purchased": 10.00,
+  "lifetime_used": 0.50,
+  "currency": "USD"
+}
+```

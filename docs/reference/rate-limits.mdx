@@ -1,0 +1,56 @@
+---
+title: "Rate Limits"
+description: "Request limits and throttling policies."
+---
+
+# Rate Limits
+
+The API enforces rate limits to ensure fair usage and platform stability.
+
+## Limits
+
+| Scope | Limit |
+|---|---|
+| Per API key | 60 requests / minute |
+| Per IP address | 120 requests / minute |
+| Max results per page | 50 |
+| Max search query length | 200 characters |
+
+## Headers
+
+Rate limit information is not currently returned in response headers. Monitor your usage through the `/account/credits` endpoint.
+
+## Exceeding Limits
+
+If you exceed the rate limit, you'll receive a `429 Too Many Requests` response:
+
+```json
+{
+  "error": "rate_limited",
+  "message": "Too many requests. Please wait a moment."
+}
+```
+
+<Tip>
+**Best practices to avoid rate limiting:**
+- Cache responses when possible
+- Use pagination with reasonable `limit` values
+- Implement exponential backoff on `429` responses
+- Batch your requests instead of making many small ones
+</Tip>
+
+## Retry Strategy
+
+We recommend implementing exponential backoff:
+
+```javascript
+async function fetchWithRetry(url, options, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    const res = await fetch(url, options);
+    if (res.status !== 429) return res;
+    const delay = Math.pow(2, i) * 1000; // 1s, 2s, 4s
+    await new Promise(r => setTimeout(r, delay));
+  }
+  throw new Error("Rate limited after retries");
+}
+```

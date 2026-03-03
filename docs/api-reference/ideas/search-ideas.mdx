@@ -1,0 +1,105 @@
+---
+title: "Search Ideas"
+api: "GET /ideas/search"
+description: "Full-text search across titles, taglines, and categories."
+---
+
+# Search Ideas
+
+Search public ideas by title, tagline, or category. Returns matching results with pagination.
+
+**Cost:** $0.02 per call | **Scope:** `ideas:read`
+
+## Query Parameters
+
+<ParamField query="q" type="string" required>
+  Search query. Searches across title, tagline, and category fields.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="20">
+  Number of results per page (1–50).
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Pagination offset.
+</ParamField>
+
+## Response
+
+<ResponseField name="ideas" type="array" required>
+  Array of matching idea objects (same schema as List Ideas).
+</ResponseField>
+
+<ResponseField name="total" type="integer" required>
+  Total number of matching ideas.
+</ResponseField>
+
+<ResponseField name="limit" type="integer" required>
+  Number of results returned.
+</ResponseField>
+
+<ResponseField name="offset" type="integer" required>
+  Current pagination offset.
+</ResponseField>
+
+<ResponseField name="query" type="string" required>
+  The search query that was used.
+</ResponseField>
+
+## Example
+
+<CodeGroup>
+
+```bash cURL
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas/search?q=ai%20resume&limit=10"
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas/search?q=ai+resume&limit=10",
+  { headers: { Authorization: "Bearer YOUR_API_KEY" } }
+);
+const data = await res.json();
+```
+
+```python Python
+import requests
+
+res = requests.get(
+    "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas/search",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    params={"q": "ai resume", "limit": 10}
+)
+```
+
+</CodeGroup>
+
+```json Response — 200 OK
+{
+  "ideas": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "title": "AI Resume Builder",
+      "slug": "ai-resume-builder",
+      "tagline": "Create tailored resumes in seconds with AI",
+      "category": "AI/ML",
+      "difficulty": "Medium",
+      "estimated_mrr_low": 5000,
+      "estimated_mrr_high": 25000,
+      "upvotes": 42,
+      "created_at": "2025-01-15T10:30:00.000Z"
+    }
+  ],
+  "total": 3,
+  "limit": 10,
+  "offset": 0,
+  "query": "ai resume"
+}
+```
+
+```json Error — 400 Bad Request
+{
+  "error": "Missing q parameter"
+}
+```

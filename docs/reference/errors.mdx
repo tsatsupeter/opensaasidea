@@ -1,0 +1,101 @@
+---
+title: "Error Codes"
+description: "HTTP status codes and error responses returned by the API."
+---
+
+# Error Codes
+
+The API uses standard HTTP status codes and returns JSON error bodies with descriptive messages.
+
+## Error Response Format
+
+All errors follow this structure:
+
+```json
+{
+  "error": "error_code",
+  "message": "Human-readable description of the error"
+}
+```
+
+## Status Codes
+
+| Code | Error | Description |
+|---|---|---|
+| `400` | `bad_request` | Invalid or missing query parameters |
+| `401` | `invalid_api_key` | Missing, malformed, or unknown API key |
+| `402` | `insufficient_credits` | Not enough credits for this request |
+| `403` | `key_revoked` | The API key has been revoked |
+| `404` | `not_found` | Resource not found or unknown endpoint |
+| `429` | `rate_limited` | Too many requests — slow down |
+| `500` | `internal_error` | Something went wrong on our end |
+
+## Detailed Examples
+
+### 401 — Invalid API Key
+
+Returned when no API key is provided or the key is not recognized.
+
+```json
+{
+  "error": "invalid_api_key",
+  "message": "Provide a valid API key via Authorization: Bearer osk_..."
+}
+```
+
+### 402 — Insufficient Credits
+
+Returned when your credit balance is too low for the requested endpoint.
+
+```json
+{
+  "error": "insufficient_credits",
+  "message": "Not enough API credits. Current balance: $0.03",
+  "balance_cents": 3,
+  "cost_cents": 2
+}
+```
+
+### 403 — Key Revoked
+
+Returned when using a key that has been revoked from the Developer Dashboard.
+
+```json
+{
+  "error": "key_revoked",
+  "message": "This API key has been revoked"
+}
+```
+
+### 404 — Not Found
+
+Returned when requesting an idea that doesn't exist or hitting an unknown endpoint.
+
+```json
+{
+  "error": "not_found",
+  "message": "Unknown endpoint: /foo",
+  "available_endpoints": [
+    "GET /ideas",
+    "GET /ideas/search?q=...",
+    "GET /ideas/:slug",
+    "GET /categories",
+    "GET /account/credits"
+  ]
+}
+```
+
+### 429 — Rate Limited
+
+Returned when you exceed the rate limit.
+
+```json
+{
+  "error": "rate_limited",
+  "message": "Too many requests. Please wait a moment."
+}
+```
+
+<Info>
+If you receive a `500` error, please retry after a few seconds. If the issue persists, contact support at **support@opensaasidea.com**.
+</Info>

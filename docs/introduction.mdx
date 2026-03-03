@@ -1,0 +1,86 @@
+---
+title: "Introduction"
+description: "Programmatic access to thousands of AI-generated SaaS ideas."
+---
+
+# OpenSaaSIdea API
+
+The OpenSaaSIdea API gives you read-only access to our full database of public SaaS ideas, categories, and account information. Use it to build integrations, dashboards, Slack bots, or any tool that needs fresh SaaS ideas.
+
+<CardGroup cols={3}>
+  <Card title="Simple REST API" icon="bolt">
+    JSON responses with Bearer token authentication.
+  </Card>
+  <Card title="Pay-per-use" icon="credit-card">
+    $0.01–$0.02 per API call. No subscriptions required.
+  </Card>
+  <Card title="$5 Free Credit" icon="gift">
+    Every new developer gets $5.00 free on their first API key.
+  </Card>
+</CardGroup>
+
+## Base URL
+
+All API requests are made to:
+
+```
+https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api
+```
+
+## Quick Start
+
+<Steps>
+  <Step title="Get an API Key">
+    Generate an API key from the [Developer Dashboard](https://opensaasidea.com/developer/api). You'll receive **$5.00 free credit** automatically.
+  </Step>
+  <Step title="Make your first request">
+    ```bash
+    curl -H "Authorization: Bearer YOUR_API_KEY" \
+      https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas
+    ```
+  </Step>
+  <Step title="Build something awesome">
+    Use the response data to power your app, dashboard, or integration.
+  </Step>
+</Steps>
+
+## Code Examples
+
+<CodeGroup>
+
+```bash cURL
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+  https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas",
+  { headers: { Authorization: "Bearer YOUR_API_KEY" } }
+);
+const data = await res.json();
+console.log(data.ideas);
+```
+
+```python Python
+import requests
+
+res = requests.get(
+    "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas",
+    headers={"Authorization": "Bearer YOUR_API_KEY"}
+)
+data = res.json()
+print(data["ideas"])
+```
+
+</CodeGroup>
+
+## Available Endpoints
+
+| Endpoint | Description | Cost |
+|---|---|---|
+| `GET /ideas` | List public ideas with pagination and filtering | $0.01 |
+| `GET /ideas/search` | Search ideas by title, tagline, or category | $0.02 |
+| `GET /ideas/:slug` | Get full details for a single idea | $0.01 |
+| `GET /categories` | List all idea categories | Free |
+| `GET /account/credits` | Check your credit balance | Free |
