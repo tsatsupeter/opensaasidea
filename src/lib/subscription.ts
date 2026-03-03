@@ -6,11 +6,11 @@ import type { SubscriptionTier } from '@/types/database'
 // https://app.dodopayments.com/
 // ============================================================
 export const DODO_PRODUCTS = {
-  pro_monthly: 'prd_REPLACE_WITH_PRO_MONTHLY_ID',
-  pro_yearly: 'prd_REPLACE_WITH_PRO_YEARLY_ID',
-  team_monthly: 'prd_REPLACE_WITH_TEAM_MONTHLY_ID',
-  team_yearly: 'prd_REPLACE_WITH_TEAM_YEARLY_ID',
-  deep_dive_report: 'prd_REPLACE_WITH_DEEP_DIVE_ID',
+  pro_monthly: 'pdt_0NZeflk6sMciMDCDaISyM',
+  pro_yearly: 'pdt_0NZeg9SRFVl8jmcddwvYr',
+  team_monthly: 'pdt_0NZegK9n5gtXuS0DMCxg0',
+  team_yearly: 'pdt_0NZegQobfQot4otEu6uUi',
+  deep_dive_report: 'pdt_0NZegZxNdvYC509J4arcj',
 } as const
 
 // Dodo API base URL (switch to live when ready)
