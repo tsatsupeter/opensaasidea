@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/use-auth'
 import { useBookmarks } from '@/hooks/use-bookmarks'
-import { supabase } from '@/lib/supabase'
+import { supabase, SAFE_IDEA_COLUMNS } from '@/lib/supabase'
 import type { SaasIdea } from '@/types/database'
 
 interface CategoryStat {
@@ -36,7 +36,7 @@ export function StatsPage() {
     const [ideasRes, votesRes, myCommentsRes] = await Promise.all([
       supabase
         .from('saas_ideas')
-        .select('*')
+        .select(SAFE_IDEA_COLUMNS)
         .eq('generated_for', user.id)
         .order('created_at', { ascending: false })
         .limit(200),

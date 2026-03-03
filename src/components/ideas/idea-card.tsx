@@ -164,8 +164,12 @@ export function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicT
             <button
               onClick={async () => {
                 if (!user) { navigate('/login'); return }
-                const saved = await toggleBookmark(idea.id)
-                toast(saved ? 'Idea saved' : 'Removed from saved')
+                const result = await toggleBookmark(idea.id)
+                if (result === 'limit') {
+                  toast('Save limit reached. Upgrade to Pro for unlimited saves!')
+                  return
+                }
+                toast(result ? 'Idea saved' : 'Removed from saved')
               }}
               className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors cursor-pointer ${
                 isBookmarked(idea.id) ? 'text-brand' : 'text-text-muted hover:bg-surface-2'

@@ -33,19 +33,11 @@ export function useSubscription() {
 
   const incrementDailyGeneration = useCallback(async () => {
     if (!user) return
-    const today = new Date().toISOString().split('T')[0]
-    const isNewDay = profile?.last_generation_date !== today
-
-    await (supabase.from('profiles') as any)
-      .update({
-        daily_ideas_generated: isNewDay ? 1 : (profile?.daily_ideas_generated || 0) + 1,
-        last_generation_date: today,
-      })
-      .eq('id', user.id)
-
+    // Use server-side RPC that enforces limits and can't be bypassed
+    await (supabase.rpc as any)('increment_daily_generation')
     // Refresh profile so React state reflects the new count
     await refreshProfile()
-  }, [user, profile, refreshProfile])
+  }, [user, refreshProfile])
 
   const createCheckout = useCallback(async (productId: string) => {
     if (!user) return null

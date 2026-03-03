@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Loader2, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { supabase, SAFE_IDEA_COLUMNS } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { IdeaCard } from '@/components/ideas/idea-card'
 import { Logo } from '@/components/ui/logo'
@@ -219,7 +219,7 @@ function CategoryFeedPage({ categorySlug }: { categorySlug: string }) {
 
     const { data: allData } = await supabase
       .from('saas_ideas')
-      .select('*')
+      .select(SAFE_IDEA_COLUMNS)
       .eq('is_public', true)
       .order(orderCol, { ascending })
       .limit(200)

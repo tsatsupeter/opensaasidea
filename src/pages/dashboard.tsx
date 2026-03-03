@@ -9,7 +9,7 @@ import { IdeaCard } from '@/components/ideas/idea-card'
 import { GenerationAnimation } from '@/components/ideas/generation-animation'
 import { useAuth } from '@/hooks/use-auth'
 import { useSubscription } from '@/hooks/use-subscription'
-import { supabase } from '@/lib/supabase'
+import { supabase, SAFE_IDEA_COLUMNS } from '@/lib/supabase'
 import { generateSaasIdea, saveIdeaToSupabase, type GenerationStep } from '@/lib/ai'
 import { useBookmarks } from '@/hooks/use-bookmarks'
 import { Logo } from '@/components/ui/logo'
@@ -33,7 +33,7 @@ export function DashboardPage() {
     setLoading(true)
     const { data } = await supabase
       .from('saas_ideas')
-      .select('*')
+      .select(SAFE_IDEA_COLUMNS)
       .eq('generated_for', user.id)
       .order('created_at', { ascending: false })
       .limit(50)
@@ -52,7 +52,7 @@ export function DashboardPage() {
     const ids = Array.from(bookmarkedIds)
     const { data } = await supabase
       .from('saas_ideas')
-      .select('*')
+      .select(SAFE_IDEA_COLUMNS)
       .in('id', ids)
       .order('created_at', { ascending: false })
     setSavedIdeas((data as SaasIdea[]) || [])

@@ -11,7 +11,7 @@ import { IdeaCard } from '@/components/ideas/idea-card'
 import { useAuth } from '@/hooks/use-auth'
 import { useBookmarks } from '@/hooks/use-bookmarks'
 import { useRecent } from '@/hooks/use-recent'
-import { supabase } from '@/lib/supabase'
+import { supabase, SAFE_IDEA_COLUMNS } from '@/lib/supabase'
 import type { SaasIdea } from '@/types/database'
 
 type ProfileTab = 'public' | 'private' | 'saved' | 'history' | 'votes' | 'comments'
@@ -46,7 +46,7 @@ export function ProfilePage() {
     // Fetch all user ideas
     const { data: allIdeas } = await supabase
       .from('saas_ideas')
-      .select('*')
+      .select(SAFE_IDEA_COLUMNS)
       .eq('generated_for', user.id)
       .order('created_at', { ascending: false })
       .limit(100)
@@ -61,7 +61,7 @@ export function ProfilePage() {
     if (bookmarkedIds.size > 0) {
       const { data: saved } = await supabase
         .from('saas_ideas')
-        .select('*')
+        .select(SAFE_IDEA_COLUMNS)
         .in('id', Array.from(bookmarkedIds))
         .order('created_at', { ascending: false })
       setSavedIdeas((saved as SaasIdea[]) || [])
@@ -78,7 +78,7 @@ export function ProfilePage() {
       const voteIdeaIds = votes.map((v: any) => v.idea_id)
       const { data: voteIdeas } = await supabase
         .from('saas_ideas')
-        .select('*')
+        .select(SAFE_IDEA_COLUMNS)
         .in('id', voteIdeaIds)
 
       const ideaMap = new Map((voteIdeas || []).map((i: any) => [i.id, i as SaasIdea]))
