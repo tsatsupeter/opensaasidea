@@ -43,22 +43,8 @@ export function IdeaDetailPage() {
   useEffect(() => {
     if (!slug) return
     const fetchData = async () => {
-      // Try slug first, fall back to id for old links
-      let { data } = await supabase
-        .from('saas_ideas')
-        .select('*')
-        .eq('slug', slug)
-        .single()
-
-      // Fallback: if slug looks like a UUID, try by id
-      if (!data && /^[0-9a-f]{8}-/.test(slug)) {
-        const res = await supabase
-          .from('saas_ideas')
-          .select('*')
-          .eq('id', slug)
-          .single()
-        data = res.data
-      }
+      // Use secure RPC that strips Pro-only fields server-side
+      const { data } = await (supabase.rpc as any)('get_idea_by_slug', { p_slug: slug })
 
       const ideaData = data as SaasIdea | null
       setIdea(ideaData)
@@ -72,14 +58,6 @@ export function IdeaDetailPage() {
           path: `/idea/${ideaData.slug || ideaData.id}`,
           upvotes: ideaData.upvotes || 0,
         })
-        // Increment view count (deduplicate per session)
-        const viewKey = `viewed_${ideaData.id}`
-        if (!sessionStorage.getItem(viewKey)) {
-          sessionStorage.setItem(viewKey, '1')
-          ;(supabase.rpc as any)('increment_views', { idea_id: ideaData.id }).then(() => {
-            setIdea(prev => prev ? { ...prev, views: (prev.views || 0) + 1 } : prev)
-          })
-        }
       }
 
       if (user && ideaData) {
@@ -621,7 +599,7 @@ export function IdeaDetailPage() {
             </div>
           </div>
 
-          {/* Revenue card */}
+          {/* Revenue card — basic MRR for all, details for Pro */}
           {(idea.estimated_mrr_low || idea.estimated_mrr_high || idea.estimated_monthly_sales) && (
             <div className="rounded-xl border border-border bg-surface-0 overflow-hidden">
               <div className="px-4 py-3 border-b border-border">
@@ -634,24 +612,33 @@ export function IdeaDetailPage() {
                 {idea.estimated_monthly_sales && (
                   <SidebarRow icon={DollarSign} label="Monthly Sales" value={formatCurrency(idea.estimated_monthly_sales)} highlight="emerald" />
                 )}
-                {idea.estimated_daily_sales && (
-                  <SidebarRow icon={DollarSign} label="Daily Sales" value={formatCurrency(idea.estimated_daily_sales)} />
+                {isPro && (
+                  <>
+                    {idea.estimated_daily_sales && (
+                      <SidebarRow icon={DollarSign} label="Daily Sales" value={formatCurrency(idea.estimated_daily_sales)} />
+                    )}
+                    {revenue?.customer_acquisition_cost && (
+                      <SidebarRow icon={DollarSign} label="CAC" value={formatCurrency(revenue.customer_acquisition_cost)} />
+                    )}
+                    {revenue?.lifetime_value && (
+                      <SidebarRow icon={DollarSign} label="LTV" value={formatCurrency(revenue.lifetime_value)} />
+                    )}
+                    {revenue?.free_trial_conversion_rate && (
+                      <SidebarRow icon={Zap} label="Trial Conv." value={`${revenue.free_trial_conversion_rate}%`} />
+                    )}
+                  </>
                 )}
-                {revenue?.customer_acquisition_cost && (
-                  <SidebarRow icon={DollarSign} label="CAC" value={formatCurrency(revenue.customer_acquisition_cost)} />
-                )}
-                {revenue?.lifetime_value && (
-                  <SidebarRow icon={DollarSign} label="LTV" value={formatCurrency(revenue.lifetime_value)} />
-                )}
-                {revenue?.free_trial_conversion_rate && (
-                  <SidebarRow icon={Zap} label="Trial Conv." value={`${revenue.free_trial_conversion_rate}%`} />
+                {!isPro && (
+                  <Link to="/pricing" className="flex items-center gap-1.5 text-[11px] text-brand font-medium hover:underline mt-1">
+                    <Crown className="h-3 w-3" /> Unlock full revenue breakdown
+                  </Link>
                 )}
               </div>
             </div>
           )}
 
-          {/* Team card */}
-          {teamRoles.length > 0 && (
+          {/* Team card — Pro only */}
+          {isPro && teamRoles.length > 0 && (
             <div className="rounded-xl border border-border bg-surface-0 overflow-hidden">
               <div className="px-4 py-3 border-b border-border">
                 <h4 className="text-[12px] font-semibold uppercase tracking-wider text-text-muted">Team</h4>
@@ -711,8 +698,8 @@ export function IdeaDetailPage() {
             </div>
           )}
 
-          {/* Competitors card */}
-          {competitors.length > 0 && (
+          {/* Competitors card — Pro only */}
+          {isPro && competitors.length > 0 && (
             <div className="rounded-xl border border-border bg-surface-0 overflow-hidden">
               <div className="px-4 py-3 border-b border-border">
                 <h4 className="text-[12px] font-semibold uppercase tracking-wider text-text-muted">Competitors</h4>
