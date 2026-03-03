@@ -4,14 +4,23 @@ import { useAuth } from './use-auth'
 import { canSaveIdea } from '@/lib/subscription'
 import type { SubscriptionTier } from '@/types/database'
 
+export interface SavedIdea {
+  id: string
+  title: string
+  slug: string
+  category: string
+}
+
 export function useBookmarks() {
   const { user, profile } = useAuth()
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set())
+  const [savedIdeas, setSavedIdeas] = useState<SavedIdea[]>([])
   const [loading, setLoading] = useState(false)
 
   const fetchBookmarks = useCallback(async () => {
     if (!user) {
       setBookmarkedIds(new Set())
+      setSavedIdeas([])
       return
     }
     const { data } = await supabase
@@ -19,7 +28,20 @@ export function useBookmarks() {
       .select('idea_id')
       .eq('user_id', user.id)
     if (data) {
-      setBookmarkedIds(new Set(data.map((b: any) => b.idea_id)))
+      const ids = data.map((b: any) => b.idea_id)
+      setBookmarkedIds(new Set(ids))
+      // Fetch idea details for sidebar
+      if (ids.length > 0) {
+        const { data: ideas } = await supabase
+          .from('saas_ideas')
+          .select('id, title, slug, category')
+          .in('id', ids)
+          .order('created_at', { ascending: false })
+          .limit(5)
+        setSavedIdeas((ideas as SavedIdea[]) || [])
+      } else {
+        setSavedIdeas([])
+      }
     }
   }, [user])
 
@@ -63,5 +85,5 @@ export function useBookmarks() {
 
   const isBookmarked = useCallback((ideaId: string) => bookmarkedIds.has(ideaId), [bookmarkedIds])
 
-  return { isBookmarked, toggleBookmark, loading, bookmarkedIds }
+  return { isBookmarked, toggleBookmark, loading, bookmarkedIds, savedIdeas }
 }

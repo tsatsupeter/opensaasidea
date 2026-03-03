@@ -3,11 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Compass, LayoutDashboard, Home, Moon, Sun,
   LogIn, LogOut, Shield, ChevronDown, Flame, TrendingUp,
-  BarChart3, User, Users, Camera, Settings, ChevronRight, Crown
+  BarChart3, User, Users, Camera, Settings, ChevronRight, Crown,
+  Bookmark, BookmarkCheck, Megaphone, Code2, Info, HelpCircle, FileText, ShieldCheck, Newspaper
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { useSubscription } from '@/hooks/use-subscription'
+import { useBookmarks } from '@/hooks/use-bookmarks'
 import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/utils'
 import { useCategories, type DynamicCategory } from '@/lib/categories'
@@ -31,7 +33,9 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
   const { categories } = useCategories()
+  const { savedIdeas } = useBookmarks()
   const [catOpen, setCatOpen] = useState(true)
+  const [savedOpen, setSavedOpen] = useState(true)
   const [yourOpen, setYourOpen] = useState(true)
   const [profileOpen, setProfileOpen] = useState(
     ['/profile', '/settings'].some(p => location.pathname.startsWith(p))
@@ -133,6 +137,44 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
             )}
           </AnimatePresence>
 
+          {/* Saved (auth) */}
+          {user && savedIdeas.length > 0 && (
+            <>
+              <SectionHeader label="Saved" open={savedOpen} onToggle={() => setSavedOpen(!savedOpen)} />
+              <AnimatePresence initial={false}>
+                {savedOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    {savedIdeas.map(idea => (
+                      <Link key={idea.id} to={`/idea/${idea.slug || idea.id}`} onClick={onMobileClose}>
+                        <div className={cn(
+                          'flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150',
+                          location.pathname === `/idea/${idea.slug}`
+                            ? 'bg-surface-2 text-text-primary'
+                            : 'text-text-secondary hover:bg-surface-2 hover:text-text-primary'
+                        )}>
+                          <BookmarkCheck className="h-[18px] w-[18px] shrink-0 text-brand" />
+                          <span className="truncate">{idea.title}</span>
+                        </div>
+                      </Link>
+                    ))}
+                    <Link to="/dashboard" onClick={onMobileClose}>
+                      <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-text-muted hover:text-text-secondary transition-colors">
+                        <Bookmark className="h-[18px] w-[18px] shrink-0" />
+                        View all Saved
+                      </div>
+                    </Link>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
+          )}
+
           {/* Your Stuff (auth) */}
           {user && (
             <>
@@ -189,6 +231,19 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
               </AnimatePresence>
             </>
           )}
+
+          <div className="mx-3 my-2 h-px bg-border" />
+
+          {/* Advantage */}
+          <div className="space-y-0.5 pb-2">
+            <span className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted block">Advantage</span>
+            <NavLink href="/advertise" icon={Megaphone} label="Advertise" />
+            <NavLink href="/developer/api" icon={Code2} label="Developer API" />
+            <NavLink href="/about" icon={Info} label="About" />
+            <NavLink href="/help" icon={HelpCircle} label="Help" />
+            <NavLink href="/blog" icon={Newspaper} label="Blog" />
+            <NavLink href="/privacy" icon={ShieldCheck} label="Privacy Policy" />
+          </div>
         </nav>
 
         {/* Bottom section */}

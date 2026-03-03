@@ -20,6 +20,11 @@ import { PrivacyPage, TermsPage, AccessibilityPage } from '@/pages/legal'
 import { PricingPage } from '@/pages/pricing'
 import { CheckoutSuccessPage } from '@/pages/checkout-success'
 import { TeamPage } from '@/pages/team'
+import { DeveloperApiPage } from '@/pages/developer-api'
+import { AdvertisePage } from '@/pages/advertise'
+import { AboutPage } from '@/pages/about'
+import { HelpPage } from '@/pages/help'
+import { BlogPage } from '@/pages/blog'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,6 +61,11 @@ function App() {
                   <Route path="/admin" element={<AdminPage />} />
                   <Route path="/pricing" element={<PricingPage />} />
                   <Route path="/team" element={<TeamPage />} />
+                  <Route path="/developer/api" element={<DeveloperApiPage />} />
+                  <Route path="/advertise" element={<AdvertisePage />} />
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/help" element={<HelpPage />} />
+                  <Route path="/blog" element={<BlogPage />} />
                   <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                   <Route path="/terms" element={<TermsPage />} />
