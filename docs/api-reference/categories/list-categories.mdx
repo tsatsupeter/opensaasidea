@@ -30,12 +30,12 @@ Returns all available idea categories with the number of ideas in each. This is 
 
 ```bash cURL
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/categories"
+  "https://opensaasidea.com/v1/api/categories"
 ```
 
 ```javascript JavaScript
 const res = await fetch(
-  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/categories",
+  "https://opensaasidea.com/v1/api/categories",
   { headers: { Authorization: "Bearer YOUR_API_KEY" } }
 );
 const data = await res.json();
@@ -45,7 +45,7 @@ const data = await res.json();
 import requests
 
 res = requests.get(
-    "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/categories",
+    "https://opensaasidea.com/v1/api/categories",
     headers={"Authorization": "Bearer YOUR_API_KEY"}
 )
 data = res.json()

@@ -52,12 +52,12 @@ Search public ideas by title, tagline, or category. Returns matching results wit
 
 ```bash cURL
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas/search?q=ai%20resume&limit=10"
+  "https://opensaasidea.com/v1/api/ideas/search?q=ai%20resume&limit=10"
 ```
 
 ```javascript JavaScript
 const res = await fetch(
-  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas/search?q=ai+resume&limit=10",
+  "https://opensaasidea.com/v1/api/ideas/search?q=ai+resume&limit=10",
   { headers: { Authorization: "Bearer YOUR_API_KEY" } }
 );
 const data = await res.json();
@@ -67,7 +67,7 @@ const data = await res.json();
 import requests
 
 res = requests.get(
-    "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas/search",
+    "https://opensaasidea.com/v1/api/ideas/search",
     headers={"Authorization": "Bearer YOUR_API_KEY"},
     params={"q": "ai resume", "limit": 10}
 )

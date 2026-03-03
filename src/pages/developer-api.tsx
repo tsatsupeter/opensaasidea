@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
 
-const API_BASE = 'https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api'
+const API_BASE = 'https://opensaasidea.com/v1/api'
 const DOCS_URL = 'https://opensaasidea.mintlify.app'
 
 export function DeveloperApiPage() {

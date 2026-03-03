@@ -64,12 +64,12 @@ Returns a paginated list of public SaaS ideas. Supports filtering by category an
 
 ```bash cURL
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas?limit=5&sort=popular"
+  "https://opensaasidea.com/v1/api/ideas?limit=5&sort=popular"
 ```
 
 ```javascript JavaScript
 const res = await fetch(
-  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas?limit=5&sort=popular",
+  "https://opensaasidea.com/v1/api/ideas?limit=5&sort=popular",
   { headers: { Authorization: "Bearer YOUR_API_KEY" } }
 );
 const data = await res.json();
@@ -79,7 +79,7 @@ const data = await res.json();
 import requests
 
 res = requests.get(
-    "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas",
+    "https://opensaasidea.com/v1/api/ideas",
     headers={"Authorization": "Bearer YOUR_API_KEY"},
     params={"limit": 5, "sort": "popular"}
 )

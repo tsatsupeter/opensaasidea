@@ -66,7 +66,7 @@
   },
   "api": {
     "mdx": {
-      "server": "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api",
+      "server": "https://opensaasidea.com/v1/api",
       "auth": {
         "method": "bearer"
       }
@@ -113,6 +113,6 @@
     ]
   },
   "variables": {
-    "api-url": "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api"
+    "api-url": "https://opensaasidea.com/v1/api"
   }
 }

@@ -38,12 +38,12 @@ Check your current API credit balance, lifetime purchases, and lifetime usage. T
 
 ```bash cURL
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/account/credits"
+  "https://opensaasidea.com/v1/api/account/credits"
 ```
 
 ```javascript JavaScript
 const res = await fetch(
-  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/account/credits",
+  "https://opensaasidea.com/v1/api/account/credits",
   { headers: { Authorization: "Bearer YOUR_API_KEY" } }
 );
 const credits = await res.json();
@@ -54,7 +54,7 @@ console.log(`Balance: $${credits.balance}`);
 import requests
 
 res = requests.get(
-    "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/account/credits",
+    "https://opensaasidea.com/v1/api/account/credits",
     headers={"Authorization": "Bearer YOUR_API_KEY"}
 )
 credits = res.json()

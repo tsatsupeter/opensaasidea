@@ -24,7 +24,7 @@ The OpenSaaSIdea API gives you read-only access to our full database of public S
 All API requests are made to:
 
 ```
-https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api
+https://opensaasidea.com/v1/api
 ```
 
 ## Quick Start
@@ -36,7 +36,7 @@ https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api
   <Step title="Make your first request">
     ```bash
     curl -H "Authorization: Bearer YOUR_API_KEY" \
-      https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas
+      https://opensaasidea.com/v1/api/ideas
     ```
   </Step>
   <Step title="Build something awesome">
@@ -50,12 +50,12 @@ https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api
 
 ```bash cURL
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas
+  https://opensaasidea.com/v1/api/ideas
 ```
 
 ```javascript JavaScript
 const res = await fetch(
-  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas",
+  "https://opensaasidea.com/v1/api/ideas",
   { headers: { Authorization: "Bearer YOUR_API_KEY" } }
 );
 const data = await res.json();
@@ -66,7 +66,7 @@ console.log(data.ideas);
 import requests
 
 res = requests.get(
-    "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas",
+    "https://opensaasidea.com/v1/api/ideas",
     headers={"Authorization": "Bearer YOUR_API_KEY"}
 )
 data = res.json()

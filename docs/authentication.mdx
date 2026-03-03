@@ -30,12 +30,12 @@ Your first API key automatically grants **$5.00 free credit** to test the API. N
 
 ```bash cURL
 curl -H "Authorization: Bearer osk_abc123def456..." \
-  https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas?limit=5
+  https://opensaasidea.com/v1/api/ideas?limit=5
 ```
 
 ```javascript JavaScript
 const res = await fetch(
-  "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas?limit=5",
+  "https://opensaasidea.com/v1/api/ideas?limit=5",
   {
     headers: {
       Authorization: "Bearer osk_abc123def456..."
@@ -48,7 +48,7 @@ const res = await fetch(
 import requests
 
 res = requests.get(
-    "https://qpfmnheghocfcckferum.supabase.co/functions/v1/public-api/ideas",
+    "https://opensaasidea.com/v1/api/ideas",
     headers={"Authorization": "Bearer osk_abc123def456..."},
     params={"limit": 5}
 )
