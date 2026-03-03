@@ -1,0 +1,48 @@
+---
+title: "Delete Comment"
+api: "DELETE /comments/{id}"
+description: "Delete your own comment."
+---
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The comment UUID to delete. You can only delete comments you created.
+</ParamField>
+
+## Response
+
+<ResponseField name="deleted" type="boolean">
+  `true` if the comment was deleted.
+</ResponseField>
+
+## Scope
+
+`comments:write` - Free
+
+<RequestExample>
+```bash cURL
+curl -X DELETE \
+  -H "x-api-key: osk_your_key" \
+  https://openprojectidea.com/v1/api/comments/comment-uuid-here
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://openprojectidea.com/v1/api/comments/comment-uuid-here",
+  {
+    method: "DELETE",
+    headers: { "x-api-key": "osk_your_key" }
+  }
+);
+const { deleted } = await res.json();
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "deleted": true
+}
+```
+</ResponseExample>

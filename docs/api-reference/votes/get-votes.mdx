@@ -1,0 +1,63 @@
+---
+title: "Get Votes"
+api: "GET /ideas/{id}/votes"
+description: "Get vote counts and your current vote status for an idea."
+---
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The idea slug or UUID.
+</ParamField>
+
+## Response
+
+<ResponseField name="data" type="object">
+  <Expandable>
+    <ResponseField name="upvotes" type="integer">
+      Total upvotes on this idea.
+    </ResponseField>
+    <ResponseField name="downvotes" type="integer">
+      Total downvotes on this idea.
+    </ResponseField>
+    <ResponseField name="score" type="integer">
+      Net score (upvotes - downvotes).
+    </ResponseField>
+    <ResponseField name="user_vote" type="string">
+      Your current vote: `"up"`, `"down"`, or `null` if you haven't voted.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Scope
+
+`votes:read` - Free
+
+<RequestExample>
+```bash cURL
+curl -H "x-api-key: osk_your_key" \
+  https://openprojectidea.com/v1/api/ideas/ai-resume-builder/votes
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://openprojectidea.com/v1/api/ideas/ai-resume-builder/votes",
+  { headers: { "x-api-key": "osk_your_key" } }
+);
+const { data } = await res.json();
+console.log(data.score, data.user_vote);
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "data": {
+    "upvotes": 48,
+    "downvotes": 6,
+    "score": 42,
+    "user_vote": "up"
+  }
+}
+```
+</ResponseExample>

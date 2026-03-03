@@ -16,7 +16,7 @@ import { supabase } from '@/lib/supabase'
 import { siteConfig } from '@/lib/site-config'
 
 const API_BASE = `https://${siteConfig.domain}/v1/api`
-const DOCS_URL = `https://${siteConfig.domain.replace('.com', '')}.mintlify.app`
+const DOCS_URL = `https://docs.openprojectidea.com`
 
 export function DeveloperApiPage() {
   const { user } = useAuth()
@@ -91,7 +91,7 @@ export function DeveloperApiPage() {
       name: newKeyName.trim(),
       key_hash: keyHash,
       key_prefix: keyPrefix,
-      scopes: ['ideas:read', 'categories:read', 'account:read'],
+      scopes: ['ideas:read', 'comments:read', 'comments:write', 'votes:read', 'votes:write', 'bookmarks:read', 'bookmarks:write', 'categories:read', 'account:read', 'stats:read'],
     })
 
     if (!error) {
@@ -276,8 +276,14 @@ export function DeveloperApiPage() {
                     <span className="text-text-muted">GET /ideas</span><span className="text-right font-mono">$0.01</span>
                     <span className="text-text-muted">GET /ideas/search</span><span className="text-right font-mono">$0.02</span>
                     <span className="text-text-muted">GET /ideas/:slug</span><span className="text-right font-mono">$0.01</span>
+                    <span className="text-text-muted">GET /ideas/trending</span><span className="text-right font-mono">$0.01</span>
+                    <span className="text-text-muted">GET /ideas/:id/comments</span><span className="text-right font-mono">$0.01</span>
+                    <span className="text-text-muted">POST /ideas/:id/comments</span><span className="text-right font-mono">$0.02</span>
+                    <span className="text-text-muted">POST /ideas/:id/vote</span><span className="text-right font-mono">$0.01</span>
+                    <span className="text-text-muted">GET/POST /bookmarks</span><span className="text-right font-mono">$0.01</span>
                     <span className="text-text-muted">GET /categories</span><span className="text-right font-mono text-emerald">FREE</span>
-                    <span className="text-text-muted">GET /account/credits</span><span className="text-right font-mono text-emerald">FREE</span>
+                    <span className="text-text-muted">GET /stats</span><span className="text-right font-mono text-emerald">FREE</span>
+                    <span className="text-text-muted">GET /account/*</span><span className="text-right font-mono text-emerald">FREE</span>
                   </div>
                 </div>
               </CardContent>
@@ -291,7 +297,7 @@ export function DeveloperApiPage() {
 
               {newKeyValue && (
                 <div className="bg-emerald/5 border border-emerald/30 rounded-lg p-3 space-y-2">
-                  <p className="text-[12px] font-semibold text-emerald">New API Key — copy it now!</p>
+                  <p className="text-[12px] font-semibold text-emerald">New API Key - copy it now!</p>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 text-[11px] bg-surface-2 rounded px-3 py-2 font-mono break-all">{newKeyValue}</code>
                     <CopyBtn text={newKeyValue} label="new-key" />

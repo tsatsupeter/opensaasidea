@@ -1,0 +1,78 @@
+---
+title: "List Bookmarks"
+api: "GET /bookmarks"
+description: "Get your saved/bookmarked ideas with full idea details."
+---
+
+## Query Parameters
+
+<ParamField query="limit" type="integer" default="20">
+  Number of bookmarks to return (max 50).
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of bookmarks to skip.
+</ParamField>
+
+## Response
+
+<ResponseField name="data" type="array">
+  Array of bookmark objects with embedded idea data.
+  <Expandable>
+    <ResponseField name="id" type="string">
+      Bookmark UUID.
+    </ResponseField>
+    <ResponseField name="idea_id" type="string" />
+    <ResponseField name="created_at" type="string" />
+    <ResponseField name="idea" type="object">
+      The full idea object (fields depend on broad vs lite mode).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Scope
+
+`bookmarks:read` - $0.01 per call
+
+<RequestExample>
+```bash cURL
+curl -H "x-api-key: osk_your_key" \
+  https://openprojectidea.com/v1/api/bookmarks?limit=10
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://openprojectidea.com/v1/api/bookmarks?limit=10",
+  { headers: { "x-api-key": "osk_your_key" } }
+);
+const { data, meta } = await res.json();
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "data": [
+    {
+      "id": "bookmark-uuid",
+      "idea_id": "idea-uuid",
+      "created_at": "2025-03-02T10:00:00Z",
+      "idea": {
+        "id": "idea-uuid",
+        "title": "AI Resume Builder",
+        "slug": "ai-resume-builder",
+        "tagline": "Smart resume optimization",
+        "category": "HR Tech",
+        "vote_score": 42,
+        "created_at": "2025-03-01T12:00:00Z"
+      }
+    }
+  ],
+  "meta": {
+    "total": 1,
+    "limit": 10,
+    "offset": 0
+  }
+}
+```
+</ResponseExample>

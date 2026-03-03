@@ -1,0 +1,55 @@
+---
+title: "API Reference Overview"
+description: "Complete reference for all API endpoints."
+---
+
+# API Reference
+
+All endpoints require a valid API key passed via the `x-api-key` header. Responses are JSON with a consistent structure:
+
+```json
+{
+  "data": "...",   // The response payload (object or array)
+  "meta": { ... }  // Pagination info, mode, etc. (when applicable)
+}
+```
+
+## Response Conventions
+
+- **Lists** return `{ data: [], meta: { total, limit, offset } }`
+- **Single items** return `{ data: { ... } }`
+- **Write operations** return `{ data: { ... } }` with status `201` for creates
+- **Deletes** return `{ deleted: true }`
+- **Errors** return `{ error: "code", message: "..." }` with appropriate HTTP status
+
+## Authentication
+
+Include your API key in every request:
+
+```bash
+curl -H "x-api-key: osk_your_key_here" \
+  https://openprojectidea.com/v1/api/ideas
+```
+
+## Pagination
+
+List endpoints support `limit` and `offset` query parameters:
+
+| Parameter | Default | Max | Description |
+|---|---|---|---|
+| `limit` | 20 | 50 | Number of items to return |
+| `offset` | 0 | - | Number of items to skip |
+
+## HTTP Status Codes
+
+| Code | Meaning |
+|---|---|
+| `200` | Success |
+| `201` | Created (POST) |
+| `400` | Bad request (missing/invalid params) |
+| `401` | Invalid or missing API key |
+| `402` | Insufficient credits |
+| `403` | Revoked key or insufficient scope |
+| `404` | Resource not found |
+| `409` | Conflict (e.g. duplicate bookmark) |
+| `500` | Internal server error |

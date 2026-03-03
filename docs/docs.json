@@ -1,8 +1,8 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "maple",
-  "name": "OpenSaaSIdea API",
-  "description": "Developer documentation for the OpenSaaSIdea API — programmatic access to AI-generated SaaS ideas.",
+  "name": "OpenProjectIdea API",
+  "description": "Developer documentation for the OpenProjectIdea & OpenSaaSIdea APIs - programmatic access to AI-generated project and SaaS ideas.",
   "colors": {
     "primary": "#F97316",
     "light": "#F8FAFC",
@@ -19,8 +19,9 @@
             "pages": [
               "introduction",
               "authentication",
-              "credits",
-              "scopes"
+              "modes",
+              "scopes",
+              "credits"
             ]
           }
         ]
@@ -29,23 +30,57 @@
         "tab": "API Reference",
         "groups": [
           {
+            "group": "Overview",
+            "pages": [
+              "api-reference/overview"
+            ]
+          },
+          {
             "group": "Ideas",
             "pages": [
               "api-reference/ideas/list-ideas",
               "api-reference/ideas/search-ideas",
+              "api-reference/ideas/trending-ideas",
               "api-reference/ideas/get-idea"
             ]
           },
           {
-            "group": "Categories",
+            "group": "Comments",
             "pages": [
-              "api-reference/categories/list-categories"
+              "api-reference/comments/list-comments",
+              "api-reference/comments/create-comment",
+              "api-reference/comments/delete-comment"
+            ]
+          },
+          {
+            "group": "Votes",
+            "pages": [
+              "api-reference/votes/get-votes",
+              "api-reference/votes/cast-vote",
+              "api-reference/votes/remove-vote"
+            ]
+          },
+          {
+            "group": "Bookmarks",
+            "pages": [
+              "api-reference/bookmarks/list-bookmarks",
+              "api-reference/bookmarks/add-bookmark",
+              "api-reference/bookmarks/remove-bookmark"
+            ]
+          },
+          {
+            "group": "Categories & Stats",
+            "pages": [
+              "api-reference/categories/list-categories",
+              "api-reference/stats/platform-stats"
             ]
           },
           {
             "group": "Account",
             "pages": [
-              "api-reference/account/get-credits"
+              "api-reference/account/get-credits",
+              "api-reference/account/get-profile",
+              "api-reference/account/get-usage"
             ]
           }
         ]
@@ -66,7 +101,7 @@
   },
   "api": {
     "mdx": {
-      "server": "https://opensaasidea.com/v1/api",
+      "server": "https://openprojectidea.com/v1/api",
       "auth": {
         "method": "key",
         "name": "x-api-key"
@@ -76,44 +111,45 @@
   "navbar": {
     "links": [
       {
-        "type": "github",
-        "href": "https://github.com/tsatsupeter/opensaasidea"
+        "label": "Broad API",
+        "href": "https://openprojectidea.com/developer-api"
       },
       {
-        "label": "Dashboard",
-        "href": "https://opensaasidea.com/developer/api"
+        "label": "Lite API",
+        "href": "https://opensaasidea.com/developer-api"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Get API Key",
-      "href": "https://opensaasidea.com/developer/api"
+      "href": "https://openprojectidea.com/developer-api"
     }
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/tsatsupeter/opensaasidea",
+      "website": "https://openprojectidea.com",
       "x": "https://x.com/opensaasidea"
     },
     "links": [
       {
         "header": "Product",
         "items": [
-          { "label": "Home", "href": "https://opensaasidea.com" },
-          { "label": "Pricing", "href": "https://opensaasidea.com/pricing" },
-          { "label": "Explore Ideas", "href": "https://opensaasidea.com/explore" }
+          { "label": "OpenProjectIdea (Broad)", "href": "https://openprojectidea.com" },
+          { "label": "OpenSaaSIdea (Lite)", "href": "https://opensaasidea.com" },
+          { "label": "Pricing", "href": "https://openprojectidea.com/pricing" }
         ]
       },
       {
         "header": "Legal",
         "items": [
-          { "label": "Privacy Policy", "href": "https://opensaasidea.com/privacy" },
-          { "label": "Terms of Service", "href": "https://opensaasidea.com/terms" }
+          { "label": "Privacy Policy", "href": "https://openprojectidea.com/privacy" },
+          { "label": "Terms of Service", "href": "https://openprojectidea.com/terms" }
         ]
       }
     ]
   },
   "variables": {
-    "api-url": "https://opensaasidea.com/v1/api"
+    "broad-api-url": "https://openprojectidea.com/v1/api",
+    "lite-api-url": "https://opensaasidea.com/v1/api"
   }
 }

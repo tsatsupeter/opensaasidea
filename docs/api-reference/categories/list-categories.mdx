@@ -4,67 +4,67 @@ api: "GET /categories"
 description: "Get all available idea categories with their idea counts."
 ---
 
-# List Categories
-
-Returns all available idea categories with the number of ideas in each. This is a **free endpoint** — no credits are charged.
+Returns all available idea categories sorted by idea count (descending). This is a **free endpoint**.
 
 **Cost:** Free | **Scope:** `categories:read`
 
 ## Response
 
-<ResponseField name="categories" type="array" required>
+<ResponseField name="data" type="array" required>
   Array of category objects.
-  <Expandable title="Category object">
+  <Expandable>
     <ResponseField name="name" type="string">Category name.</ResponseField>
-    <ResponseField name="count" type="integer">Number of ideas in this category.</ResponseField>
+    <ResponseField name="count" type="integer">Number of public ideas in this category.</ResponseField>
   </Expandable>
 </ResponseField>
 
-<ResponseField name="total" type="integer" required>
-  Total number of categories.
+<ResponseField name="meta" type="object" required>
+  <Expandable>
+    <ResponseField name="total" type="integer">Total number of categories.</ResponseField>
+  </Expandable>
 </ResponseField>
 
-## Example
-
-<CodeGroup>
-
+<RequestExample>
 ```bash cURL
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://opensaasidea.com/v1/api/categories"
+  "https://openprojectidea.com/v1/api/categories"
 ```
 
 ```javascript JavaScript
 const res = await fetch(
-  "https://opensaasidea.com/v1/api/categories",
+  "https://openprojectidea.com/v1/api/categories",
   { headers: { "x-api-key": "YOUR_API_KEY" } }
 );
-const data = await res.json();
+const { data } = await res.json();
 ```
 
 ```python Python
 import requests
 
 res = requests.get(
-    "https://opensaasidea.com/v1/api/categories",
+    "https://openprojectidea.com/v1/api/categories",
     headers={"x-api-key": "YOUR_API_KEY"}
 )
-data = res.json()
+categories = res.json()["data"]
 ```
+</RequestExample>
 
-</CodeGroup>
-
-```json Response — 200 OK
+<ResponseExample>
+```json 200
 {
-  "categories": [
-    { "name": "AI/ML", "count": 45 },
-    { "name": "Developer Tools", "count": 32 },
-    { "name": "E-Commerce", "count": 28 },
-    { "name": "FinTech", "count": 22 },
-    { "name": "Health & Fitness", "count": 18 },
-    { "name": "Education", "count": 15 },
-    { "name": "Marketing", "count": 14 },
-    { "name": "Productivity", "count": 12 }
+  "data": [
+    { "name": "Developer Tools", "count": 45 },
+    { "name": "FinTech", "count": 32 },
+    { "name": "HR Tech", "count": 28 },
+    { "name": "EdTech", "count": 22 },
+    { "name": "HealthTech", "count": 18 },
+    { "name": "Marketing", "count": 15 },
+    { "name": "Productivity", "count": 14 },
+    { "name": "E-Commerce", "count": 12 }
   ],
-  "total": 8
+  "meta": {
+    "total": 8
+  }
 }
 ```
+</ResponseExample>

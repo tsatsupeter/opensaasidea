@@ -1,23 +1,21 @@
 ---
 title: "Search Ideas"
 api: "GET /ideas/search"
-description: "Full-text search across titles, taglines, and categories."
+description: "Full-text search across titles, taglines, descriptions, and categories."
 ---
 
-# Search Ideas
-
-Search public ideas by title, tagline, or category. Returns matching results with pagination.
+Search public ideas by keyword. Searches across title, tagline, description, and category fields. Results are sorted by relevance (vote score). Response fields vary by [API mode](/modes).
 
 **Cost:** $0.02 per call | **Scope:** `ideas:read`
 
 ## Query Parameters
 
 <ParamField query="q" type="string" required>
-  Search query. Searches across title, tagline, and category fields.
+  Search query string.
 </ParamField>
 
 <ParamField query="limit" type="integer" default="20">
-  Number of results per page (1–50).
+  Number of results per page (max 50).
 </ParamField>
 
 <ParamField query="offset" type="integer" default="0">
@@ -26,80 +24,77 @@ Search public ideas by title, tagline, or category. Returns matching results wit
 
 ## Response
 
-<ResponseField name="ideas" type="array" required>
-  Array of matching idea objects (same schema as List Ideas).
+<ResponseField name="data" type="array" required>
+  Array of matching idea objects (same fields as [List Ideas](/api-reference/ideas/list-ideas)).
 </ResponseField>
 
-<ResponseField name="total" type="integer" required>
-  Total number of matching ideas.
+<ResponseField name="meta" type="object" required>
+  <Expandable>
+    <ResponseField name="total" type="integer" />
+    <ResponseField name="limit" type="integer" />
+    <ResponseField name="offset" type="integer" />
+    <ResponseField name="query" type="string">The search query used.</ResponseField>
+    <ResponseField name="mode" type="string">`broad` or `lite`</ResponseField>
+  </Expandable>
 </ResponseField>
 
-<ResponseField name="limit" type="integer" required>
-  Number of results returned.
-</ResponseField>
-
-<ResponseField name="offset" type="integer" required>
-  Current pagination offset.
-</ResponseField>
-
-<ResponseField name="query" type="string" required>
-  The search query that was used.
-</ResponseField>
-
-## Example
-
-<CodeGroup>
-
+<RequestExample>
 ```bash cURL
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://opensaasidea.com/v1/api/ideas/search?q=ai%20resume&limit=10"
+  "https://openprojectidea.com/v1/api/ideas/search?q=ai%20resume&limit=10"
 ```
 
 ```javascript JavaScript
 const res = await fetch(
-  "https://opensaasidea.com/v1/api/ideas/search?q=ai+resume&limit=10",
+  "https://openprojectidea.com/v1/api/ideas/search?q=ai+resume&limit=10",
   { headers: { "x-api-key": "YOUR_API_KEY" } }
 );
-const data = await res.json();
+const { data, meta } = await res.json();
 ```
 
 ```python Python
 import requests
 
 res = requests.get(
-    "https://opensaasidea.com/v1/api/ideas/search",
+    "https://openprojectidea.com/v1/api/ideas/search",
     headers={"x-api-key": "YOUR_API_KEY"},
     params={"q": "ai resume", "limit": 10}
 )
 ```
+</RequestExample>
 
-</CodeGroup>
-
-```json Response — 200 OK
+<ResponseExample>
+```json 200
 {
-  "ideas": [
+  "data": [
     {
       "id": "550e8400-e29b-41d4-a716-446655440000",
       "title": "AI Resume Builder",
       "slug": "ai-resume-builder",
       "tagline": "Create tailored resumes in seconds with AI",
-      "category": "AI/ML",
-      "difficulty": "Medium",
+      "category": "HR Tech",
+      "platform": "web",
+      "monetization_model": "freemium",
       "estimated_mrr_low": 5000,
       "estimated_mrr_high": 25000,
-      "upvotes": 42,
+      "vote_score": 42,
       "created_at": "2025-01-15T10:30:00.000Z"
     }
   ],
-  "total": 3,
-  "limit": 10,
-  "offset": 0,
-  "query": "ai resume"
+  "meta": {
+    "total": 3,
+    "limit": 10,
+    "offset": 0,
+    "query": "ai resume",
+    "mode": "broad"
+  }
 }
 ```
 
-```json Error — 400 Bad Request
+```json 400
 {
-  "error": "Missing q parameter"
+  "error": "missing_param",
+  "message": "Query parameter q is required"
 }
 ```
+</ResponseExample>

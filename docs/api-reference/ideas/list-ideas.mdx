@@ -1,19 +1,17 @@
 ---
 title: "List Ideas"
 api: "GET /ideas"
-description: "Retrieve a paginated list of public SaaS ideas."
+description: "Retrieve a paginated list of public ideas with filtering and sorting."
 ---
 
-# List Ideas
-
-Returns a paginated list of public SaaS ideas. Supports filtering by category and sorting by newest, popularity, or estimated MRR.
+Returns a paginated list of public ideas. Supports filtering by category/platform and sorting. Response fields vary by [API mode](/modes) (broad vs lite).
 
 **Cost:** $0.01 per call | **Scope:** `ideas:read`
 
 ## Query Parameters
 
 <ParamField query="limit" type="integer" default="20">
-  Number of results per page (1–50).
+  Number of results per page (max 50).
 </ParamField>
 
 <ParamField query="offset" type="integer" default="0">
@@ -21,90 +19,109 @@ Returns a paginated list of public SaaS ideas. Supports filtering by category an
 </ParamField>
 
 <ParamField query="category" type="string">
-  Filter by category name (e.g. `AI/ML`, `Developer Tools`).
+  Filter by category name (e.g. `Developer Tools`, `FinTech`).
+</ParamField>
+
+<ParamField query="platform" type="string">
+  Filter by platform (e.g. `web`, `mobile`, `desktop`).
 </ParamField>
 
 <ParamField query="sort" type="string" default="newest">
-  Sort order. One of `newest`, `popular`, or `mrr`.
+  Sort order: `newest`, `popular`, `mrr`, or `views`.
 </ParamField>
 
 ## Response
 
-<ResponseField name="ideas" type="array" required>
-  Array of idea objects.
-  <Expandable title="Idea object">
-    <ResponseField name="id" type="string">UUID of the idea.</ResponseField>
-    <ResponseField name="title" type="string">Title of the idea.</ResponseField>
-    <ResponseField name="slug" type="string">URL-friendly slug.</ResponseField>
-    <ResponseField name="tagline" type="string">Short tagline.</ResponseField>
-    <ResponseField name="category" type="string">Category name.</ResponseField>
-    <ResponseField name="difficulty" type="string">Difficulty level (Easy, Medium, Hard).</ResponseField>
-    <ResponseField name="estimated_mrr_low" type="integer">Low MRR estimate in USD.</ResponseField>
-    <ResponseField name="estimated_mrr_high" type="integer">High MRR estimate in USD.</ResponseField>
-    <ResponseField name="upvotes" type="integer">Number of upvotes.</ResponseField>
-    <ResponseField name="created_at" type="string">ISO 8601 timestamp.</ResponseField>
+<ResponseField name="data" type="array" required>
+  Array of idea objects. Fields depend on broad vs lite mode.
+  <Expandable title="Idea object (broad)">
+    <ResponseField name="id" type="string" />
+    <ResponseField name="title" type="string" />
+    <ResponseField name="slug" type="string" />
+    <ResponseField name="tagline" type="string" />
+    <ResponseField name="category" type="string" />
+    <ResponseField name="platform" type="string" />
+    <ResponseField name="monetization_model" type="string" />
+    <ResponseField name="estimated_mrr_low" type="integer" />
+    <ResponseField name="estimated_mrr_high" type="integer" />
+    <ResponseField name="vote_score" type="integer" />
+    <ResponseField name="upvotes" type="integer">Broad only</ResponseField>
+    <ResponseField name="downvotes" type="integer">Broad only</ResponseField>
+    <ResponseField name="views" type="integer">Broad only</ResponseField>
+    <ResponseField name="comment_count" type="integer">Broad only</ResponseField>
+    <ResponseField name="created_at" type="string" />
   </Expandable>
 </ResponseField>
 
-<ResponseField name="total" type="integer" required>
-  Total number of matching ideas.
+<ResponseField name="meta" type="object" required>
+  <Expandable>
+    <ResponseField name="total" type="integer" />
+    <ResponseField name="limit" type="integer" />
+    <ResponseField name="offset" type="integer" />
+    <ResponseField name="mode" type="string">`broad` or `lite`</ResponseField>
+  </Expandable>
 </ResponseField>
 
-<ResponseField name="limit" type="integer" required>
-  Number of results returned.
-</ResponseField>
-
-<ResponseField name="offset" type="integer" required>
-  Current pagination offset.
-</ResponseField>
-
-## Example
-
-<CodeGroup>
-
+<RequestExample>
 ```bash cURL
+# Broad API
+curl -H "x-api-key: YOUR_API_KEY" \
+  "https://openprojectidea.com/v1/api/ideas?limit=5&sort=popular"
+
+# Lite API
 curl -H "x-api-key: YOUR_API_KEY" \
   "https://opensaasidea.com/v1/api/ideas?limit=5&sort=popular"
 ```
 
 ```javascript JavaScript
 const res = await fetch(
-  "https://opensaasidea.com/v1/api/ideas?limit=5&sort=popular",
+  "https://openprojectidea.com/v1/api/ideas?limit=5&sort=popular",
   { headers: { "x-api-key": "YOUR_API_KEY" } }
 );
-const data = await res.json();
+const { data, meta } = await res.json();
 ```
 
 ```python Python
 import requests
 
 res = requests.get(
-    "https://opensaasidea.com/v1/api/ideas",
+    "https://openprojectidea.com/v1/api/ideas",
     headers={"x-api-key": "YOUR_API_KEY"},
     params={"limit": 5, "sort": "popular"}
 )
+result = res.json()
+ideas = result["data"]
 ```
+</RequestExample>
 
-</CodeGroup>
-
-```json Response — 200 OK
+<ResponseExample>
+```json 200
 {
-  "ideas": [
+  "data": [
     {
       "id": "550e8400-e29b-41d4-a716-446655440000",
       "title": "AI Resume Builder",
       "slug": "ai-resume-builder",
       "tagline": "Create tailored resumes in seconds with AI",
-      "category": "AI/ML",
-      "difficulty": "Medium",
+      "category": "HR Tech",
+      "platform": "web",
+      "monetization_model": "freemium",
       "estimated_mrr_low": 5000,
       "estimated_mrr_high": 25000,
-      "upvotes": 42,
+      "vote_score": 42,
+      "upvotes": 48,
+      "downvotes": 6,
+      "views": 1200,
+      "comment_count": 8,
       "created_at": "2025-01-15T10:30:00.000Z"
     }
   ],
-  "total": 342,
-  "limit": 5,
-  "offset": 0
+  "meta": {
+    "total": 342,
+    "limit": 5,
+    "offset": 0,
+    "mode": "broad"
+  }
 }
 ```
+</ResponseExample>

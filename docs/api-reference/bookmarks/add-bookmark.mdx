@@ -1,0 +1,67 @@
+---
+title: "Add Bookmark"
+api: "POST /bookmarks"
+description: "Bookmark/save an idea to your collection."
+---
+
+## Body Parameters
+
+<ParamField body="idea_id" type="string" required>
+  The UUID of the idea to bookmark.
+</ParamField>
+
+## Response
+
+Returns status `201` on success.
+
+<ResponseField name="bookmarked" type="boolean">
+  `true` if the bookmark was created.
+</ResponseField>
+
+<ResponseField name="idea_id" type="string">
+  The bookmarked idea ID.
+</ResponseField>
+
+## Errors
+
+| Status | Error | Description |
+|---|---|---|
+| `409` | `already_bookmarked` | This idea is already in your bookmarks |
+
+## Scope
+
+`bookmarks:write` - $0.01 per call
+
+<RequestExample>
+```bash cURL
+curl -X POST \
+  -H "x-api-key: osk_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"idea_id": "idea-uuid-here"}' \
+  https://openprojectidea.com/v1/api/bookmarks
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://openprojectidea.com/v1/api/bookmarks",
+  {
+    method: "POST",
+    headers: {
+      "x-api-key": "osk_your_key",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ idea_id: "idea-uuid-here" })
+  }
+);
+const data = await res.json();
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201
+{
+  "bookmarked": true,
+  "idea_id": "idea-uuid-here"
+}
+```
+</ResponseExample>

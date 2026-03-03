@@ -1,0 +1,48 @@
+---
+title: "Remove Vote"
+api: "DELETE /ideas/{id}/vote"
+description: "Remove your vote from an idea."
+---
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The idea slug or UUID.
+</ParamField>
+
+## Response
+
+<ResponseField name="deleted" type="boolean">
+  `true` if the vote was removed.
+</ResponseField>
+
+## Scope
+
+`votes:write` - Free
+
+<RequestExample>
+```bash cURL
+curl -X DELETE \
+  -H "x-api-key: osk_your_key" \
+  https://openprojectidea.com/v1/api/ideas/ai-resume-builder/vote
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://openprojectidea.com/v1/api/ideas/ai-resume-builder/vote",
+  {
+    method: "DELETE",
+    headers: { "x-api-key": "osk_your_key" }
+  }
+);
+const { deleted } = await res.json();
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "deleted": true
+}
+```
+</ResponseExample>

@@ -1,0 +1,86 @@
+---
+title: "List Comments"
+api: "GET /ideas/{id}/comments"
+description: "Get all comments for a specific idea."
+---
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The idea slug or UUID.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="limit" type="integer" default="50">
+  Number of comments to return (max 100).
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of comments to skip.
+</ParamField>
+
+## Response
+
+<ResponseField name="data" type="array">
+  Array of comment objects.
+  <Expandable>
+    <ResponseField name="id" type="string" />
+    <ResponseField name="idea_id" type="string" />
+    <ResponseField name="user_id" type="string" />
+    <ResponseField name="parent_id" type="string">
+      Parent comment ID for replies. `null` for top-level comments.
+    </ResponseField>
+    <ResponseField name="content" type="string" />
+    <ResponseField name="upvotes" type="integer" />
+    <ResponseField name="downvotes" type="integer" />
+    <ResponseField name="is_edited" type="boolean" />
+    <ResponseField name="created_at" type="string" />
+    <ResponseField name="updated_at" type="string" />
+  </Expandable>
+</ResponseField>
+
+## Scope
+
+`comments:read` - $0.01 per call
+
+<RequestExample>
+```bash cURL
+curl -H "x-api-key: osk_your_key" \
+  https://openprojectidea.com/v1/api/ideas/ai-resume-builder/comments
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://openprojectidea.com/v1/api/ideas/ai-resume-builder/comments",
+  { headers: { "x-api-key": "osk_your_key" } }
+);
+const { data, meta } = await res.json();
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "data": [
+    {
+      "id": "comment-uuid",
+      "idea_id": "idea-uuid",
+      "user_id": "user-uuid",
+      "parent_id": null,
+      "content": "This is a great idea! The market is ripe for this.",
+      "upvotes": 3,
+      "downvotes": 0,
+      "is_edited": false,
+      "created_at": "2025-03-01T14:30:00Z",
+      "updated_at": "2025-03-01T14:30:00Z"
+    }
+  ],
+  "meta": {
+    "total": 1,
+    "limit": 50,
+    "offset": 0
+  }
+}
+```
+</ResponseExample>

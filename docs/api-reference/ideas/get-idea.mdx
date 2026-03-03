@@ -1,12 +1,10 @@
 ---
 title: "Get Idea"
 api: "GET /ideas/{slug}"
-description: "Retrieve full details for a single idea by slug or ID."
+description: "Retrieve full details for a single idea by slug or UUID."
 ---
 
-# Get Idea
-
-Retrieve full details for a single idea by its slug or UUID. Includes tech stack, pricing tiers, and detailed metrics.
+Get complete details for a single idea. The depth of data returned depends on [API mode](/modes) (broad vs lite). Broad mode includes revenue breakdowns, marketing strategies, team roles, competitors, and more.
 
 **Cost:** $0.01 per call | **Scope:** `ideas:read`
 
@@ -18,93 +16,129 @@ Retrieve full details for a single idea by its slug or UUID. Includes tech stack
 
 ## Response
 
-<ResponseField name="idea" type="object" required>
+<ResponseField name="data" type="object" required>
   Full idea object.
-  <Expandable title="Idea object">
-    <ResponseField name="id" type="string">UUID of the idea.</ResponseField>
-    <ResponseField name="title" type="string">Title of the idea.</ResponseField>
-    <ResponseField name="slug" type="string">URL-friendly slug.</ResponseField>
-    <ResponseField name="tagline" type="string">Short tagline.</ResponseField>
-    <ResponseField name="description" type="string">Full description of the idea.</ResponseField>
-    <ResponseField name="category" type="string">Category name.</ResponseField>
-    <ResponseField name="difficulty" type="string">Difficulty level (Easy, Medium, Hard).</ResponseField>
-    <ResponseField name="estimated_mrr_low" type="integer">Low MRR estimate in USD.</ResponseField>
-    <ResponseField name="estimated_mrr_high" type="integer">High MRR estimate in USD.</ResponseField>
-    <ResponseField name="estimated_users" type="string">Estimated user base range.</ResponseField>
-    <ResponseField name="time_to_build" type="string">Estimated build time.</ResponseField>
-    <ResponseField name="platforms" type="array">Target platforms (Web, Mobile, Desktop, etc.).</ResponseField>
-    <ResponseField name="tech_stack" type="object">Recommended technology stack.</ResponseField>
-    <ResponseField name="pricing_tiers" type="array">Suggested pricing tiers for the idea.</ResponseField>
-    <ResponseField name="upvotes" type="integer">Number of upvotes.</ResponseField>
-    <ResponseField name="downvotes" type="integer">Number of downvotes.</ResponseField>
-    <ResponseField name="view_count" type="integer">Total view count.</ResponseField>
-    <ResponseField name="created_at" type="string">ISO 8601 timestamp.</ResponseField>
+  <Expandable title="Fields (both modes)">
+    <ResponseField name="id" type="string" />
+    <ResponseField name="title" type="string" />
+    <ResponseField name="slug" type="string" />
+    <ResponseField name="tagline" type="string" />
+    <ResponseField name="description" type="string" />
+    <ResponseField name="category" type="string" />
+    <ResponseField name="platform" type="string" />
+    <ResponseField name="monetization_model" type="string" />
+    <ResponseField name="pricing_tiers" type="array" />
+    <ResponseField name="estimated_mrr_low" type="integer" />
+    <ResponseField name="estimated_mrr_high" type="integer" />
+    <ResponseField name="tech_stack" type="object" />
+    <ResponseField name="pros" type="array" />
+    <ResponseField name="cons" type="array" />
+    <ResponseField name="vote_score" type="integer" />
+    <ResponseField name="upvotes" type="integer" />
+    <ResponseField name="downvotes" type="integer" />
+    <ResponseField name="views" type="integer" />
+    <ResponseField name="comment_count" type="integer" />
+    <ResponseField name="created_at" type="string" />
+  </Expandable>
+  <Expandable title="Additional fields (broad mode only)">
+    <ResponseField name="estimated_daily_sales" type="object" />
+    <ResponseField name="estimated_weekly_sales" type="object" />
+    <ResponseField name="estimated_monthly_sales" type="object" />
+    <ResponseField name="revenue_breakdown" type="object" />
+    <ResponseField name="team_roles" type="array" />
+    <ResponseField name="lead_generation" type="object" />
+    <ResponseField name="marketing_strategy" type="object" />
+    <ResponseField name="seo_strategy" type="object" />
+    <ResponseField name="existing_competitors" type="array" />
+    <ResponseField name="unique_differentiators" type="array" />
+    <ResponseField name="updated_at" type="string" />
   </Expandable>
 </ResponseField>
 
-## Example
+<ResponseField name="meta" type="object">
+  <Expandable>
+    <ResponseField name="mode" type="string">`broad` or `lite`</ResponseField>
+  </Expandable>
+</ResponseField>
 
-<CodeGroup>
-
+<RequestExample>
 ```bash cURL
+# Broad (full detail)
+curl -H "x-api-key: YOUR_API_KEY" \
+  "https://openprojectidea.com/v1/api/ideas/ai-resume-builder"
+
+# Lite (SaaS-focused)
 curl -H "x-api-key: YOUR_API_KEY" \
   "https://opensaasidea.com/v1/api/ideas/ai-resume-builder"
 ```
 
 ```javascript JavaScript
 const res = await fetch(
-  "https://opensaasidea.com/v1/api/ideas/ai-resume-builder",
+  "https://openprojectidea.com/v1/api/ideas/ai-resume-builder",
   { headers: { "x-api-key": "YOUR_API_KEY" } }
 );
-const idea = (await res.json()).idea;
+const { data } = await res.json();
 ```
 
 ```python Python
 import requests
 
 res = requests.get(
-    "https://opensaasidea.com/v1/api/ideas/ai-resume-builder",
+    "https://openprojectidea.com/v1/api/ideas/ai-resume-builder",
     headers={"x-api-key": "YOUR_API_KEY"}
 )
-idea = res.json()["idea"]
+idea = res.json()["data"]
 ```
+</RequestExample>
 
-</CodeGroup>
-
-```json Response — 200 OK
+<ResponseExample>
+```json 200
 {
-  "idea": {
+  "data": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
     "title": "AI Resume Builder",
     "slug": "ai-resume-builder",
     "tagline": "Create tailored resumes in seconds with AI",
-    "description": "An AI-powered resume builder that...",
-    "category": "AI/ML",
-    "difficulty": "Medium",
+    "description": "An AI-powered resume builder that analyzes job descriptions...",
+    "category": "HR Tech",
+    "platform": "web",
+    "monetization_model": "freemium",
+    "pricing_tiers": [
+      { "name": "Free", "price": 0, "features": ["3 resumes/month"] },
+      { "name": "Pro", "price": 15, "features": ["Unlimited resumes", "AI optimization"] }
+    ],
     "estimated_mrr_low": 5000,
     "estimated_mrr_high": 25000,
-    "estimated_users": "10K-50K",
-    "time_to_build": "2-3 months",
-    "platforms": ["Web", "Mobile"],
     "tech_stack": {
       "frontend": ["React", "Tailwind CSS"],
       "backend": ["Node.js", "PostgreSQL"],
       "ai": ["OpenAI GPT-4"]
     },
-    "pricing_tiers": [
-      { "name": "Free", "price": 0, "features": ["3 resumes/month"] },
-      { "name": "Pro", "price": 15, "features": ["Unlimited resumes", "AI suggestions"] }
-    ],
-    "upvotes": 42,
-    "downvotes": 3,
-    "view_count": 1200,
-    "created_at": "2025-01-15T10:30:00.000Z"
+    "pros": ["Large TAM", "Low competition in AI-resume niche"],
+    "cons": ["Requires quality AI fine-tuning"],
+    "vote_score": 42,
+    "upvotes": 48,
+    "downvotes": 6,
+    "views": 1200,
+    "comment_count": 8,
+    "marketing_strategy": { "channels": ["SEO", "LinkedIn Ads"], "budget": "$500/mo" },
+    "seo_strategy": { "keywords": ["ai resume builder", "resume optimizer"] },
+    "team_roles": ["Full-stack Developer", "ML Engineer", "Designer"],
+    "existing_competitors": ["Resume.io", "Zety"],
+    "unique_differentiators": ["Real-time job-description matching"],
+    "created_at": "2025-01-15T10:30:00.000Z",
+    "updated_at": "2025-02-01T08:00:00.000Z"
+  },
+  "meta": {
+    "mode": "broad"
   }
 }
 ```
 
-```json Error — 404 Not Found
+```json 404
 {
-  "error": "Idea not found"
+  "error": "not_found",
+  "message": "Idea not found"
 }
 ```
+</ResponseExample>

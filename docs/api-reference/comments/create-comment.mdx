@@ -1,0 +1,82 @@
+---
+title: "Create Comment"
+api: "POST /ideas/{id}/comments"
+description: "Post a new comment on an idea."
+---
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The idea slug or UUID.
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="content" type="string" required>
+  The comment text (max 2000 characters).
+</ParamField>
+
+<ParamField body="parent_id" type="string">
+  Optional parent comment ID to create a reply.
+</ParamField>
+
+## Response
+
+Returns the created comment with status `201`.
+
+<ResponseField name="data" type="object">
+  <Expandable>
+    <ResponseField name="id" type="string" />
+    <ResponseField name="idea_id" type="string" />
+    <ResponseField name="user_id" type="string" />
+    <ResponseField name="parent_id" type="string" />
+    <ResponseField name="content" type="string" />
+    <ResponseField name="created_at" type="string" />
+  </Expandable>
+</ResponseField>
+
+## Scope
+
+`comments:write` - $0.02 per call
+
+<RequestExample>
+```bash cURL
+curl -X POST \
+  -H "x-api-key: osk_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Great idea! The freemium model makes sense here."}' \
+  https://openprojectidea.com/v1/api/ideas/ai-resume-builder/comments
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://openprojectidea.com/v1/api/ideas/ai-resume-builder/comments",
+  {
+    method: "POST",
+    headers: {
+      "x-api-key": "osk_your_key",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      content: "Great idea! The freemium model makes sense here."
+    })
+  }
+);
+const { data } = await res.json();
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201
+{
+  "data": {
+    "id": "new-comment-uuid",
+    "idea_id": "idea-uuid",
+    "user_id": "your-user-uuid",
+    "parent_id": null,
+    "content": "Great idea! The freemium model makes sense here.",
+    "created_at": "2025-03-03T16:00:00Z"
+  }
+}
+```
+</ResponseExample>

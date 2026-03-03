@@ -13,64 +13,72 @@ API access uses a credit-based system. Each API call deducts a small amount from
 |---|---|---|
 | `GET /ideas` | $0.01 | `ideas:read` |
 | `GET /ideas/search` | $0.02 | `ideas:read` |
+| `GET /ideas/trending` | $0.01 | `ideas:read` |
 | `GET /ideas/:slug` | $0.01 | `ideas:read` |
+| `GET /ideas/:id/comments` | $0.01 | `comments:read` |
+| `POST /ideas/:id/comments` | $0.02 | `comments:write` |
+| `DELETE /comments/:id` | **Free** | `comments:write` |
+| `GET /ideas/:id/votes` | **Free** | `votes:read` |
+| `POST /ideas/:id/vote` | $0.01 | `votes:write` |
+| `DELETE /ideas/:id/vote` | **Free** | `votes:write` |
+| `GET /bookmarks` | $0.01 | `bookmarks:read` |
+| `POST /bookmarks` | $0.01 | `bookmarks:write` |
+| `DELETE /bookmarks/:id` | **Free** | `bookmarks:write` |
 | `GET /categories` | **Free** | `categories:read` |
+| `GET /stats` | **Free** | `stats:read` |
 | `GET /account/credits` | **Free** | `account:read` |
+| `GET /account/profile` | **Free** | `account:read` |
+| `GET /account/usage` | **Free** | `account:read` |
 
 ## Free Credit
 
 <Tip>
-Every new developer gets **$5.00 free credit** when generating their first API key. No credit card required — just sign up and start building.
+Every new developer gets **$5.00 free credit** when generating their first API key. No credit card required.
 </Tip>
 
 That's enough for:
 - **500** list or detail requests (`GET /ideas`, `GET /ideas/:slug`)
 - **250** search requests (`GET /ideas/search`)
-- Unlimited `GET /categories` and `GET /account/credits` calls
+- **500** comment reads or vote actions
+- Unlimited free endpoints (categories, stats, account)
 
 ## Adding Credits
 
-Top up your balance from the [Developer Dashboard](https://opensaasidea.com/developer/api) with any custom amount between **$5 and $500**. Payments are processed securely via Dodo Payments.
+Top up your balance from the Developer Dashboard with any amount between **$5 and $500**:
+- [openprojectidea.com/developer-api](https://openprojectidea.com/developer-api)
+- [opensaasidea.com/developer-api](https://opensaasidea.com/developer-api)
 
-<Steps>
-  <Step title="Go to Developer Dashboard">
-    Visit [opensaasidea.com/developer/api](https://opensaasidea.com/developer/api)
-  </Step>
-  <Step title="Enter amount">
-    Choose a preset ($10, $25, $50) or enter a custom amount.
-  </Step>
-  <Step title="Complete payment">
-    Pay securely via Dodo Payments. Credits are added to your balance instantly.
-  </Step>
-</Steps>
+Payments are processed securely via Dodo Payments. Credits are added instantly.
 
 ## Checking Your Balance
 
-Use the free `/account/credits` endpoint to check your balance programmatically:
+Use the free `/account/credits` endpoint:
 
 ```bash
 curl -H "x-api-key: YOUR_API_KEY" \
-  https://opensaasidea.com/v1/api/account/credits
+  https://openprojectidea.com/v1/api/account/credits
 ```
 
-```json Response
+```json
 {
-  "balance": 4.50,
-  "balance_cents": 450,
-  "lifetime_purchased": 10.00,
-  "lifetime_used": 0.50,
-  "currency": "USD"
+  "data": {
+    "balance": 4.50,
+    "balance_cents": 450,
+    "lifetime_purchased": 10.00,
+    "lifetime_used": 0.50,
+    "currency": "USD"
+  }
 }
 ```
 
 ## Insufficient Credits
 
-If your balance is too low for a request, you'll receive a `402 Payment Required` response:
+If your balance is too low, you'll receive a `402` response:
 
-```json 402 — Insufficient Credits
+```json
 {
   "error": "insufficient_credits",
-  "message": "Not enough API credits. Current balance: $0.03",
+  "message": "Not enough API credits. Balance: $0.03, cost: $0.02",
   "balance_cents": 3,
   "cost_cents": 2
 }

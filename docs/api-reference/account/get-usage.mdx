@@ -1,0 +1,75 @@
+---
+title: "Get Usage History"
+api: "GET /account/usage"
+description: "Get your recent API credit transaction history."
+---
+
+## Query Parameters
+
+<ParamField query="limit" type="integer" default="20">
+  Number of transactions to return (max 50).
+</ParamField>
+
+## Response
+
+<ResponseField name="data" type="array">
+  Array of transaction objects, newest first.
+  <Expandable>
+    <ResponseField name="id" type="string" />
+    <ResponseField name="amount_cents" type="integer">
+      Positive for credits added, negative for API usage.
+    </ResponseField>
+    <ResponseField name="type" type="string">
+      One of: `free_grant`, `purchase`, `api_usage`, `refund`
+    </ResponseField>
+    <ResponseField name="endpoint" type="string">
+      The API endpoint that was called (for `api_usage` type).
+    </ResponseField>
+    <ResponseField name="description" type="string" />
+    <ResponseField name="created_at" type="string" />
+  </Expandable>
+</ResponseField>
+
+## Scope
+
+`account:read` - Free
+
+<RequestExample>
+```bash cURL
+curl -H "x-api-key: osk_your_key" \
+  https://openprojectidea.com/v1/api/account/usage?limit=5
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://openprojectidea.com/v1/api/account/usage?limit=5",
+  { headers: { "x-api-key": "osk_your_key" } }
+);
+const { data } = await res.json();
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "data": [
+    {
+      "id": "tx-uuid",
+      "amount_cents": -1,
+      "type": "api_usage",
+      "endpoint": "/ideas",
+      "description": "API: GET /ideas ($0.01)",
+      "created_at": "2025-03-03T16:30:00Z"
+    },
+    {
+      "id": "tx-uuid-2",
+      "amount_cents": 500,
+      "type": "free_grant",
+      "endpoint": null,
+      "description": "Welcome bonus - $5.00 free credit",
+      "created_at": "2025-03-03T16:00:00Z"
+    }
+  ]
+}
+```
+</ResponseExample>

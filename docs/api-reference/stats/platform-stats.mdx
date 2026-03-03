@@ -1,0 +1,67 @@
+---
+title: "Platform Stats"
+api: "GET /stats"
+description: "Get platform-wide statistics including totals and top categories."
+---
+
+## Response
+
+<ResponseField name="data" type="object">
+  <Expandable>
+    <ResponseField name="total_ideas" type="integer">
+      Total number of public ideas on the platform.
+    </ResponseField>
+    <ResponseField name="total_votes" type="integer">
+      Total votes cast across all ideas.
+    </ResponseField>
+    <ResponseField name="total_comments" type="integer">
+      Total comments posted.
+    </ResponseField>
+    <ResponseField name="total_users" type="integer">
+      Total registered users.
+    </ResponseField>
+    <ResponseField name="top_categories" type="array">
+      Top 10 categories by idea count.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Scope
+
+`stats:read` - Free
+
+<RequestExample>
+```bash cURL
+curl -H "x-api-key: osk_your_key" \
+  https://openprojectidea.com/v1/api/stats
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://openprojectidea.com/v1/api/stats",
+  { headers: { "x-api-key": "osk_your_key" } }
+);
+const { data } = await res.json();
+console.log(`${data.total_ideas} ideas, ${data.total_users} users`);
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "data": {
+    "total_ideas": 1250,
+    "total_votes": 8400,
+    "total_comments": 2100,
+    "total_users": 450,
+    "top_categories": [
+      { "name": "Developer Tools", "count": 180 },
+      { "name": "HR Tech", "count": 95 },
+      { "name": "FinTech", "count": 88 },
+      { "name": "EdTech", "count": 72 },
+      { "name": "HealthTech", "count": 65 }
+    ]
+  }
+}
+```
+</ResponseExample>

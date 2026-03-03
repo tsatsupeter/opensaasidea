@@ -1,0 +1,48 @@
+---
+title: "Remove Bookmark"
+api: "DELETE /bookmarks/{idea_id}"
+description: "Remove an idea from your bookmarks."
+---
+
+## Path Parameters
+
+<ParamField path="idea_id" type="string" required>
+  The UUID of the idea to un-bookmark.
+</ParamField>
+
+## Response
+
+<ResponseField name="deleted" type="boolean">
+  `true` if the bookmark was removed.
+</ResponseField>
+
+## Scope
+
+`bookmarks:write` - Free
+
+<RequestExample>
+```bash cURL
+curl -X DELETE \
+  -H "x-api-key: osk_your_key" \
+  https://openprojectidea.com/v1/api/bookmarks/idea-uuid-here
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://openprojectidea.com/v1/api/bookmarks/idea-uuid-here",
+  {
+    method: "DELETE",
+    headers: { "x-api-key": "osk_your_key" }
+  }
+);
+const { deleted } = await res.json();
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "deleted": true
+}
+```
+</ResponseExample>

@@ -1,36 +1,91 @@
 ---
 title: "OAuth Scopes"
-description: "Permissions granted to each API key."
+description: "Fine-grained permissions for each API key."
 ---
 
 # OAuth Scopes
 
-API keys are scoped to control which endpoints they can access. Currently, all keys receive full read access across all scopes.
+Every API key has a set of scopes that control which endpoints it can access. When a request requires a scope your key doesn't have, you'll receive a `403 insufficient_scope` error.
 
 ## Available Scopes
 
 <AccordionGroup>
   <Accordion title="ideas:read" icon="lightbulb">
-    Read public SaaS ideas, search, and retrieve full details.
+    Read public ideas, search, trending, and retrieve full details.
 
     **Endpoints:**
-    - `GET /ideas` — List ideas with pagination and filtering
-    - `GET /ideas/search` — Full-text search across ideas
-    - `GET /ideas/:slug` — Get detailed information for a single idea
+    - `GET /ideas` - List ideas with pagination and filtering
+    - `GET /ideas/search?q=` - Search ideas by keyword
+    - `GET /ideas/trending` - Get trending ideas
+    - `GET /ideas/:slug` - Get full idea detail
+  </Accordion>
+
+  <Accordion title="comments:read" icon="message">
+    Read comments on ideas.
+
+    **Endpoints:**
+    - `GET /ideas/:id/comments` - List comments for an idea
+  </Accordion>
+
+  <Accordion title="comments:write" icon="pen">
+    Post and delete comments.
+
+    **Endpoints:**
+    - `POST /ideas/:id/comments` - Post a new comment
+    - `DELETE /comments/:id` - Delete your own comment
+  </Accordion>
+
+  <Accordion title="votes:read" icon="thumbs-up">
+    Read vote counts and your vote status on ideas.
+
+    **Endpoints:**
+    - `GET /ideas/:id/votes` - Get vote counts and your vote
+  </Accordion>
+
+  <Accordion title="votes:write" icon="check">
+    Cast or remove votes on ideas.
+
+    **Endpoints:**
+    - `POST /ideas/:id/vote` - Cast an upvote or downvote
+    - `DELETE /ideas/:id/vote` - Remove your vote
+  </Accordion>
+
+  <Accordion title="bookmarks:read" icon="bookmark">
+    List your saved/bookmarked ideas.
+
+    **Endpoints:**
+    - `GET /bookmarks` - List your bookmarks with idea details
+  </Accordion>
+
+  <Accordion title="bookmarks:write" icon="plus">
+    Add or remove bookmarks.
+
+    **Endpoints:**
+    - `POST /bookmarks` - Bookmark an idea
+    - `DELETE /bookmarks/:idea_id` - Remove a bookmark
   </Accordion>
 
   <Accordion title="categories:read" icon="tag">
-    List all available idea categories with counts.
+    List all idea categories with counts.
 
     **Endpoints:**
-    - `GET /categories` — List categories (free endpoint)
+    - `GET /categories` - List categories (free)
+  </Accordion>
+
+  <Accordion title="stats:read" icon="chart-bar">
+    Read platform-wide statistics.
+
+    **Endpoints:**
+    - `GET /stats` - Platform stats (free)
   </Accordion>
 
   <Accordion title="account:read" icon="wallet">
-    View your API credit balance and usage statistics.
+    View your profile, credit balance, and API usage history.
 
     **Endpoints:**
-    - `GET /account/credits` — Get credit balance (free endpoint)
+    - `GET /account/credits` - Credit balance (free)
+    - `GET /account/profile` - Your profile (free)
+    - `GET /account/usage` - API usage history (free)
   </Accordion>
 </AccordionGroup>
 
@@ -38,10 +93,30 @@ API keys are scoped to control which endpoints they can access. Currently, all k
 
 | Scope | Endpoints | Billed |
 |---|---|---|
-| `ideas:read` | `/ideas`, `/ideas/search`, `/ideas/:slug` | Yes |
-| `categories:read` | `/categories` | No |
-| `account:read` | `/account/credits` | No |
+| `ideas:read` | `/ideas`, `/ideas/search`, `/ideas/trending`, `/ideas/:slug` | Yes ($0.01-$0.02) |
+| `comments:read` | `/ideas/:id/comments` | Yes ($0.01) |
+| `comments:write` | `POST /ideas/:id/comments`, `DELETE /comments/:id` | $0.02 / Free |
+| `votes:read` | `/ideas/:id/votes` | Free |
+| `votes:write` | `POST /ideas/:id/vote`, `DELETE /ideas/:id/vote` | $0.01 / Free |
+| `bookmarks:read` | `/bookmarks` | Yes ($0.01) |
+| `bookmarks:write` | `POST /bookmarks`, `DELETE /bookmarks/:id` | $0.01 / Free |
+| `categories:read` | `/categories` | Free |
+| `stats:read` | `/stats` | Free |
+| `account:read` | `/account/credits`, `/account/profile`, `/account/usage` | Free |
+
+## Default Scopes
+
+All API keys created from the Developer Dashboard are granted **all scopes** by default:
+
+```json
+[
+  "ideas:read", "comments:read", "comments:write",
+  "votes:read", "votes:write", "bookmarks:read",
+  "bookmarks:write", "categories:read", "account:read",
+  "stats:read"
+]
+```
 
 <Info>
-All API keys created from the Developer Dashboard are granted all available scopes by default. Scope restrictions for granular access control are coming in a future update.
+Granular scope selection during key creation is planned for a future update. For now, all keys receive full access.
 </Info>

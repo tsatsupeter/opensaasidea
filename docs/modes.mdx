@@ -1,0 +1,98 @@
+---
+title: "API Modes"
+description: "Broad vs Lite - choose the right data depth for your use case."
+---
+
+# API Modes
+
+The same API key works on both domains. The difference is the **depth of data** returned in idea responses.
+
+## Broad Mode (openprojectidea.com)
+
+Returns the full dataset for every idea, designed for comprehensive analysis tools and dashboards.
+
+**Base URL:** `https://openprojectidea.com/v1/api`
+
+### Idea List Fields (Broad)
+```
+id, title, slug, tagline, category, platform, monetization_model,
+estimated_mrr_low, estimated_mrr_high, vote_score, upvotes, downvotes,
+views, comment_count, created_at
+```
+
+### Idea Detail Fields (Broad)
+All list fields plus:
+```
+description, pricing_tiers, estimated_daily_sales, estimated_weekly_sales,
+estimated_monthly_sales, revenue_breakdown, tech_stack, team_roles,
+lead_generation, marketing_strategy, seo_strategy, existing_competitors,
+unique_differentiators, pros, cons, updated_at
+```
+
+## Lite Mode (opensaasidea.com)
+
+Returns a streamlined, SaaS-focused subset. Ideal for lightweight integrations and SaaS-specific tools.
+
+**Base URL:** `https://opensaasidea.com/v1/api`
+
+### Idea List Fields (Lite)
+```
+id, title, slug, tagline, category, platform, monetization_model,
+estimated_mrr_low, estimated_mrr_high, vote_score, created_at
+```
+
+### Idea Detail Fields (Lite)
+All list fields plus:
+```
+description, pricing_tiers, tech_stack, pros, cons,
+upvotes, downvotes, views, comment_count
+```
+
+## Comparison
+
+| Field | Broad | Lite |
+|---|---|---|
+| Core info (title, tagline, category) | Yes | Yes |
+| MRR estimates | Yes | Yes |
+| Tech stack | Yes | Yes |
+| Pricing tiers | Yes | Yes |
+| Pros and cons | Yes | Yes |
+| Revenue breakdown | Yes | No |
+| Marketing strategy | Yes | No |
+| SEO strategy | Yes | No |
+| Team roles | Yes | No |
+| Lead generation | Yes | No |
+| Competitor analysis | Yes | No |
+| Sales estimates (daily/weekly/monthly) | Yes | No |
+| Views and comment count | Yes | Yes |
+| Vote details (up/down) | Yes | Scores only |
+
+## How Mode is Determined
+
+The mode is automatically set based on which domain you call:
+
+```bash
+# This returns BROAD data
+curl -H "x-api-key: osk_..." https://openprojectidea.com/v1/api/ideas
+
+# This returns LITE data
+curl -H "x-api-key: osk_..." https://opensaasidea.com/v1/api/ideas
+```
+
+Every response includes `meta.mode` so you can verify which mode was used:
+
+```json
+{
+  "data": [...],
+  "meta": {
+    "total": 150,
+    "limit": 20,
+    "offset": 0,
+    "mode": "broad"
+  }
+}
+```
+
+<Tip>
+Non-idea endpoints (comments, votes, bookmarks, categories, stats, account) return the same data regardless of mode.
+</Tip>

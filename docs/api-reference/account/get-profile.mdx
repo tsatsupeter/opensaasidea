@@ -1,0 +1,67 @@
+---
+title: "Get Profile"
+api: "GET /account/profile"
+description: "Get your user profile information."
+---
+
+## Response
+
+<ResponseField name="data" type="object">
+  <Expandable>
+    <ResponseField name="id" type="string">
+      Your user UUID.
+    </ResponseField>
+    <ResponseField name="email" type="string" />
+    <ResponseField name="full_name" type="string" />
+    <ResponseField name="avatar_url" type="string" />
+    <ResponseField name="bio" type="string" />
+    <ResponseField name="experience_level" type="string">
+      One of: `beginner`, `intermediate`, `senior`, `expert`
+    </ResponseField>
+    <ResponseField name="interests" type="array" />
+    <ResponseField name="preferred_platforms" type="array" />
+    <ResponseField name="subscription_tier" type="string">
+      One of: `free`, `pro`, `team`
+    </ResponseField>
+    <ResponseField name="created_at" type="string" />
+  </Expandable>
+</ResponseField>
+
+## Scope
+
+`account:read` - Free
+
+<RequestExample>
+```bash cURL
+curl -H "x-api-key: osk_your_key" \
+  https://openprojectidea.com/v1/api/account/profile
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://openprojectidea.com/v1/api/account/profile",
+  { headers: { "x-api-key": "osk_your_key" } }
+);
+const { data } = await res.json();
+console.log(data.full_name, data.subscription_tier);
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "data": {
+    "id": "user-uuid",
+    "email": "dev@example.com",
+    "full_name": "Jane Developer",
+    "avatar_url": null,
+    "bio": "Full-stack developer building SaaS products",
+    "experience_level": "senior",
+    "interests": ["AI", "Developer Tools", "FinTech"],
+    "preferred_platforms": ["web", "api"],
+    "subscription_tier": "pro",
+    "created_at": "2025-02-15T10:00:00Z"
+  }
+}
+```
+</ResponseExample>

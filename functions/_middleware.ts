@@ -16,7 +16,10 @@ export const onRequest: PagesFunction = async (context) => {
   if (path.startsWith('/v1/api/') || path === '/v1/api') {
     const subpath = path.replace(/^\/v1\/api\/?/, '')
     const target = `${SUPABASE_ORIGIN}/functions/v1/public-api/${subpath}${url.search}`
-    return proxyRequest(context.request, target)
+    // Detect API mode from hostname: opensaasidea.com → lite, openprojectidea.com → broad
+    const host = url.hostname
+    const mode = host.includes('opensaasidea') ? 'lite' : 'broad'
+    return proxyRequest(context.request, target, { 'x-api-mode': mode })
   }
 
   // Proxy all Supabase service paths
@@ -31,7 +34,7 @@ export const onRequest: PagesFunction = async (context) => {
   return context.next()
 }
 
-async function proxyRequest(request: Request, targetUrl: string): Promise<Response> {
+async function proxyRequest(request: Request, targetUrl: string, extraHeaders?: Record<string, string>): Promise<Response> {
   const headers = new Headers(request.headers)
   // Point Host header at Supabase so TLS/routing works
   headers.set('Host', new URL(SUPABASE_ORIGIN).host)
@@ -39,6 +42,10 @@ async function proxyRequest(request: Request, targetUrl: string): Promise<Respon
   headers.delete('cf-connecting-ip')
   headers.delete('cf-ray')
   headers.delete('cf-visitor')
+  // Apply any extra headers (e.g. x-api-mode)
+  if (extraHeaders) {
+    for (const [k, v] of Object.entries(extraHeaders)) headers.set(k, v)
+  }
 
   // Handle WebSocket upgrades (Supabase Realtime)
   if (request.headers.get('Upgrade')?.toLowerCase() === 'websocket') {

@@ -1,0 +1,70 @@
+---
+title: "Cast Vote"
+api: "POST /ideas/{id}/vote"
+description: "Upvote or downvote an idea."
+---
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+  The idea slug or UUID.
+</ParamField>
+
+## Body Parameters
+
+<ParamField body="vote_type" type="string" required>
+  Either `"up"` or `"down"`.
+</ParamField>
+
+## Response
+
+<ResponseField name="data" type="object">
+  <Expandable>
+    <ResponseField name="vote_type" type="string">
+      The vote that was recorded.
+    </ResponseField>
+    <ResponseField name="action" type="string">
+      `"created"` for a new vote, `"changed"` if you switched your vote, `"unchanged"` if you voted the same way.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Scope
+
+`votes:write` - $0.01 per call
+
+<RequestExample>
+```bash cURL
+curl -X POST \
+  -H "x-api-key: osk_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"vote_type": "up"}' \
+  https://openprojectidea.com/v1/api/ideas/ai-resume-builder/vote
+```
+
+```javascript JavaScript
+const res = await fetch(
+  "https://openprojectidea.com/v1/api/ideas/ai-resume-builder/vote",
+  {
+    method: "POST",
+    headers: {
+      "x-api-key": "osk_your_key",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ vote_type: "up" })
+  }
+);
+const { data } = await res.json();
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "data": {
+    "vote_type": "up",
+    "action": "created"
+  }
+}
+```
+</ResponseExample>

@@ -4,71 +4,59 @@ api: "GET /account/credits"
 description: "Check your current API credit balance and usage."
 ---
 
-# Get Credits
-
-Check your current API credit balance, lifetime purchases, and lifetime usage. This is a **free endpoint** — no credits are charged.
+Check your current API credit balance, lifetime purchases, and lifetime usage. This is a **free endpoint**.
 
 **Cost:** Free | **Scope:** `account:read`
 
 ## Response
 
-<ResponseField name="balance" type="number" required>
-  Current balance in dollars (e.g. `4.50`).
+<ResponseField name="data" type="object" required>
+  <Expandable>
+    <ResponseField name="balance" type="number">Current balance in dollars (e.g. `4.50`).</ResponseField>
+    <ResponseField name="balance_cents" type="integer">Current balance in cents (e.g. `450`).</ResponseField>
+    <ResponseField name="lifetime_purchased" type="number">Total amount purchased in dollars.</ResponseField>
+    <ResponseField name="lifetime_used" type="number">Total amount used in dollars.</ResponseField>
+    <ResponseField name="currency" type="string">Always `"USD"`.</ResponseField>
+  </Expandable>
 </ResponseField>
 
-<ResponseField name="balance_cents" type="integer" required>
-  Current balance in cents (e.g. `450`).
-</ResponseField>
-
-<ResponseField name="lifetime_purchased" type="number" required>
-  Total amount purchased in dollars.
-</ResponseField>
-
-<ResponseField name="lifetime_used" type="number" required>
-  Total amount used in dollars.
-</ResponseField>
-
-<ResponseField name="currency" type="string" required>
-  Always `"USD"`.
-</ResponseField>
-
-## Example
-
-<CodeGroup>
-
+<RequestExample>
 ```bash cURL
 curl -H "x-api-key: YOUR_API_KEY" \
-  "https://opensaasidea.com/v1/api/account/credits"
+  "https://openprojectidea.com/v1/api/account/credits"
 ```
 
 ```javascript JavaScript
 const res = await fetch(
-  "https://opensaasidea.com/v1/api/account/credits",
+  "https://openprojectidea.com/v1/api/account/credits",
   { headers: { "x-api-key": "YOUR_API_KEY" } }
 );
-const credits = await res.json();
-console.log(`Balance: $${credits.balance}`);
+const { data } = await res.json();
+console.log(`Balance: $${data.balance}`);
 ```
 
 ```python Python
 import requests
 
 res = requests.get(
-    "https://opensaasidea.com/v1/api/account/credits",
+    "https://openprojectidea.com/v1/api/account/credits",
     headers={"x-api-key": "YOUR_API_KEY"}
 )
-credits = res.json()
+credits = res.json()["data"]
 print(f"Balance: ${credits['balance']}")
 ```
+</RequestExample>
 
-</CodeGroup>
-
-```json Response — 200 OK
+<ResponseExample>
+```json 200
 {
-  "balance": 4.50,
-  "balance_cents": 450,
-  "lifetime_purchased": 10.00,
-  "lifetime_used": 0.50,
-  "currency": "USD"
+  "data": {
+    "balance": 4.50,
+    "balance_cents": 450,
+    "lifetime_purchased": 10.00,
+    "lifetime_used": 0.50,
+    "currency": "USD"
+  }
 }
 ```
+</ResponseExample>

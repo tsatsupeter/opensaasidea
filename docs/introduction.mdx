@@ -1,46 +1,50 @@
 ---
 title: "Introduction"
-description: "Programmatic access to thousands of AI-generated SaaS ideas."
+description: "Programmatic access to AI-generated project and SaaS ideas via two API modes."
 ---
 
-# OpenSaaSIdea API
+# OpenProjectIdea API
 
-The OpenSaaSIdea API gives you read-only access to our full database of public SaaS ideas, categories, and account information. Use it to build integrations, dashboards, Slack bots, or any tool that needs fresh SaaS ideas.
+Two APIs, one platform. Access thousands of AI-generated ideas programmatically.
+
+- **Broad API** (`openprojectidea.com`) - Full data including revenue breakdowns, marketing strategies, SEO plans, team roles, competitors, and lead generation.
+- **Lite API** (`opensaasidea.com`) - Streamlined SaaS-focused data with core fields: title, description, tech stack, pricing, and MRR estimates.
+
+Both APIs share the same authentication, scopes, and credit system. The only difference is the depth of data returned.
 
 <CardGroup cols={3}>
-  <Card title="Simple REST API" icon="bolt">
-    JSON responses with x-api-key header authentication.
+  <Card title="REST + JSON" icon="bolt">
+    Simple x-api-key header auth. GET, POST, DELETE methods.
   </Card>
   <Card title="Pay-per-use" icon="credit-card">
-    $0.01–$0.02 per API call. No subscriptions required.
+    $0.01-$0.02 per call. Many endpoints are free.
   </Card>
   <Card title="$5 Free Credit" icon="gift">
     Every new developer gets $5.00 free on their first API key.
   </Card>
 </CardGroup>
 
-## Base URL
+## Base URLs
 
-All API requests are made to:
-
-```
-https://opensaasidea.com/v1/api
-```
+| Mode | Base URL | Description |
+|---|---|---|
+| **Broad** | `https://openprojectidea.com/v1/api` | All fields, full detail |
+| **Lite** | `https://opensaasidea.com/v1/api` | SaaS-focused, streamlined |
 
 ## Quick Start
 
 <Steps>
   <Step title="Get an API Key">
-    Generate an API key from the [Developer Dashboard](https://opensaasidea.com/developer/api). You'll receive **$5.00 free credit** automatically.
+    Generate an API key from the [Developer Dashboard](https://openprojectidea.com/developer-api). You receive **$5.00 free credit** automatically.
   </Step>
   <Step title="Make your first request">
     ```bash
     curl -H "x-api-key: YOUR_API_KEY" \
-      https://opensaasidea.com/v1/api/ideas
+      https://openprojectidea.com/v1/api/ideas
     ```
   </Step>
-  <Step title="Build something awesome">
-    Use the response data to power your app, dashboard, or integration.
+  <Step title="Build something great">
+    Use the response data to power your app, dashboard, Slack bot, or integration.
   </Step>
 </Steps>
 
@@ -49,38 +53,56 @@ https://opensaasidea.com/v1/api
 <CodeGroup>
 
 ```bash cURL
+# Broad API (full data)
+curl -H "x-api-key: YOUR_API_KEY" \
+  https://openprojectidea.com/v1/api/ideas
+
+# Lite API (SaaS-focused)
 curl -H "x-api-key: YOUR_API_KEY" \
   https://opensaasidea.com/v1/api/ideas
 ```
 
 ```javascript JavaScript
 const res = await fetch(
-  "https://opensaasidea.com/v1/api/ideas",
+  "https://openprojectidea.com/v1/api/ideas",
   { headers: { "x-api-key": "YOUR_API_KEY" } }
 );
-const data = await res.json();
-console.log(data.ideas);
+const { data, meta } = await res.json();
+console.log(data); // array of ideas
+console.log(meta); // { total, limit, offset, mode }
 ```
 
 ```python Python
 import requests
 
 res = requests.get(
-    "https://opensaasidea.com/v1/api/ideas",
-    headers={"x-api-key": "YOUR_API_KEY"}
+    "https://openprojectidea.com/v1/api/ideas",
+    headers={"x-api-key": "YOUR_API_KEY"},
+    params={"limit": 10, "sort": "popular"}
 )
 data = res.json()
-print(data["ideas"])
+for idea in data["data"]:
+    print(idea["title"], idea["estimated_mrr_high"])
 ```
 
 </CodeGroup>
 
-## Available Endpoints
+## All Endpoints
 
-| Endpoint | Description | Cost |
-|---|---|---|
-| `GET /ideas` | List public ideas with pagination and filtering | $0.01 |
-| `GET /ideas/search` | Search ideas by title, tagline, or category | $0.02 |
-| `GET /ideas/:slug` | Get full details for a single idea | $0.01 |
-| `GET /categories` | List all idea categories | Free |
-| `GET /account/credits` | Check your credit balance | Free |
+| Endpoint | Scope | Cost | Methods |
+|---|---|---|---|
+| `/ideas` | `ideas:read` | $0.01 | GET |
+| `/ideas/search?q=` | `ideas:read` | $0.02 | GET |
+| `/ideas/trending` | `ideas:read` | $0.01 | GET |
+| `/ideas/:slug` | `ideas:read` | $0.01 | GET |
+| `/ideas/:id/comments` | `comments:read/write` | $0.01-$0.02 | GET, POST |
+| `/comments/:id` | `comments:write` | Free | DELETE |
+| `/ideas/:id/votes` | `votes:read` | Free | GET |
+| `/ideas/:id/vote` | `votes:write` | $0.01 | POST, DELETE |
+| `/bookmarks` | `bookmarks:read/write` | $0.01 | GET, POST |
+| `/bookmarks/:idea_id` | `bookmarks:write` | Free | DELETE |
+| `/categories` | `categories:read` | Free | GET |
+| `/stats` | `stats:read` | Free | GET |
+| `/account/credits` | `account:read` | Free | GET |
+| `/account/profile` | `account:read` | Free | GET |
+| `/account/usage` | `account:read` | Free | GET |
