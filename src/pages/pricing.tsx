@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Check, Zap, Users, Crown, Loader2, ArrowRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -6,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/use-auth'
 import { useSubscription } from '@/hooks/use-subscription'
+import { useToast } from '@/components/ui/toast'
 import { TIERS, getProductId, DODO_PRODUCTS } from '@/lib/subscription'
 import type { SubscriptionTier } from '@/types/database'
 
@@ -29,7 +31,9 @@ const TIER_BORDER: Record<SubscriptionTier, string> = {
 
 export function PricingPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const { tier: currentTier, createCheckout } = useSubscription()
+  const { toast } = useToast()
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly')
   const [loadingTier, setLoadingTier] = useState<string | null>(null)
 
@@ -37,7 +41,7 @@ export function PricingPage() {
     if (tier === 'free' || tier === currentTier) return
 
     if (!user) {
-      window.location.href = '/login'
+      navigate('/login')
       return
     }
 
@@ -47,6 +51,8 @@ export function PricingPage() {
       const url = await createCheckout(productId)
       if (url) {
         window.location.href = url
+      } else {
+        toast('Failed to create checkout. Please try again.')
       }
     } finally {
       setLoadingTier(null)
@@ -55,7 +61,7 @@ export function PricingPage() {
 
   const handleBuyReport = async () => {
     if (!user) {
-      window.location.href = '/login'
+      navigate('/login')
       return
     }
     setLoadingTier('report')
@@ -63,6 +69,8 @@ export function PricingPage() {
       const url = await createCheckout(DODO_PRODUCTS.deep_dive_report)
       if (url) {
         window.location.href = url
+      } else {
+        toast('Failed to create checkout. Please try again.')
       }
     } finally {
       setLoadingTier(null)

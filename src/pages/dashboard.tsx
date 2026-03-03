@@ -149,8 +149,8 @@ export function DashboardPage() {
           {!generating && (
             <div className="flex items-center gap-3 shrink-0">
               {remainingIdeas !== null && (
-                <span className="text-xs text-text-muted">
-                  {remainingIdeas} idea{remainingIdeas !== 1 ? 's' : ''} left today
+                <span className={`text-xs ${remainingIdeas === 0 ? 'text-rose' : 'text-text-muted'}`}>
+                  {remainingIdeas === 0 ? 'Daily limit reached' : `${remainingIdeas} idea${remainingIdeas !== 1 ? 's' : ''} left today`}
                 </span>
               )}
               <Button onClick={handleGenerate} className="group" disabled={!checkCanGenerate()}>
@@ -160,6 +160,16 @@ export function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Upgrade prompt when limit hit */}
+        {isFree && !checkCanGenerate() && !generating && (
+          <div className="mb-6">
+            <UpgradePrompt
+              feature="You've used your daily free idea"
+              description="Upgrade to Pro for unlimited idea generation, PDF exports, and detailed market reports."
+            />
+          </div>
+        )}
 
         {/* Fun generation animation */}
         <AnimatePresence>
@@ -197,7 +207,7 @@ export function DashboardPage() {
                 <p className="text-sm text-text-secondary mb-5 text-center max-w-sm">
                   Hit "Generate My Idea" to get a personalized SaaS idea based on your skills and interests.
                 </p>
-                <Button onClick={handleGenerate}>
+                <Button onClick={handleGenerate} disabled={!checkCanGenerate()}>
                   <Logo className="h-4 w-4" />
                   Generate Now
                 </Button>

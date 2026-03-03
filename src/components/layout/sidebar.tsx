@@ -16,6 +16,7 @@ const mainNav = [
   { href: '/explore', label: 'Explore', icon: Compass },
   { href: '/popular', label: 'Popular', icon: Flame },
   { href: '/trending', label: 'Trending', icon: TrendingUp },
+  { href: '/pricing', label: 'Pricing', icon: Crown, color: 'text-brand' },
 ]
 
 interface SidebarProps {
@@ -83,7 +84,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
         <nav className="flex-1 px-2 py-3 overflow-y-auto sidebar-scroll space-y-0.5">
           {/* Main nav */}
           {mainNav.map(item => (
-            <NavLink key={item.href} href={item.href} icon={item.icon} label={item.label} />
+            <NavLink key={item.href} href={item.href} icon={item.icon} label={item.label} color={(item as any).color} />
           ))}
 
           <div className="mx-3 my-2 h-px bg-border" />
@@ -179,7 +180,6 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                       )}
                     </AnimatePresence>
 
-                    <NavLink href="/pricing" icon={Crown} label="Pricing" color="text-brand" />
                     {isAdmin && <NavLink href="/admin" icon={Shield} label="Admin" />}
                   </motion.div>
                 )}
