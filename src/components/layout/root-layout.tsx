@@ -7,6 +7,7 @@ import { RightSidebar } from './right-sidebar'
 import { SearchBar } from '@/components/ui/search-bar'
 import { NotificationsBell } from '@/components/ui/notifications-bell'
 import { useAuth } from '@/hooks/use-auth'
+import { useAuthModal } from '@/components/ui/auth-modal'
 import { Button } from '@/components/ui/button'
 
 const NO_SIDEBAR_ROUTES = ['/login', '/register', '/onboarding']
@@ -15,6 +16,7 @@ const NO_RIGHT_SIDEBAR_ROUTES = ['/login', '/register', '/onboarding', '/dashboa
 export function RootLayout() {
   const location = useLocation()
   const { user } = useAuth()
+  const { openAuthModal } = useAuthModal()
   const [mobileOpen, setMobileOpen] = useState(false)
   const noSidebar = NO_SIDEBAR_ROUTES.includes(location.pathname)
   const noRight = NO_RIGHT_SIDEBAR_ROUTES.includes(location.pathname) || location.pathname.startsWith('/idea/')
@@ -70,9 +72,7 @@ export function RootLayout() {
               </Link>
             </>
           ) : (
-            <Link to="/login">
-              <Button size="sm" className="text-xs">Sign In</Button>
-            </Link>
+            <Button size="sm" className="text-xs" onClick={() => openAuthModal('login')}>Sign In</Button>
           )}
         </div>
       </header>

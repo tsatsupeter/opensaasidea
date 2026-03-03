@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/hooks/use-theme'
 import { RecentProvider } from '@/hooks/use-recent'
 import { ToastProvider } from '@/components/ui/toast'
 import { NotificationsProvider } from '@/hooks/use-notifications'
+import { AuthModalProvider } from '@/components/ui/auth-modal'
 import { RootLayout } from '@/components/layout/root-layout'
 import { HomePage } from '@/pages/home'
 import { ExplorePage } from '@/pages/explore'
@@ -43,6 +44,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
+          <AuthModalProvider>
           <NotificationsProvider>
           <RecentProvider>
             <ToastProvider>
@@ -82,6 +84,7 @@ function App() {
             </ToastProvider>
           </RecentProvider>
           </NotificationsProvider>
+          </AuthModalProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

@@ -10,6 +10,7 @@ import { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { useSubscription } from '@/hooks/use-subscription'
 import { useBookmarks } from '@/hooks/use-bookmarks'
+import { useAuthModal } from '@/components/ui/auth-modal'
 import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/utils'
 import { useCategories, type DynamicCategory } from '@/lib/categories'
@@ -33,7 +34,8 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
   const { categories } = useCategories()
-  const { savedIdeas } = useBookmarks()
+  const { savedIdeas, toggleBookmark } = useBookmarks()
+  const { openAuthModal } = useAuthModal()
   const [catOpen, setCatOpen] = useState(true)
   const [savedOpen, setSavedOpen] = useState(true)
   const [yourOpen, setYourOpen] = useState(true)
@@ -151,22 +153,31 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                     className="overflow-hidden"
                   >
                     {savedIdeas.map(idea => (
-                      <Link key={idea.id} to={`/idea/${idea.slug || idea.id}`} onClick={onMobileClose}>
-                        <div className={cn(
-                          'flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150',
-                          location.pathname === `/idea/${idea.slug}`
-                            ? 'bg-surface-2 text-text-primary'
-                            : 'text-text-secondary hover:bg-surface-2 hover:text-text-primary'
-                        )}>
-                          <BookmarkCheck className="h-[18px] w-[18px] shrink-0 text-brand" />
-                          <span className="truncate">{idea.title}</span>
-                        </div>
-                      </Link>
+                      <div key={idea.id} className={cn(
+                        'flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 group',
+                        location.pathname === `/idea/${idea.slug}`
+                          ? 'bg-surface-2 text-text-primary'
+                          : 'text-text-secondary hover:bg-surface-2 hover:text-text-primary'
+                      )}>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            await toggleBookmark(idea.id)
+                          }}
+                          className="shrink-0 cursor-pointer"
+                          title="Remove from saved"
+                        >
+                          <BookmarkCheck className="h-[18px] w-[18px] text-brand hover:text-rose transition-colors" />
+                        </button>
+                        <Link to={`/idea/${idea.slug || idea.id}`} onClick={onMobileClose} className="truncate flex-1">
+                          {idea.title}
+                        </Link>
+                      </div>
                     ))}
                     <Link to="/dashboard" onClick={onMobileClose}>
                       <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-text-muted hover:text-text-secondary transition-colors">
                         <Bookmark className="h-[18px] w-[18px] shrink-0" />
-                        View all Saved
+                        All Saved
                       </div>
                     </Link>
                   </motion.div>
@@ -265,12 +276,13 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
               Sign Out
             </button>
           ) : (
-            <Link to="/login" onClick={onMobileClose}>
-              <div className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-text-secondary hover:text-brand hover:bg-brand/10 transition-all duration-150 w-full">
-                <LogIn className="h-[18px] w-[18px]" />
-                Sign In
-              </div>
-            </Link>
+            <button
+              onClick={() => { openAuthModal('login'); onMobileClose?.() }}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium text-text-secondary hover:text-brand hover:bg-brand/10 transition-all duration-150 w-full cursor-pointer"
+            >
+              <LogIn className="h-[18px] w-[18px]" />
+              Sign In
+            </button>
           )}
         </div>
 
