@@ -14,6 +14,7 @@ import { useToast } from '@/components/ui/toast'
 import { exportIdeaToPDF } from '@/lib/pdf-export'
 import { VoteButton } from '@/components/ideas/vote-button'
 import { CommentSection } from '@/components/comments/comment-section'
+import { UpgradePrompt } from '@/components/subscription/upgrade-prompt'
 import { formatCurrency, formatNumber, timeAgo } from '@/lib/utils'
 import { categoryColor, toSlug, useCategories } from '@/lib/categories'
 import { getAffiliateLink } from '@/lib/affiliates'
@@ -35,8 +36,8 @@ export function IdeaDetailPage() {
   const [isPublic, setIsPublic] = useState(false)
   const [toggling, setToggling] = useState(false)
   const [exporting, setExporting] = useState(false)
-  const { isBookmarked, toggleBookmark } = useBookmarks()
-  const { isPro } = useSubscription()
+  const { isBookmarked, toggleBookmark, bookmarkedIds } = useBookmarks()
+  const { isPro, isFree } = useSubscription()
   const { toast } = useToast()
 
   useEffect(() => {
@@ -189,24 +190,47 @@ export function IdeaDetailPage() {
               <div>
                 <p className="text-text-primary font-semibold mb-2">Revenue Estimates:</p>
                 <ul className="list-disc list-inside space-y-1 ml-1">
-                  {idea.estimated_daily_sales && <li>Daily Sales: <strong className="text-emerald">{formatCurrency(idea.estimated_daily_sales)}</strong></li>}
-                  {idea.estimated_weekly_sales && <li>Weekly Sales: <strong className="text-emerald">{formatCurrency(idea.estimated_weekly_sales)}</strong></li>}
-                  {idea.estimated_monthly_sales && <li>Monthly Sales: <strong className="text-emerald">{formatCurrency(idea.estimated_monthly_sales)}</strong></li>}
                   {idea.estimated_mrr_low && idea.estimated_mrr_high && (
                     <li>Estimated MRR: <strong className="text-brand">{formatCurrency(idea.estimated_mrr_low)} – {formatCurrency(idea.estimated_mrr_high)}</strong></li>
                   )}
+                  {idea.estimated_monthly_sales && <li>Monthly Sales: <strong className="text-emerald">{formatCurrency(idea.estimated_monthly_sales)}</strong></li>}
                 </ul>
-                {revenue && (
+                {isPro ? (
                   <>
-                    <p className="text-text-primary font-medium mt-3 mb-1">Revenue breakdown:</p>
-                    <ul className="list-disc list-inside space-y-1 ml-1">
-                      {revenue.primary_revenue && <li>Primary revenue: {revenue.primary_revenue}</li>}
-                      {revenue.free_trial_conversion_rate && <li>Free trial conversion: {revenue.free_trial_conversion_rate}%</li>}
-                      {revenue.customer_acquisition_cost && <li>Customer acquisition cost: {formatCurrency(revenue.customer_acquisition_cost)}</li>}
-                      {revenue.lifetime_value && <li>Lifetime value: {formatCurrency(revenue.lifetime_value)}</li>}
-                      {revenue.average_customer_lifetime_months && <li>Average customer lifetime: {revenue.average_customer_lifetime_months} months</li>}
+                    <ul className="list-disc list-inside space-y-1 ml-1 mt-1">
+                      {idea.estimated_daily_sales && <li>Daily Sales: <strong className="text-emerald">{formatCurrency(idea.estimated_daily_sales)}</strong></li>}
+                      {idea.estimated_weekly_sales && <li>Weekly Sales: <strong className="text-emerald">{formatCurrency(idea.estimated_weekly_sales)}</strong></li>}
                     </ul>
+                    {revenue && (
+                      <>
+                        <p className="text-text-primary font-medium mt-3 mb-1">Revenue breakdown:</p>
+                        <ul className="list-disc list-inside space-y-1 ml-1">
+                          {revenue.primary_revenue && <li>Primary revenue: {revenue.primary_revenue}</li>}
+                          {revenue.free_trial_conversion_rate && <li>Free trial conversion: {revenue.free_trial_conversion_rate}%</li>}
+                          {revenue.customer_acquisition_cost && <li>Customer acquisition cost: {formatCurrency(revenue.customer_acquisition_cost)}</li>}
+                          {revenue.lifetime_value && <li>Lifetime value: {formatCurrency(revenue.lifetime_value)}</li>}
+                          {revenue.average_customer_lifetime_months && <li>Average customer lifetime: {revenue.average_customer_lifetime_months} months</li>}
+                        </ul>
+                      </>
+                    )}
                   </>
+                ) : (
+                  <div className="relative mt-3">
+                    <div className="blur-sm select-none pointer-events-none opacity-50">
+                      <p className="text-text-primary font-medium mb-1">Revenue breakdown:</p>
+                      <ul className="list-disc list-inside space-y-1 ml-1">
+                        <li>Primary revenue: Subscription model</li>
+                        <li>Free trial conversion: 12%</li>
+                        <li>Customer acquisition cost: $45</li>
+                        <li>Lifetime value: $522</li>
+                      </ul>
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="bg-surface-0/90 backdrop-blur-sm rounded-lg px-4 py-2 border border-brand/20">
+                        <p className="text-xs font-semibold text-brand flex items-center gap-1.5"><Crown className="h-3.5 w-3.5" /> Pro feature — Detailed revenue breakdown</p>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
 
@@ -214,15 +238,15 @@ export function IdeaDetailPage() {
               {pricingTiers.length > 0 && (
                 <div>
                   <p className="text-text-primary font-semibold mb-2">Pricing Tiers:</p>
-                  {pricingTiers.map((tier, i) => (
+                  {pricingTiers.map((t, i) => (
                     <div key={i} className="mb-3">
                       <p className="font-medium text-text-primary">
-                        {tier.name} — <strong>{formatCurrency(tier.price)}</strong>/{tier.billing}
+                        {t.name} — <strong>{formatCurrency(t.price)}</strong>/{t.billing}
                         {i === 1 && <span className="text-brand ml-1">(most popular)</span>}
                       </p>
-                      {tier.features && tier.features.length > 0 && (
+                      {t.features && t.features.length > 0 && (
                         <ul className="list-disc list-inside space-y-0.5 ml-1 mt-1">
-                          {tier.features.map((f, fi) => (
+                          {t.features.map((f, fi) => (
                             <li key={fi}>{f}</li>
                           ))}
                         </ul>
@@ -232,7 +256,7 @@ export function IdeaDetailPage() {
                 </div>
               )}
 
-              {/* Tech Stack */}
+              {/* Tech Stack — visible to all */}
               {techStack && (
                 <div>
                   <p className="text-text-primary font-semibold mb-2">Tech Stack:</p>
@@ -247,126 +271,163 @@ export function IdeaDetailPage() {
                 </div>
               )}
 
-              {/* Team */}
-              {teamRoles.length > 0 && (
-                <div>
-                  <p className="text-text-primary font-semibold mb-2">Team Breakdown:</p>
-                  {teamRoles.map((role, i) => (
-                    <div key={i} className="mb-3">
-                      <p className="font-medium text-text-primary">
-                        {role.role}
-                        <span className={`ml-2 text-[12px] ${
-                          role.priority === 'critical' ? 'text-rose' :
-                          role.priority === 'important' ? 'text-amber' : 'text-text-muted'
-                        }`}>({role.priority})</span>
-                      </p>
-                      {role.responsibilities?.length > 0 && (
-                        <ul className="list-disc list-inside space-y-0.5 ml-1 mt-0.5">
-                          {role.responsibilities.map((r, ri) => (
-                            <li key={ri}>{r}</li>
-                          ))}
-                        </ul>
+              {/* === PRO-GATED SECTIONS: Team, Lead Gen, Marketing, SEO, Competitors === */}
+              {isPro ? (
+                <>
+                  {/* Team */}
+                  {teamRoles.length > 0 && (
+                    <div>
+                      <p className="text-text-primary font-semibold mb-2">Team Breakdown:</p>
+                      {teamRoles.map((role, i) => (
+                        <div key={i} className="mb-3">
+                          <p className="font-medium text-text-primary">
+                            {role.role}
+                            <span className={`ml-2 text-[12px] ${
+                              role.priority === 'critical' ? 'text-rose' :
+                              role.priority === 'important' ? 'text-amber' : 'text-text-muted'
+                            }`}>({role.priority})</span>
+                          </p>
+                          {role.responsibilities?.length > 0 && (
+                            <ul className="list-disc list-inside space-y-0.5 ml-1 mt-0.5">
+                              {role.responsibilities.map((r, ri) => (
+                                <li key={ri}>{r}</li>
+                              ))}
+                            </ul>
+                          )}
+                          {role.skills_needed?.length > 0 && (
+                            <p className="mt-1 text-[13px]">Skills: {role.skills_needed.join(', ')}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Lead Generation */}
+                  {leadGen && (
+                    <div>
+                      <p className="text-text-primary font-semibold mb-2">Lead Generation:</p>
+                      {leadGen.channels?.length > 0 && (
+                        <p className="mb-1">Channels: {leadGen.channels.join(', ')}</p>
                       )}
-                      {role.skills_needed?.length > 0 && (
-                        <p className="mt-1 text-[13px]">Skills: {role.skills_needed.join(', ')}</p>
+                      {leadGen.strategies?.length > 0 && (
+                        <>
+                          <p className="font-medium text-text-primary mt-2 mb-1">Strategies:</p>
+                          <ul className="list-disc list-inside space-y-0.5 ml-1">
+                            {leadGen.strategies.map((s: string, i: number) => (
+                              <li key={i}>{s}</li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                      {leadGen.conversion_funnel?.length > 0 && (
+                        <p className="mt-2">
+                          Conversion funnel: {leadGen.conversion_funnel.join(' → ')}
+                        </p>
+                      )}
+                      {leadGen.estimated_cost_per_lead && (
+                        <p className="mt-1">Cost per lead: <strong className="text-brand">{formatCurrency(leadGen.estimated_cost_per_lead)}</strong></p>
                       )}
                     </div>
-                  ))}
-                </div>
-              )}
+                  )}
 
-              {/* Lead Generation */}
-              {leadGen && (
-                <div>
-                  <p className="text-text-primary font-semibold mb-2">Lead Generation:</p>
-                  {leadGen.channels?.length > 0 && (
-                    <p className="mb-1">Channels: {leadGen.channels.join(', ')}</p>
-                  )}
-                  {leadGen.strategies?.length > 0 && (
-                    <>
-                      <p className="font-medium text-text-primary mt-2 mb-1">Strategies:</p>
-                      <ul className="list-disc list-inside space-y-0.5 ml-1">
-                        {leadGen.strategies.map((s: string, i: number) => (
-                          <li key={i}>{s}</li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-                  {leadGen.conversion_funnel?.length > 0 && (
-                    <p className="mt-2">
-                      Conversion funnel: {leadGen.conversion_funnel.join(' → ')}
-                    </p>
-                  )}
-                  {leadGen.estimated_cost_per_lead && (
-                    <p className="mt-1">Cost per lead: <strong className="text-brand">{formatCurrency(leadGen.estimated_cost_per_lead)}</strong></p>
-                  )}
-                </div>
-              )}
-
-              {/* Marketing */}
-              {marketing && (
-                <div>
-                  <p className="text-text-primary font-semibold mb-2">Marketing Strategy:</p>
-                  {marketing.channels?.length > 0 && (
-                    <p className="mb-1">Marketing channels: {marketing.channels.join(', ')}</p>
-                  )}
-                  {marketing.content_strategy?.length > 0 && (
-                    <>
-                      <p className="font-medium text-text-primary mt-2 mb-1">Content strategy:</p>
-                      <ul className="list-disc list-inside space-y-0.5 ml-1">
-                        {marketing.content_strategy.map((s: string, i: number) => (
-                          <li key={i}>{s}</li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-                  {marketing.launch_strategy && (
-                    <p className="mt-2">Launch strategy: {marketing.launch_strategy}</p>
-                  )}
-                </div>
-              )}
-
-              {/* SEO */}
-              {seoStrategy && (
-                <div>
-                  <p className="text-text-primary font-semibold mb-2">SEO Strategy:</p>
-                  {seoStrategy.target_keywords?.length > 0 && (
-                    <p className="mb-1">Target keywords: {seoStrategy.target_keywords.join(', ')}</p>
-                  )}
-                  {seoStrategy.content_plan?.length > 0 && (
-                    <>
-                      <p className="font-medium text-text-primary mt-2 mb-1">Content plan:</p>
-                      <ul className="list-disc list-inside space-y-0.5 ml-1">
-                        {seoStrategy.content_plan.map((s: string, i: number) => (
-                          <li key={i}>{s}</li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-                  {seoStrategy.estimated_organic_traffic_monthly && (
-                    <p className="mt-1">Estimated organic traffic: <strong className="text-emerald">{seoStrategy.estimated_organic_traffic_monthly.toLocaleString()} visits/mo</strong></p>
-                  )}
-                </div>
-              )}
-
-              {/* Competitors */}
-              {competitors.length > 0 && (
-                <div>
-                  <p className="text-text-primary font-semibold mb-2">Competitive Analysis:</p>
-                  {competitors.map((comp, i) => (
-                    <div key={i} className="mb-2">
-                      <p className="font-medium text-text-primary">
-                        {comp.name}
-                        {comp.url && (
-                          <a href={comp.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline ml-2 text-[13px]">
-                            ({comp.url})
-                          </a>
-                        )}
-                      </p>
-                      {comp.weakness && <p className="ml-1">Weakness: <span className="text-rose">{comp.weakness}</span></p>}
-                      {comp.our_advantage && <p className="ml-1">Our advantage: <span className="text-emerald">{comp.our_advantage}</span></p>}
+                  {/* Marketing */}
+                  {marketing && (
+                    <div>
+                      <p className="text-text-primary font-semibold mb-2">Marketing Strategy:</p>
+                      {marketing.channels?.length > 0 && (
+                        <p className="mb-1">Marketing channels: {marketing.channels.join(', ')}</p>
+                      )}
+                      {marketing.content_strategy?.length > 0 && (
+                        <>
+                          <p className="font-medium text-text-primary mt-2 mb-1">Content strategy:</p>
+                          <ul className="list-disc list-inside space-y-0.5 ml-1">
+                            {marketing.content_strategy.map((s: string, i: number) => (
+                              <li key={i}>{s}</li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                      {marketing.launch_strategy && (
+                        <p className="mt-2">Launch strategy: {marketing.launch_strategy}</p>
+                      )}
                     </div>
-                  ))}
+                  )}
+
+                  {/* SEO */}
+                  {seoStrategy && (
+                    <div>
+                      <p className="text-text-primary font-semibold mb-2">SEO Strategy:</p>
+                      {seoStrategy.target_keywords?.length > 0 && (
+                        <p className="mb-1">Target keywords: {seoStrategy.target_keywords.join(', ')}</p>
+                      )}
+                      {seoStrategy.content_plan?.length > 0 && (
+                        <>
+                          <p className="font-medium text-text-primary mt-2 mb-1">Content plan:</p>
+                          <ul className="list-disc list-inside space-y-0.5 ml-1">
+                            {seoStrategy.content_plan.map((s: string, i: number) => (
+                              <li key={i}>{s}</li>
+                            ))}
+                          </ul>
+                        </>
+                      )}
+                      {seoStrategy.estimated_organic_traffic_monthly && (
+                        <p className="mt-1">Estimated organic traffic: <strong className="text-emerald">{seoStrategy.estimated_organic_traffic_monthly.toLocaleString()} visits/mo</strong></p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Competitors */}
+                  {competitors.length > 0 && (
+                    <div>
+                      <p className="text-text-primary font-semibold mb-2">Competitive Analysis:</p>
+                      {competitors.map((comp, i) => (
+                        <div key={i} className="mb-2">
+                          <p className="font-medium text-text-primary">
+                            {comp.name}
+                            {comp.url && (
+                              <a href={comp.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline ml-2 text-[13px]">
+                                ({comp.url})
+                              </a>
+                            )}
+                          </p>
+                          {comp.weakness && <p className="ml-1">Weakness: <span className="text-rose">{comp.weakness}</span></p>}
+                          {comp.our_advantage && <p className="ml-1">Our advantage: <span className="text-emerald">{comp.our_advantage}</span></p>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* Free user — show blurred preview with upgrade prompt */
+                <div className="relative">
+                  <div className="blur-[6px] select-none pointer-events-none opacity-40 space-y-5">
+                    <div>
+                      <p className="text-text-primary font-semibold mb-2">Team Breakdown:</p>
+                      <p>Full Stack Developer (critical) • Product Designer (important) • Growth Marketer (nice-to-have)</p>
+                    </div>
+                    <div>
+                      <p className="text-text-primary font-semibold mb-2">Lead Generation:</p>
+                      <p>Channels: SEO, Content Marketing, Product Hunt • Strategies: Free tier funnel, Blog content, Social proof</p>
+                    </div>
+                    <div>
+                      <p className="text-text-primary font-semibold mb-2">Marketing Strategy:</p>
+                      <p>Channels: Twitter/X, LinkedIn, Reddit • Content: Weekly blog posts, Case studies, Video tutorials</p>
+                    </div>
+                    <div>
+                      <p className="text-text-primary font-semibold mb-2">SEO Strategy:</p>
+                      <p>Target keywords, content plan, technical SEO, estimated organic traffic</p>
+                    </div>
+                    <div>
+                      <p className="text-text-primary font-semibold mb-2">Competitive Analysis:</p>
+                      <p>Competitor weaknesses, your advantages, market positioning</p>
+                    </div>
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <UpgradePrompt
+                      feature="Detailed Market Reports"
+                      description="Upgrade to Pro to unlock team breakdowns, lead generation strategies, marketing playbooks, SEO plans, and competitive analysis."
+                    />
+                  </div>
                 </div>
               )}
 
@@ -435,8 +496,12 @@ export function IdeaDetailPage() {
               <button
                 onClick={async () => {
                   if (!user) return
-                  const saved = await toggleBookmark(idea.id)
-                  toast(saved ? 'Idea saved' : 'Removed from saved')
+                  const result = await toggleBookmark(idea.id)
+                  if (result === 'limit') {
+                    toast('Save limit reached. Upgrade to Pro for unlimited saves!')
+                    return
+                  }
+                  toast(result ? 'Idea saved' : 'Removed from saved')
                 }}
                 className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors cursor-pointer ${
                   isBookmarked(idea.id) ? 'text-brand' : 'text-text-muted hover:bg-surface-2'

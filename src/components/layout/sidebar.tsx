@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
+import { useSubscription } from '@/hooks/use-subscription'
 import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/utils'
 import { useCategories, type DynamicCategory } from '@/lib/categories'
@@ -26,6 +27,7 @@ interface SidebarProps {
 
 export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
   const { user, profile, signOut } = useAuth()
+  const { tier } = useSubscription()
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
   const { categories } = useCategories()
@@ -232,6 +234,13 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                   <p className="text-xs font-medium truncate">{profile?.full_name || 'User'}</p>
                   <p className="text-[10px] text-text-muted truncate">{user.email}</p>
                 </div>
+                <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md shrink-0 ${
+                  tier === 'team' ? 'bg-accent/15 text-accent' :
+                  tier === 'pro' ? 'bg-brand/15 text-brand' :
+                  'bg-surface-3 text-text-muted'
+                }`}>
+                  {tier}
+                </span>
               </div>
             </Link>
           </div>

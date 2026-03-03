@@ -108,6 +108,7 @@ export function DashboardPage() {
           liked_categories: [...new Set(likedCategories)] as string[],
           disliked_categories: [...new Set(dislikedCategories)] as string[],
         },
+        priorityGeneration: !isFree,
       })
 
       if (idea) {

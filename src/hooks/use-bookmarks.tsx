@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './use-auth'
+import { canSaveIdea } from '@/lib/subscription'
+import type { SubscriptionTier } from '@/types/database'
 
 export function useBookmarks() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
 
@@ -25,10 +27,19 @@ export function useBookmarks() {
     fetchBookmarks()
   }, [fetchBookmarks])
 
-  const toggleBookmark = useCallback(async (ideaId: string): Promise<boolean> => {
+  const toggleBookmark = useCallback(async (ideaId: string): Promise<boolean | 'limit'> => {
     if (!user) return false
     setLoading(true)
     const isCurrentlyBookmarked = bookmarkedIds.has(ideaId)
+
+    // Enforce save limit for non-bookmarked ideas
+    if (!isCurrentlyBookmarked) {
+      const tier = (profile?.subscription_tier as SubscriptionTier) || 'free'
+      if (!canSaveIdea(tier, bookmarkedIds.size)) {
+        setLoading(false)
+        return 'limit'
+      }
+    }
 
     if (isCurrentlyBookmarked) {
       setBookmarkedIds(prev => {

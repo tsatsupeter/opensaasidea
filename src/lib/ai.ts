@@ -187,6 +187,7 @@ export async function generateSaasIdea(options?: {
   preferredPlatforms?: string[]
   experienceLevel?: string
   voteFeedback?: { liked_categories: string[]; disliked_categories: string[] }
+  priorityGeneration?: boolean
 }): Promise<Record<string, unknown> | null> {
   let userContext = ''
 
@@ -257,7 +258,7 @@ export async function generateSaasIdea(options?: {
           'X-Title': 'OpenSaaSIdea',
         },
         body: JSON.stringify({
-          model: 'deepseek/deepseek-chat',
+          model: options?.priorityGeneration ? 'anthropic/claude-sonnet-4' : 'deepseek/deepseek-chat',
           messages: [
             { role: 'system', content: SYSTEM_PROMPT },
             { role: 'user', content: userMessage },
@@ -332,7 +333,7 @@ export async function saveIdeaToSupabase(
     unique_differentiators: idea.unique_differentiators as string[],
     pros: idea.pros as string[],
     cons: idea.cons as string[],
-    ai_model_used: 'deepseek/deepseek-chat',
+    ai_model_used: idea.ai_model_used as string || 'deepseek/deepseek-chat',
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
