@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { LayoutDashboard, Loader2, Lock, Globe, RefreshCw, BookmarkCheck } from 'lucide-react'
+import { LayoutDashboard, Loader2, Lock, Globe, RefreshCw, BookmarkCheck, Crown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -154,9 +154,13 @@ export function DashboardPage() {
           </div>
           {!generating && (
             <div className="flex items-center gap-3 shrink-0">
-              {remainingIdeas !== null && (
+              {remainingIdeas !== null ? (
                 <span className={`text-xs ${remainingIdeas === 0 ? 'text-rose' : 'text-text-muted'}`}>
                   {remainingIdeas === 0 ? 'Daily limit reached' : `${remainingIdeas} idea${remainingIdeas !== 1 ? 's' : ''} left today`}
+                </span>
+              ) : (
+                <span className="text-xs text-brand font-medium flex items-center gap-1">
+                  <Crown className="h-3 w-3" /> Unlimited
                 </span>
               )}
               <Button onClick={handleGenerate} className="group" disabled={!checkCanGenerate()}>

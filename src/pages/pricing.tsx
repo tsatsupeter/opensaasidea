@@ -11,6 +11,12 @@ import { useToast } from '@/components/ui/toast'
 import { TIERS, getProductId, DODO_PRODUCTS } from '@/lib/subscription'
 import type { SubscriptionTier } from '@/types/database'
 
+const TIER_HIGHLIGHT: Record<SubscriptionTier, string> = {
+  free: '',
+  pro: 'bg-brand/5',
+  team: 'bg-accent/5',
+}
+
 const TIER_ICONS: Record<SubscriptionTier, typeof Zap> = {
   free: Zap,
   pro: Crown,
@@ -241,19 +247,31 @@ export function PricingPage() {
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-3xl font-extrabold">$9.99</p>
-                <p className="text-xs text-text-muted mb-3">per report</p>
-                <Button
-                  variant="outline"
-                  onClick={handleBuyReport}
-                  disabled={loadingTier === 'report'}
-                >
-                  {loadingTier === 'report' ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    'Buy Report'
-                  )}
-                </Button>
+                {currentTier === 'pro' || currentTier === 'team' ? (
+                  <>
+                    <div className="flex items-center gap-1.5 mb-2 justify-end">
+                      <Check className="h-4 w-4 text-emerald" />
+                      <span className="text-sm font-semibold text-emerald">Included in your plan</span>
+                    </div>
+                    <p className="text-xs text-text-muted">Export any idea as PDF from the idea page</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-3xl font-extrabold">$9.99</p>
+                    <p className="text-xs text-text-muted mb-3">per report</p>
+                    <Button
+                      variant="outline"
+                      onClick={handleBuyReport}
+                      disabled={loadingTier === 'report'}
+                    >
+                      {loadingTier === 'report' ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        'Buy Report'
+                      )}
+                    </Button>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
