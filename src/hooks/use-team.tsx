@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { useSubscription } from '@/hooks/use-subscription'
+import { createNotification } from '@/hooks/use-notifications'
 
 // Helper — cast to bypass missing generated types for new tables
 const db = (table: string): any => (supabase.from as any)(table)
@@ -85,6 +86,7 @@ export function useTeam() {
   const [customCategories, setCustomCategories] = useState<CustomCategory[]>([])
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([])
   const [loading, setLoading] = useState(true)
+  const [dataLoading, setDataLoading] = useState(true)
 
   const fetchTeam = useCallback(async () => {
     if (!user) { setLoading(false); return }
@@ -170,7 +172,14 @@ export function useTeam() {
   }, [user])
 
   useEffect(() => { fetchTeam() }, [fetchTeam])
-  useEffect(() => { if (team) { fetchMembers(); fetchTeamIdeas() } }, [team, fetchMembers, fetchTeamIdeas])
+  useEffect(() => {
+    if (team) {
+      setDataLoading(true)
+      Promise.all([fetchMembers(), fetchTeamIdeas()]).finally(() => setDataLoading(false))
+    } else {
+      setDataLoading(false)
+    }
+  }, [team, fetchMembers, fetchTeamIdeas])
   useEffect(() => { if (user && isTeam) { fetchCustomCategories(); fetchApiKeys() } }, [user, isTeam, fetchCustomCategories, fetchApiKeys])
 
   // --- ACTIONS ---
@@ -216,9 +225,23 @@ export function useTeam() {
     })
     if (error) return { success: false }
 
+    const inviterName = (await db('profiles').select('full_name').eq('id', user.id).single())?.data?.full_name || 'Someone'
+
     if (existingProfile) {
       await db('profiles').update({ team_id: team.id }).eq('id', existingProfile.id)
+      // Notify existing user they were added
+      await createNotification(
+        existingProfile.id,
+        'team_joined',
+        `You were added to ${team.name}`,
+        `${inviterName} added you to the team. Head to the Team workspace to get started.`,
+        { team_id: team.id }
+      )
+    } else {
+      // For pending invites - notification will be created when they sign up and we match their email
+      // But also create one keyed to the invite token for the accept flow
     }
+
     await fetchMembers()
     return { success: true, token: existingProfile ? undefined : inviteToken }
   }, [team, user, members, fetchMembers])
@@ -230,6 +253,14 @@ export function useTeam() {
     await db('team_members').update({ status: 'removed' }).eq('id', memberId)
     if (member.user_id) {
       await db('profiles').update({ team_id: null }).eq('id', member.user_id)
+      // Notify removed user
+      await createNotification(
+        member.user_id,
+        'team_removed',
+        `You were removed from ${team.name}`,
+        'You no longer have access to this team workspace.',
+        { team_id: team.id }
+      )
     }
     await fetchMembers()
     return true
@@ -325,8 +356,19 @@ export function useTeam() {
     // Link profile to team
     await db('profiles').update({ team_id: invite.team_id }).eq('id', user.id)
 
-    // Get team name for confirmation
-    const { data: teamData } = await db('teams').select('name').eq('id', invite.team_id).single()
+    // Get team info + notify the team owner
+    const { data: teamData } = await db('teams').select('name, owner_id').eq('id', invite.team_id).single()
+    const userName = (await db('profiles').select('full_name').eq('id', user.id).single())?.data?.full_name || 'A new member'
+
+    if (teamData?.owner_id) {
+      await createNotification(
+        teamData.owner_id,
+        'team_joined',
+        `${userName} joined ${teamData.name}`,
+        'They accepted the team invite and are now a member.',
+        { team_id: invite.team_id, user_id: user.id }
+      )
+    }
 
     // Re-fetch everything
     await fetchTeam()
@@ -344,7 +386,7 @@ export function useTeam() {
   }, [fetchApiKeys])
 
   return {
-    team, members, teamIdeas, customCategories, apiKeys, loading,
+    team, members, teamIdeas, customCategories, apiKeys, loading, dataLoading,
     createTeam, inviteMember, removeMember, updateMemberRole,
     shareIdeaToTeam, updateTeamIdeaStatus, assignTeamIdea, voteOnTeamIdea,
     addCustomCategory, deleteCustomCategory,

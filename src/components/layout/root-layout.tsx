@@ -5,6 +5,7 @@ import { siteConfig, getBrandParts } from '@/lib/site-config'
 import { Sidebar } from './sidebar'
 import { RightSidebar } from './right-sidebar'
 import { SearchBar } from '@/components/ui/search-bar'
+import { NotificationsDropdown } from '@/components/ui/notifications-dropdown'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 
@@ -55,6 +56,7 @@ export function RootLayout() {
         <div className="flex items-center gap-2 shrink-0">
           {user ? (
             <>
+              <NotificationsDropdown />
               <Link to="/dashboard">
                 <Button size="sm" className="hidden sm:flex gap-1.5 text-xs">
                   <Plus className="h-3.5 w-3.5" />

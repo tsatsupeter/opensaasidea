@@ -4,6 +4,7 @@ import { AuthProvider } from '@/hooks/use-auth'
 import { ThemeProvider } from '@/hooks/use-theme'
 import { RecentProvider } from '@/hooks/use-recent'
 import { ToastProvider } from '@/components/ui/toast'
+import { NotificationsProvider } from '@/hooks/use-notifications'
 import { RootLayout } from '@/components/layout/root-layout'
 import { HomePage } from '@/pages/home'
 import { ExplorePage } from '@/pages/explore'
@@ -41,6 +42,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
+          <NotificationsProvider>
           <RecentProvider>
             <ToastProvider>
             <BrowserRouter>
@@ -77,6 +79,7 @@ function App() {
             </BrowserRouter>
             </ToastProvider>
           </RecentProvider>
+          </NotificationsProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

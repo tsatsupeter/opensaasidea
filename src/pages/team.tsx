@@ -26,7 +26,7 @@ export function TeamPage() {
   const navigate = useNavigate()
   const { isTeam, tier } = useSubscription()
   const {
-    team, members, teamIdeas, customCategories, apiKeys, loading,
+    team, members, teamIdeas, customCategories, apiKeys, loading, dataLoading,
     createTeam, inviteMember, removeMember, updateMemberRole,
     updateTeamIdeaStatus, assignTeamIdea, voteOnTeamIdea,
     addCustomCategory, deleteCustomCategory,
@@ -67,7 +67,7 @@ export function TeamPage() {
     )
   }
 
-  if (loading) {
+  if (loading || (team && dataLoading)) {
     return <TeamSkeleton />
   }
 
