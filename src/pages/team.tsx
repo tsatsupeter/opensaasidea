@@ -246,13 +246,37 @@ function IdeasTab({ teamIdeas, members, user, isAdmin, updateTeamIdeaStatus, ass
 
   if (teamIdeas.length === 0) {
     return (
-      <div className="text-center py-16 space-y-4">
-        <LayoutDashboard className="h-10 w-10 text-text-muted mx-auto" />
-        <h3 className="text-[15px] font-bold">No shared ideas yet</h3>
-        <p className="text-sm text-text-muted max-w-sm mx-auto">
-          When you find an idea you like, use the <strong>"Share to Team"</strong> button on the idea page. Your team can then vote and discuss it here.
-        </p>
-        <div className="flex items-center justify-center gap-3 pt-1">
+      <div className="space-y-6 py-4">
+        <div className="text-center space-y-2">
+          <LayoutDashboard className="h-10 w-10 text-text-muted mx-auto" />
+          <h3 className="text-[15px] font-bold">No shared ideas yet</h3>
+          <p className="text-[12px] text-text-muted">Here's how your team workspace works:</p>
+        </div>
+
+        {/* Step-by-step guide */}
+        <div className="grid gap-3 max-w-lg mx-auto">
+          {[
+            { step: '1', title: 'Find ideas you like', desc: 'Browse the Explore page or generate new ideas from your Dashboard.', href: '/explore', cta: 'Browse Ideas' },
+            { step: '2', title: 'Share to your team', desc: 'On any idea page, click the "Share to Team" button to add it here.' },
+            { step: '3', title: 'Vote together', desc: 'Team members can approve, reject, or mark ideas as "maybe".' },
+            { step: '4', title: 'Track progress', desc: 'Admins can change status (reviewing, approved, in progress) and assign ideas to members.' },
+          ].map(s => (
+            <div key={s.step} className="flex items-start gap-3 rounded-xl border border-border bg-surface-0 p-4">
+              <span className="h-7 w-7 rounded-full bg-accent/10 text-accent text-[12px] font-bold flex items-center justify-center shrink-0">{s.step}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold">{s.title}</p>
+                <p className="text-[11px] text-text-muted mt-0.5">{s.desc}</p>
+                {s.href && s.cta && (
+                  <Link to={s.href} className="inline-block mt-2">
+                    <Button size="sm" variant="outline" className="text-[11px] h-7 px-3">{s.cta}</Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-center gap-3">
           <Link to="/explore"><Button variant="outline">Browse Ideas</Button></Link>
           <Link to="/dashboard"><Button>Generate New Idea</Button></Link>
         </div>
