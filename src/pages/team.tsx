@@ -52,7 +52,12 @@ export function TeamPage() {
     )
   }
 
-  if (!isTeam) {
+  if (loading || (team && dataLoading)) {
+    return <TeamSkeleton />
+  }
+
+  // Allow access if user has team subscription OR is already a member of a team
+  if (!isTeam && !team) {
     return (
       <div className="max-w-2xl mx-auto py-20 text-center space-y-4">
         <div className="mx-auto h-16 w-16 rounded-full bg-accent/10 flex items-center justify-center">
@@ -65,10 +70,6 @@ export function TeamPage() {
         </Link>
       </div>
     )
-  }
-
-  if (loading || (team && dataLoading)) {
-    return <TeamSkeleton />
   }
 
   // --- CREATE TEAM ---

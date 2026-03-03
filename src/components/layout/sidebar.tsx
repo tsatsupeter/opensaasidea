@@ -189,7 +189,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                     className="overflow-hidden"
                   >
                     <NavLink href="/dashboard" icon={LayoutDashboard} label="Dashboard" />
-                    {tier === 'team' && <NavLink href="/team" icon={Users} label="Team" />}
+                    <NavLink href="/team" icon={Users} label="Team" />
                     <NavLink href="/stats" icon={BarChart3} label="Stats" />
 
                     {/* Profile sub-nav */}
