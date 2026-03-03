@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
 import { siteConfig } from '@/lib/site-config'
 
-const API_BASE = `https://${siteConfig.domain}/v1/api`
+const API_BASE = `https://openprojectidea.com/v1/api`
 const DOCS_URL = `https://docs.openprojectidea.com`
 
 export function DeveloperApiPage() {
@@ -125,13 +125,30 @@ export function DeveloperApiPage() {
       const { data, error } = await supabase.functions.invoke('create-credit-checkout', {
         body: { amount },
       })
-      if (error) throw error
+      if (error) {
+        console.error('Credit checkout error:', error)
+        // Try to extract checkout_url from error context (FunctionsHttpError)
+        if (error.context?.body) {
+          try {
+            const body = typeof error.context.body === 'string'
+              ? JSON.parse(error.context.body)
+              : error.context.body
+            if (body?.checkout_url) {
+              window.location.href = body.checkout_url
+              return
+            }
+          } catch { /* ignore parse errors */ }
+        }
+        throw error
+      }
       if (data?.checkout_url) {
         window.location.href = data.checkout_url
       } else {
+        console.error('No checkout_url in response:', data)
         toast('Failed to create checkout')
       }
-    } catch {
+    } catch (err) {
+      console.error('Credit checkout exception:', err)
       toast('Failed to create checkout')
     }
     setPurchasing(false)

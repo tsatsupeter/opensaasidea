@@ -1,34 +1,58 @@
 ---
 title: "Credits & Billing"
+sidebarTitle: "Credits & Billing"
 description: "Pay-per-use pricing with transparent costs per API call."
 ---
 
-# Credits & Billing
+API access uses a credit-based system. Each call deducts a small amount from your balance. Many endpoints are completely free.
 
-API access uses a credit-based system. Each API call deducts a small amount from your credit balance. Some endpoints are completely free.
+<CardGroup cols={3}>
+  <Card title="$0.01" icon="circle-dot">
+    Most read endpoints
+  </Card>
+  <Card title="$0.02" icon="search">
+    Search & write endpoints
+  </Card>
+  <Card title="Free" icon="check">
+    Categories, stats, account, deletes
+  </Card>
+</CardGroup>
+
+---
 
 ## Pricing Table
 
-| Endpoint | Cost per Call | Scope |
-|---|---|---|
-| `GET /ideas` | $0.01 | `ideas:read` |
-| `GET /ideas/search` | $0.02 | `ideas:read` |
-| `GET /ideas/trending` | $0.01 | `ideas:read` |
-| `GET /ideas/:slug` | $0.01 | `ideas:read` |
-| `GET /ideas/:id/comments` | $0.01 | `comments:read` |
-| `POST /ideas/:id/comments` | $0.02 | `comments:write` |
-| `DELETE /comments/:id` | **Free** | `comments:write` |
-| `GET /ideas/:id/votes` | **Free** | `votes:read` |
-| `POST /ideas/:id/vote` | $0.01 | `votes:write` |
-| `DELETE /ideas/:id/vote` | **Free** | `votes:write` |
-| `GET /bookmarks` | $0.01 | `bookmarks:read` |
-| `POST /bookmarks` | $0.01 | `bookmarks:write` |
-| `DELETE /bookmarks/:id` | **Free** | `bookmarks:write` |
-| `GET /categories` | **Free** | `categories:read` |
-| `GET /stats` | **Free** | `stats:read` |
-| `GET /account/credits` | **Free** | `account:read` |
-| `GET /account/profile` | **Free** | `account:read` |
-| `GET /account/usage` | **Free** | `account:read` |
+<AccordionGroup>
+  <Accordion title="Paid endpoints" icon="wallet" defaultOpen>
+    | Endpoint | Cost |
+    |---|---|
+    | `GET /ideas` | $0.01 |
+    | `GET /ideas/search` | $0.02 |
+    | `GET /ideas/trending` | $0.01 |
+    | `GET /ideas/:slug` | $0.01 |
+    | `GET /ideas/:id/comments` | $0.01 |
+    | `POST /ideas/:id/comments` | $0.02 |
+    | `POST /ideas/:id/vote` | $0.01 |
+    | `GET /bookmarks` | $0.01 |
+    | `POST /bookmarks` | $0.01 |
+  </Accordion>
+
+  <Accordion title="Free endpoints" icon="badge-check">
+    | Endpoint | Cost |
+    |---|---|
+    | `DELETE /comments/:id` | Free |
+    | `GET /ideas/:id/votes` | Free |
+    | `DELETE /ideas/:id/vote` | Free |
+    | `DELETE /bookmarks/:id` | Free |
+    | `GET /categories` | Free |
+    | `GET /stats` | Free |
+    | `GET /account/credits` | Free |
+    | `GET /account/profile` | Free |
+    | `GET /account/usage` | Free |
+  </Accordion>
+</AccordionGroup>
+
+---
 
 ## Free Credit
 
@@ -40,15 +64,13 @@ That's enough for:
 - **500** list or detail requests (`GET /ideas`, `GET /ideas/:slug`)
 - **250** search requests (`GET /ideas/search`)
 - **500** comment reads or vote actions
-- Unlimited free endpoints (categories, stats, account)
+- **Unlimited** free endpoints (categories, stats, account)
+
+---
 
 ## Adding Credits
 
-Top up your balance from the Developer Dashboard with any amount between **$5 and $500**:
-- [openprojectidea.com/developer-api](https://openprojectidea.com/developer-api)
-- [opensaasidea.com/developer-api](https://opensaasidea.com/developer-api)
-
-Payments are processed securely via Dodo Payments. Credits are added instantly.
+Top up your balance from the [Developer Dashboard](https://openprojectidea.com/developer-api) with any amount between **$5 and $500**. Payments are processed securely via Dodo Payments and credits are added instantly.
 
 ## Checking Your Balance
 
@@ -59,7 +81,7 @@ curl -H "x-api-key: YOUR_API_KEY" \
   https://openprojectidea.com/v1/api/account/credits
 ```
 
-```json
+```json Response
 {
   "data": {
     "balance": 4.50,
@@ -71,11 +93,13 @@ curl -H "x-api-key: YOUR_API_KEY" \
 }
 ```
 
+---
+
 ## Insufficient Credits
 
 If your balance is too low, you'll receive a `402` response:
 
-```json
+```json 402 - Insufficient Credits
 {
   "error": "insufficient_credits",
   "message": "Not enough API credits. Balance: $0.03, cost: $0.02",

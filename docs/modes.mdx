@@ -1,54 +1,57 @@
 ---
 title: "API Modes"
+sidebarTitle: "API Modes"
 description: "Broad vs Lite - choose the right data depth for your use case."
 ---
 
-# API Modes
-
 The same API key works on both domains. The difference is the **depth of data** returned in idea responses.
 
-## Broad Mode (openprojectidea.com)
+<CardGroup cols={2}>
+  <Card title="Broad Mode" icon="layers">
+    **openprojectidea.com** - Full dataset with revenue breakdowns, marketing strategies, SEO plans, team roles, and competitor analysis.
+  </Card>
+  <Card title="Lite Mode" icon="layout-list">
+    **opensaasidea.com** - Streamlined SaaS-focused data with core fields: title, tech stack, pricing, MRR, pros and cons.
+  </Card>
+</CardGroup>
 
-Returns the full dataset for every idea, designed for comprehensive analysis tools and dashboards.
+---
+
+## Broad Mode
+
+Returns the full dataset for every idea. Designed for comprehensive analysis tools and dashboards.
 
 **Base URL:** `https://openprojectidea.com/v1/api`
 
-### Idea List Fields (Broad)
-```
-id, title, slug, tagline, category, platform, monetization_model,
-estimated_mrr_low, estimated_mrr_high, vote_score, upvotes, downvotes,
-views, comment_count, created_at
-```
+<AccordionGroup>
+  <Accordion title="List fields" icon="list" defaultOpen>
+    `id` `title` `slug` `tagline` `category` `platform` `monetization_model` `estimated_mrr_low` `estimated_mrr_high` `vote_score` `upvotes` `downvotes` `views` `comment_count` `created_at`
+  </Accordion>
+  <Accordion title="Detail fields (additional)" icon="file-text">
+    `description` `pricing_tiers` `estimated_daily_sales` `estimated_weekly_sales` `estimated_monthly_sales` `revenue_breakdown` `tech_stack` `team_roles` `lead_generation` `marketing_strategy` `seo_strategy` `existing_competitors` `unique_differentiators` `pros` `cons` `updated_at`
+  </Accordion>
+</AccordionGroup>
 
-### Idea Detail Fields (Broad)
-All list fields plus:
-```
-description, pricing_tiers, estimated_daily_sales, estimated_weekly_sales,
-estimated_monthly_sales, revenue_breakdown, tech_stack, team_roles,
-lead_generation, marketing_strategy, seo_strategy, existing_competitors,
-unique_differentiators, pros, cons, updated_at
-```
+---
 
-## Lite Mode (opensaasidea.com)
+## Lite Mode
 
-Returns a streamlined, SaaS-focused subset. Ideal for lightweight integrations and SaaS-specific tools.
+Returns a streamlined, SaaS-focused subset. Ideal for lightweight integrations.
 
 **Base URL:** `https://opensaasidea.com/v1/api`
 
-### Idea List Fields (Lite)
-```
-id, title, slug, tagline, category, platform, monetization_model,
-estimated_mrr_low, estimated_mrr_high, vote_score, created_at
-```
+<AccordionGroup>
+  <Accordion title="List fields" icon="list" defaultOpen>
+    `id` `title` `slug` `tagline` `category` `platform` `monetization_model` `estimated_mrr_low` `estimated_mrr_high` `vote_score` `created_at`
+  </Accordion>
+  <Accordion title="Detail fields (additional)" icon="file-text">
+    `description` `pricing_tiers` `tech_stack` `pros` `cons` `upvotes` `downvotes` `views` `comment_count`
+  </Accordion>
+</AccordionGroup>
 
-### Idea Detail Fields (Lite)
-All list fields plus:
-```
-description, pricing_tiers, tech_stack, pros, cons,
-upvotes, downvotes, views, comment_count
-```
+---
 
-## Comparison
+## Field Comparison
 
 | Field | Broad | Lite |
 |---|---|---|
@@ -57,31 +60,39 @@ upvotes, downvotes, views, comment_count
 | Tech stack | Yes | Yes |
 | Pricing tiers | Yes | Yes |
 | Pros and cons | Yes | Yes |
-| Revenue breakdown | Yes | No |
-| Marketing strategy | Yes | No |
-| SEO strategy | Yes | No |
-| Team roles | Yes | No |
-| Lead generation | Yes | No |
-| Competitor analysis | Yes | No |
-| Sales estimates (daily/weekly/monthly) | Yes | No |
+| Revenue breakdown | Yes | - |
+| Marketing strategy | Yes | - |
+| SEO strategy | Yes | - |
+| Team roles | Yes | - |
+| Lead generation | Yes | - |
+| Competitor analysis | Yes | - |
+| Sales estimates (daily/weekly/monthly) | Yes | - |
 | Views and comment count | Yes | Yes |
 | Vote details (up/down) | Yes | Scores only |
+
+---
 
 ## How Mode is Determined
 
 The mode is automatically set based on which domain you call:
 
-```bash
-# This returns BROAD data
-curl -H "x-api-key: osk_..." https://openprojectidea.com/v1/api/ideas
+<CodeGroup>
 
-# This returns LITE data
-curl -H "x-api-key: osk_..." https://opensaasidea.com/v1/api/ideas
+```bash Broad Mode
+curl -H "x-api-key: osk_..." \
+  https://openprojectidea.com/v1/api/ideas
 ```
 
-Every response includes `meta.mode` so you can verify which mode was used:
+```bash Lite Mode
+curl -H "x-api-key: osk_..." \
+  https://opensaasidea.com/v1/api/ideas
+```
 
-```json
+</CodeGroup>
+
+Every response includes `meta.mode` so you can verify:
+
+```json Response
 {
   "data": [...],
   "meta": {

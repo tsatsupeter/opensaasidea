@@ -1,41 +1,56 @@
 ---
-title: "Introduction"
-description: "Programmatic access to AI-generated project and SaaS ideas via two API modes."
+title: "OpenProjectIdea API"
+sidebarTitle: "Introduction"
+description: "Programmatic access to thousands of AI-generated project and business ideas with full revenue breakdowns, tech stacks, and execution plans."
 ---
 
-# OpenProjectIdea API
-
-Two APIs, one platform. Access thousands of AI-generated ideas programmatically.
-
-- **Broad API** (`openprojectidea.com`) - Full data including revenue breakdowns, marketing strategies, SEO plans, team roles, competitors, and lead generation.
-- **Lite API** (`opensaasidea.com`) - Streamlined SaaS-focused data with core fields: title, description, tech stack, pricing, and MRR estimates.
-
-Both APIs share the same authentication, scopes, and credit system. The only difference is the depth of data returned.
+Build apps, dashboards, and integrations on top of **thousands of AI-generated business ideas** with revenue breakdowns, tech stacks, marketing strategies, and more.
 
 <CardGroup cols={3}>
-  <Card title="REST + JSON" icon="bolt">
-    Simple x-api-key header auth. GET, POST, DELETE methods.
+  <Card title="REST + JSON" icon="zap">
+    Simple `x-api-key` header auth. GET, POST, DELETE methods. No OAuth complexity.
   </Card>
-  <Card title="Pay-per-use" icon="credit-card">
-    $0.01-$0.02 per call. Many endpoints are free.
+  <Card title="Pay-per-use" icon="wallet">
+    Transparent pricing at $0.01-$0.02 per call. Many endpoints are completely free.
   </Card>
-  <Card title="$5 Free Credit" icon="gift">
-    Every new developer gets $5.00 free on their first API key.
+  <Card title="$5 Free Credit" icon="badge-dollar-sign">
+    Every developer gets $5.00 free credit on their first API key. No card required.
   </Card>
 </CardGroup>
 
-## Base URLs
+---
 
-| Mode | Base URL | Description |
-|---|---|---|
-| **Broad** | `https://openprojectidea.com/v1/api` | All fields, full detail |
-| **Lite** | `https://opensaasidea.com/v1/api` | SaaS-focused, streamlined |
+## Two API Modes
+
+One API key works across two domains with different data depths:
+
+<CardGroup cols={2}>
+  <Card title="Broad API" icon="layers">
+    **openprojectidea.com** - Full data including revenue breakdowns, marketing strategies, SEO plans, team roles, competitors, and lead generation.
+  </Card>
+  <Card title="Lite API" icon="layout-list">
+    **opensaasidea.com** - Streamlined SaaS-focused data with core fields: title, tech stack, pricing, and MRR estimates.
+  </Card>
+</CardGroup>
+
+| Mode | Base URL |
+|---|---|
+| **Broad** | `https://openprojectidea.com/v1/api` |
+| **Lite** | `https://opensaasidea.com/v1/api` |
+
+<Tip>
+Both modes share the same authentication, scopes, and credit system. See [API Modes](/modes) for a full field comparison.
+</Tip>
+
+---
 
 ## Quick Start
 
+Get up and running in under a minute.
+
 <Steps>
-  <Step title="Get an API Key">
-    Generate an API key from the [Developer Dashboard](https://openprojectidea.com/developer-api). You receive **$5.00 free credit** automatically.
+  <Step title="Generate an API key">
+    Visit the [Developer Dashboard](https://openprojectidea.com/developer-api) and create your first key. You receive **$5.00 free credit** automatically.
   </Step>
   <Step title="Make your first request">
     ```bash
@@ -44,32 +59,29 @@ Both APIs share the same authentication, scopes, and credit system. The only dif
     ```
   </Step>
   <Step title="Build something great">
-    Use the response data to power your app, dashboard, Slack bot, or integration.
+    Use the response data to power your app, dashboard, Slack bot, or any integration you can imagine.
   </Step>
 </Steps>
+
+---
 
 ## Code Examples
 
 <CodeGroup>
 
 ```bash cURL
-# Broad API (full data)
 curl -H "x-api-key: YOUR_API_KEY" \
-  https://openprojectidea.com/v1/api/ideas
-
-# Lite API (SaaS-focused)
-curl -H "x-api-key: YOUR_API_KEY" \
-  https://opensaasidea.com/v1/api/ideas
+  "https://openprojectidea.com/v1/api/ideas?limit=10&sort=popular"
 ```
 
 ```javascript JavaScript
 const res = await fetch(
-  "https://openprojectidea.com/v1/api/ideas",
+  "https://openprojectidea.com/v1/api/ideas?limit=10&sort=popular",
   { headers: { "x-api-key": "YOUR_API_KEY" } }
 );
 const { data, meta } = await res.json();
-console.log(data); // array of ideas
-console.log(meta); // { total, limit, offset, mode }
+console.log(`Found ${meta.total} ideas (${meta.mode} mode)`);
+data.forEach(idea => console.log(idea.title, `$${idea.estimated_mrr_high}/mo`));
 ```
 
 ```python Python
@@ -80,29 +92,75 @@ res = requests.get(
     headers={"x-api-key": "YOUR_API_KEY"},
     params={"limit": 10, "sort": "popular"}
 )
-data = res.json()
-for idea in data["data"]:
-    print(idea["title"], idea["estimated_mrr_high"])
+result = res.json()
+for idea in result["data"]:
+    print(f"{idea['title']} - ${idea['estimated_mrr_high']}/mo")
 ```
 
 </CodeGroup>
 
-## All Endpoints
+---
 
-| Endpoint | Scope | Cost | Methods |
-|---|---|---|---|
-| `/ideas` | `ideas:read` | $0.01 | GET |
-| `/ideas/search?q=` | `ideas:read` | $0.02 | GET |
-| `/ideas/trending` | `ideas:read` | $0.01 | GET |
-| `/ideas/:slug` | `ideas:read` | $0.01 | GET |
-| `/ideas/:id/comments` | `comments:read/write` | $0.01-$0.02 | GET, POST |
-| `/comments/:id` | `comments:write` | Free | DELETE |
-| `/ideas/:id/votes` | `votes:read` | Free | GET |
-| `/ideas/:id/vote` | `votes:write` | $0.01 | POST, DELETE |
-| `/bookmarks` | `bookmarks:read/write` | $0.01 | GET, POST |
-| `/bookmarks/:idea_id` | `bookmarks:write` | Free | DELETE |
-| `/categories` | `categories:read` | Free | GET |
-| `/stats` | `stats:read` | Free | GET |
-| `/account/credits` | `account:read` | Free | GET |
-| `/account/profile` | `account:read` | Free | GET |
-| `/account/usage` | `account:read` | Free | GET |
+## Endpoint Overview
+
+<AccordionGroup>
+  <Accordion title="Ideas" icon="lightbulb" defaultOpen>
+    | Endpoint | Cost | Methods |
+    |---|---|---|
+    | `/ideas` | $0.01 | GET |
+    | `/ideas/search?q=` | $0.02 | GET |
+    | `/ideas/trending` | $0.01 | GET |
+    | `/ideas/:slug` | $0.01 | GET |
+  </Accordion>
+
+  <Accordion title="Comments" icon="message-circle">
+    | Endpoint | Cost | Methods |
+    |---|---|---|
+    | `/ideas/:id/comments` | $0.01 | GET |
+    | `/ideas/:id/comments` | $0.02 | POST |
+    | `/comments/:id` | Free | DELETE |
+  </Accordion>
+
+  <Accordion title="Votes" icon="arrow-up-circle">
+    | Endpoint | Cost | Methods |
+    |---|---|---|
+    | `/ideas/:id/votes` | Free | GET |
+    | `/ideas/:id/vote` | $0.01 | POST |
+    | `/ideas/:id/vote` | Free | DELETE |
+  </Accordion>
+
+  <Accordion title="Bookmarks" icon="bookmark">
+    | Endpoint | Cost | Methods |
+    |---|---|---|
+    | `/bookmarks` | $0.01 | GET |
+    | `/bookmarks` | $0.01 | POST |
+    | `/bookmarks/:idea_id` | Free | DELETE |
+  </Accordion>
+
+  <Accordion title="Categories, Stats & Account" icon="bar-chart-3">
+    | Endpoint | Cost | Methods |
+    |---|---|---|
+    | `/categories` | Free | GET |
+    | `/stats` | Free | GET |
+    | `/account/credits` | Free | GET |
+    | `/account/profile` | Free | GET |
+    | `/account/usage` | Free | GET |
+  </Accordion>
+</AccordionGroup>
+
+---
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="lock" href="/authentication">
+    Learn how to generate API keys and authenticate your requests.
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/overview">
+    Explore all endpoints with request/response examples.
+  </Card>
+  <Card title="Credits & Billing" icon="wallet" href="/credits">
+    Understand pay-per-use pricing and manage your credit balance.
+  </Card>
+  <Card title="Error Codes" icon="alert-triangle" href="/reference/errors">
+    Handle errors gracefully with our detailed error reference.
+  </Card>
+</CardGroup>

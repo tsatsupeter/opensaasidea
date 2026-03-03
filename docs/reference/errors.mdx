@@ -1,15 +1,12 @@
 ---
 title: "Error Codes"
+sidebarTitle: "Errors"
 description: "HTTP status codes and error responses returned by the API."
 ---
-
-# Error Codes
 
 The API uses standard HTTP status codes and returns JSON error bodies with descriptive messages.
 
 ## Error Response Format
-
-All errors follow this structure:
 
 ```json
 {
@@ -17,6 +14,8 @@ All errors follow this structure:
   "message": "Human-readable description of the error"
 }
 ```
+
+---
 
 ## Status Codes
 
@@ -27,99 +26,95 @@ All errors follow this structure:
 | `402` | `insufficient_credits` | Not enough credits for this request |
 | `403` | `key_revoked` | The API key has been revoked |
 | `404` | `not_found` | Resource not found or unknown endpoint |
-| `429` | `rate_limited` | Too many requests — slow down |
+| `429` | `rate_limited` | Too many requests - slow down |
 | `500` | `internal_error` | Something went wrong on our end |
+
+---
 
 ## Detailed Examples
 
-### 401 — Invalid API Key
+<AccordionGroup>
+  <Accordion title="401 - Invalid API Key" icon="shield-off">
+    Returned when no API key is provided or the key is not recognized.
 
-Returned when no API key is provided or the key is not recognized.
+    ```json
+    {
+      "error": "invalid_api_key",
+      "message": "Provide a valid API key via x-api-key: osk_..."
+    }
+    ```
+  </Accordion>
 
-```json
-{
-  "error": "invalid_api_key",
-  "message": "Provide a valid API key via x-api-key: osk_..."
-}
-```
+  <Accordion title="402 - Insufficient Credits" icon="wallet">
+    Returned when your credit balance is too low for the requested endpoint.
 
-### 402 — Insufficient Credits
+    ```json
+    {
+      "error": "insufficient_credits",
+      "message": "Not enough API credits. Current balance: $0.03",
+      "balance_cents": 3,
+      "cost_cents": 2
+    }
+    ```
+  </Accordion>
 
-Returned when your credit balance is too low for the requested endpoint.
+  <Accordion title="403 - Key Revoked" icon="key">
+    Returned when using a key that has been revoked from the Developer Dashboard.
 
-```json
-{
-  "error": "insufficient_credits",
-  "message": "Not enough API credits. Current balance: $0.03",
-  "balance_cents": 3,
-  "cost_cents": 2
-}
-```
+    ```json
+    {
+      "error": "key_revoked",
+      "message": "This API key has been revoked"
+    }
+    ```
+  </Accordion>
 
-### 403 — Key Revoked
+  <Accordion title="403 - Insufficient Scope" icon="lock">
+    Returned when your API key lacks the required scope for the endpoint.
 
-Returned when using a key that has been revoked from the Developer Dashboard.
+    ```json
+    {
+      "error": "insufficient_scope",
+      "message": "This key lacks the 'comments:write' scope. Current scopes: [ideas:read, categories:read]"
+    }
+    ```
+  </Accordion>
 
-```json
-{
-  "error": "key_revoked",
-  "message": "This API key has been revoked"
-}
-```
+  <Accordion title="404 - Not Found" icon="search">
+    Returned when requesting a resource that doesn't exist or hitting an unknown endpoint.
 
-### 403 — Insufficient Scope
+    ```json
+    {
+      "error": "not_found",
+      "message": "Unknown endpoint: GET /foo",
+      "docs": "https://docs.openprojectidea.com"
+    }
+    ```
+  </Accordion>
 
-Returned when your API key lacks the required scope for the endpoint.
+  <Accordion title="409 - Conflict" icon="copy">
+    Returned when attempting a duplicate action (e.g. bookmarking an already-bookmarked idea).
 
-```json
-{
-  "error": "insufficient_scope",
-  "message": "This key lacks the 'comments:write' scope. Current scopes: [ideas:read, categories:read]"
-}
-```
+    ```json
+    {
+      "error": "already_bookmarked",
+      "message": "Idea already bookmarked"
+    }
+    ```
+  </Accordion>
 
-### 404 — Not Found
+  <Accordion title="429 - Rate Limited" icon="timer">
+    Returned when you exceed the rate limit.
 
-Returned when requesting a resource that doesn't exist or hitting an unknown endpoint.
-
-```json
-{
-  "error": "not_found",
-  "message": "Unknown endpoint: GET /foo",
-  "docs": "https://docs.openprojectidea.com",
-  "endpoints": [
-    "GET /ideas", "GET /ideas/search", "GET /ideas/trending",
-    "GET /ideas/:id", "GET /ideas/:id/comments", "POST /ideas/:id/comments",
-    "DELETE /comments/:id", "GET /ideas/:id/votes", "POST /ideas/:id/vote",
-    "DELETE /ideas/:id/vote", "GET /bookmarks", "POST /bookmarks",
-    "DELETE /bookmarks/:id", "GET /categories", "GET /stats",
-    "GET /account/credits", "GET /account/profile", "GET /account/usage"
-  ]
-}
-```
-
-### 409 — Conflict
-
-Returned when attempting a duplicate action (e.g. bookmarking an already-bookmarked idea).
-
-```json
-{
-  "error": "already_bookmarked",
-  "message": "Idea already bookmarked"
-}
-```
-
-### 429 — Rate Limited
-
-Returned when you exceed the rate limit.
-
-```json
-{
-  "error": "rate_limited",
-  "message": "Too many requests. Please wait a moment."
-}
-```
+    ```json
+    {
+      "error": "rate_limited",
+      "message": "Too many requests. Please wait a moment."
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
 
 <Info>
-If you receive a `500` error, please retry after a few seconds. If the issue persists, contact support at **support@opensaasidea.com**.
+If you receive a `500` error, please retry after a few seconds. If the issue persists, contact support at **support@openprojectidea.com**.
 </Info>

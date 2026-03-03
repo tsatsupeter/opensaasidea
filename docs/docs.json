@@ -1,18 +1,41 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "maple",
-  "name": "OpenProjectIdea API",
-  "description": "Developer documentation for the OpenProjectIdea & OpenSaaSIdea APIs - programmatic access to AI-generated project and SaaS ideas.",
-  "colors": {
-    "primary": "#F97316",
-    "light": "#F8FAFC",
-    "dark": "#09090B"
+  "name": "OpenProjectIdea",
+  "description": "Developer documentation for the OpenProjectIdea API - programmatic access to AI-generated project and business ideas.",
+  "logo": {
+    "light": "/logo-light.svg",
+    "dark": "/logo-dark.svg",
+    "href": "https://openprojectidea.com"
   },
   "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#F97316",
+    "light": "#FB923C",
+    "dark": "#EA580C"
+  },
+  "appearance": {
+    "default": "dark"
+  },
+  "icons": {
+    "library": "lucide"
+  },
+  "styling": {
+    "codeblocks": {
+      "theme": {
+        "light": "github-light",
+        "dark": "github-dark"
+      }
+    }
+  },
+  "search": {
+    "prompt": "Search docs..."
+  },
   "navigation": {
     "tabs": [
       {
         "tab": "Documentation",
+        "icon": "book-open",
         "groups": [
           {
             "group": "Getting Started",
@@ -28,6 +51,7 @@
       },
       {
         "tab": "API Reference",
+        "icon": "code",
         "groups": [
           {
             "group": "Overview",
@@ -87,6 +111,7 @@
       },
       {
         "tab": "Reference",
+        "icon": "file-text",
         "groups": [
           {
             "group": "Reference",
@@ -97,6 +122,22 @@
           }
         ]
       }
+    ],
+    "anchors": [
+      {
+        "anchor": "API Reference",
+        "href": "/api-reference/overview",
+        "icon": "code"
+      },
+      {
+        "anchor": "Get API Key",
+        "href": "https://openprojectidea.com/developer-api",
+        "icon": "key",
+        "color": {
+          "light": "#F97316",
+          "dark": "#FB923C"
+        }
+      }
     ]
   },
   "api": {
@@ -106,17 +147,20 @@
         "method": "key",
         "name": "x-api-key"
       }
+    },
+    "playground": {
+      "mode": "interactive"
     }
   },
   "navbar": {
     "links": [
       {
-        "label": "Broad API",
+        "label": "Dashboard",
         "href": "https://openprojectidea.com/developer-api"
       },
       {
-        "label": "Lite API",
-        "href": "https://opensaasidea.com/developer-api"
+        "label": "Pricing",
+        "href": "https://openprojectidea.com/pricing"
       }
     ],
     "primary": {
@@ -125,18 +169,32 @@
       "href": "https://openprojectidea.com/developer-api"
     }
   },
+  "contextual": {
+    "options": [
+      "copy",
+      "view"
+    ]
+  },
   "footer": {
     "socials": {
-      "website": "https://openprojectidea.com",
-      "x": "https://x.com/opensaasidea"
+      "website": "https://openprojectidea.com"
     },
     "links": [
       {
         "header": "Product",
         "items": [
-          { "label": "OpenProjectIdea (Broad)", "href": "https://openprojectidea.com" },
-          { "label": "OpenSaaSIdea (Lite)", "href": "https://opensaasidea.com" },
-          { "label": "Pricing", "href": "https://openprojectidea.com/pricing" }
+          { "label": "OpenProjectIdea", "href": "https://openprojectidea.com" },
+          { "label": "OpenSaaSIdea", "href": "https://opensaasidea.com" },
+          { "label": "Pricing", "href": "https://openprojectidea.com/pricing" },
+          { "label": "Developer API", "href": "https://openprojectidea.com/developer-api" }
+        ]
+      },
+      {
+        "header": "Developers",
+        "items": [
+          { "label": "API Docs", "href": "https://docs.openprojectidea.com" },
+          { "label": "Authentication", "href": "https://docs.openprojectidea.com/authentication" },
+          { "label": "Error Codes", "href": "https://docs.openprojectidea.com/reference/errors" }
         ]
       },
       {

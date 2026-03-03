@@ -1,11 +1,12 @@
 ---
-title: "API Reference Overview"
-description: "Complete reference for all API endpoints."
+title: "API Reference"
+sidebarTitle: "Overview"
+description: "Complete reference for all OpenProjectIdea API endpoints."
 ---
 
-# API Reference
+All endpoints require a valid API key via the `x-api-key` header. Every response is JSON.
 
-All endpoints require a valid API key passed via the `x-api-key` header. Responses are JSON with a consistent structure:
+## Response Structure
 
 ```json
 {
@@ -14,13 +15,15 @@ All endpoints require a valid API key passed via the `x-api-key` header. Respons
 }
 ```
 
-## Response Conventions
-
-- **Lists** return `{ data: [], meta: { total, limit, offset } }`
-- **Single items** return `{ data: { ... } }`
-- **Write operations** return `{ data: { ... } }` with status `201` for creates
-- **Deletes** return `{ deleted: true }`
-- **Errors** return `{ error: "code", message: "..." }` with appropriate HTTP status
+<AccordionGroup>
+  <Accordion title="Response conventions" icon="file-json" defaultOpen>
+    - **Lists** return `{ data: [], meta: { total, limit, offset } }`
+    - **Single items** return `{ data: { ... } }`
+    - **Write operations** return `{ data: { ... } }` with status `201`
+    - **Deletes** return `{ deleted: true }`
+    - **Errors** return `{ error: "code", message: "..." }` with HTTP status
+  </Accordion>
+</AccordionGroup>
 
 ## Authentication
 
@@ -30,6 +33,10 @@ Include your API key in every request:
 curl -H "x-api-key: osk_your_key_here" \
   https://openprojectidea.com/v1/api/ideas
 ```
+
+<Tip>
+Generate your first key from the [Developer Dashboard](https://openprojectidea.com/developer-api) and get **$5.00 free credit** instantly.
+</Tip>
 
 ## Pagination
 
@@ -53,3 +60,20 @@ List endpoints support `limit` and `offset` query parameters:
 | `404` | Resource not found |
 | `409` | Conflict (e.g. duplicate bookmark) |
 | `500` | Internal server error |
+
+---
+
+<CardGroup cols={2}>
+  <Card title="Ideas API" icon="lightbulb" href="/api-reference/ideas/list-ideas">
+    Browse, search, and get full details for AI-generated ideas.
+  </Card>
+  <Card title="Comments API" icon="message-circle" href="/api-reference/comments/list-comments">
+    Read and post comments on ideas.
+  </Card>
+  <Card title="Votes API" icon="arrow-up-circle" href="/api-reference/votes/get-votes">
+    Cast upvotes/downvotes and check vote status.
+  </Card>
+  <Card title="Account API" icon="user" href="/api-reference/account/get-credits">
+    Check credits, profile, and usage history.
+  </Card>
+</CardGroup>
