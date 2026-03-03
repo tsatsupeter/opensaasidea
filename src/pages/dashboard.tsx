@@ -14,6 +14,7 @@ import { generateSaasIdea, saveIdeaToSupabase, type GenerationStep } from '@/lib
 import { useBookmarks } from '@/hooks/use-bookmarks'
 import { Logo } from '@/components/ui/logo'
 import { UpgradePrompt } from '@/components/subscription/upgrade-prompt'
+import { siteConfig } from '@/lib/site-config'
 import type { SaasIdea } from '@/types/database'
 
 export function DashboardPage() {
@@ -119,6 +120,8 @@ export function DashboardPage() {
         await saveIdeaToSupabase(idea, false, user.id)
         await incrementDailyGeneration()
         await fetchMyIdeas()
+        // Let users see the "done" state for a moment
+        await new Promise(r => setTimeout(r, 1500))
       }
     } finally {
       setGenerating(false)
@@ -215,7 +218,7 @@ export function DashboardPage() {
                 </div>
                 <h3 className="font-semibold mb-1">No private ideas yet</h3>
                 <p className="text-sm text-text-secondary mb-5 text-center max-w-sm">
-                  Hit "Generate My Idea" to get a personalized SaaS idea based on your skills and interests.
+                  Hit "Generate My Idea" to get a personalized {siteConfig.mode === 'full' ? 'project' : 'SaaS'} idea based on your skills and interests.
                 </p>
                 <Button onClick={handleGenerate} disabled={!checkCanGenerate()}>
                   <Logo className="h-4 w-4" />

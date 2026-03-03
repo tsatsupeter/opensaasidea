@@ -1,32 +1,36 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Brain, Search, Globe, MessageSquare, BarChart3, TrendingUp,
-  Database, Cpu, FileJson, ShieldCheck, CheckCircle2, Loader2
+  Brain, Search, TrendingUp, Sparkles,
+  Wand2, CheckCircle2, Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { siteConfig } from '@/lib/site-config'
 import type { GenerationStep } from '@/lib/ai'
 
-const STEP_CONFIG: Record<GenerationStep, {
-  icon: typeof Brain; text: string; subtext: string; color: string
-}> = {
-  fetching_ideas:    { icon: Database,    text: 'Loading existing ideas for dedup...',        subtext: 'Querying Supabase for 200 recent ideas',    color: 'text-accent' },
-  market_intel:      { icon: TrendingUp,  text: 'Fetching real-time market intelligence...',  subtext: 'Product Hunt, trending SaaS categories',    color: 'text-emerald' },
-  reddit:            { icon: MessageSquare,text: 'Scanning Reddit for pain points...',         subtext: 'r/SaaS, r/startups, r/Entrepreneur',        color: 'text-brand' },
-  trustmrr:          { icon: BarChart3,   text: 'Pulling TrustMRR revenue data...',           subtext: 'Verified MRR & growth benchmarks',           color: 'text-emerald' },
-  g2:                { icon: Search,      text: 'Analyzing G2 market segments...',            subtext: 'Buyer personas & competitive landscape',     color: 'text-accent' },
-  twitter:           { icon: Globe,       text: 'Reading Twitter/X builder pulse...',         subtext: 'What devs are shipping right now',           color: 'text-brand' },
-  building_context:  { icon: Brain,       text: 'Building context & blacklist...',            subtext: 'Dedup rules, market gaps, category balance', color: 'text-amber' },
-  calling_ai:        { icon: Cpu,         text: 'Generating idea with AI model...',           subtext: 'This is the big one — hang tight',           color: 'text-brand' },
-  parsing:           { icon: FileJson,    text: 'Parsing & validating response...',           subtext: 'Extracting structured JSON data',            color: 'text-accent' },
-  dedup_check:       { icon: ShieldCheck, text: 'Running duplicate check...',                 subtext: 'Ensuring uniqueness against all ideas',      color: 'text-emerald' },
-  done:              { icon: CheckCircle2,text: 'Idea ready!',                                subtext: '',                                           color: 'text-emerald' },
+interface StepDisplay {
+  icon: typeof Brain
+  text: string
+  subtext: string
+  color: string
+}
+
+const STEP_CONFIG: Record<GenerationStep, StepDisplay> = {
+  preparing:        { icon: Search,       text: 'Checking existing ideas...',          subtext: 'Making sure your idea will be unique',           color: 'text-accent' },
+  researching:      { icon: TrendingUp,   text: 'Researching market trends...',        subtext: 'Analyzing demand, gaps, and opportunities',      color: 'text-emerald' },
+  building_context: { icon: Brain,        text: 'Personalizing your brief...',         subtext: 'Matching your skills and interests',              color: 'text-amber' },
+  generating:       { icon: Wand2,        text: 'AI is crafting your idea...',         subtext: 'This is the exciting part — almost there!',      color: 'text-brand' },
+  finalizing:       { icon: Sparkles,     text: 'Polishing & verifying...',            subtext: 'Ensuring quality and uniqueness',                 color: 'text-accent' },
+  done:             { icon: CheckCircle2, text: 'Your idea is ready!',                 subtext: '',                                                color: 'text-emerald' },
 }
 
 const STEP_ORDER: GenerationStep[] = [
-  'fetching_ideas', 'market_intel', 'reddit', 'trustmrr', 'g2', 'twitter',
-  'building_context', 'calling_ai', 'parsing', 'dedup_check', 'done',
+  'preparing', 'researching', 'building_context', 'generating', 'finalizing', 'done',
 ]
+
+const VISIBLE_STEPS = STEP_ORDER.filter(s => s !== 'done')
+
+const MIN_STEP_DISPLAY_MS = 1800
 
 interface GenerationAnimationProps {
   isGenerating: boolean
@@ -35,41 +39,74 @@ interface GenerationAnimationProps {
 }
 
 export function GenerationAnimation({ isGenerating, currentStep: externalStep }: GenerationAnimationProps) {
+  const [displayStep, setDisplayStep] = useState<GenerationStep | null>(null)
   const [completedSteps, setCompletedSteps] = useState<Set<GenerationStep>>(new Set())
-  const [activeStep, setActiveStep] = useState<GenerationStep | null>(null)
-  const prevStepRef = useRef<GenerationStep | null>(null)
+  const stepQueueRef = useRef<GenerationStep[]>([])
+  const processingRef = useRef(false)
+  const lastStepTimeRef = useRef(0)
+
+  const processQueue = useCallback(() => {
+    if (processingRef.current || stepQueueRef.current.length === 0) return
+    processingRef.current = true
+
+    const now = Date.now()
+    const elapsed = now - lastStepTimeRef.current
+    const delay = Math.max(0, MIN_STEP_DISPLAY_MS - elapsed)
+
+    setTimeout(() => {
+      const nextStep = stepQueueRef.current.shift()
+      if (!nextStep) {
+        processingRef.current = false
+        return
+      }
+
+      // Mark previous display step as completed
+      setDisplayStep(prev => {
+        if (prev && prev !== nextStep) {
+          setCompletedSteps(c => new Set(c).add(prev))
+        }
+        return nextStep
+      })
+
+      lastStepTimeRef.current = Date.now()
+      processingRef.current = false
+
+      if (nextStep === 'done') {
+        setCompletedSteps(new Set(STEP_ORDER))
+      } else {
+        // Process next in queue after min display time
+        setTimeout(() => processQueue(), MIN_STEP_DISPLAY_MS)
+      }
+    }, delay)
+  }, [])
 
   useEffect(() => {
     if (!isGenerating) {
       setCompletedSteps(new Set())
-      setActiveStep(null)
-      prevStepRef.current = null
+      setDisplayStep(null)
+      stepQueueRef.current = []
+      processingRef.current = false
+      lastStepTimeRef.current = 0
       return
     }
   }, [isGenerating])
 
   useEffect(() => {
     if (!externalStep || !isGenerating) return
-    // Mark previous step as completed
-    if (prevStepRef.current && prevStepRef.current !== externalStep) {
-      setCompletedSteps(prev => new Set(prev).add(prevStepRef.current!))
+    // Avoid queueing duplicates
+    const q = stepQueueRef.current
+    if (q.length === 0 || q[q.length - 1] !== externalStep) {
+      q.push(externalStep)
     }
-    setActiveStep(externalStep)
-    prevStepRef.current = externalStep
-
-    if (externalStep === 'done') {
-      setCompletedSteps(prev => {
-        const next = new Set(prev)
-        STEP_ORDER.forEach(s => next.add(s))
-        return next
-      })
-    }
-  }, [externalStep, isGenerating])
+    processQueue()
+  }, [externalStep, isGenerating, processQueue])
 
   if (!isGenerating) return null
 
-  const activeIdx = activeStep ? STEP_ORDER.indexOf(activeStep) : 0
+  const activeIdx = displayStep ? STEP_ORDER.indexOf(displayStep) : 0
   const progress = Math.min(((activeIdx + 1) / STEP_ORDER.length) * 100, 100)
+
+  const headerLabel = siteConfig.mode === 'full' ? 'Generating your idea' : 'Generating your SaaS idea'
 
   return (
     <motion.div
@@ -89,9 +126,9 @@ export function GenerationAnimation({ isGenerating, currentStep: externalStep }:
               <div className="absolute inset-0 rounded-xl gradient-brand animate-pulse-ring opacity-30" />
             </div>
             <div>
-              <h3 className="font-semibold text-sm">Generating your SaaS idea</h3>
+              <h3 className="font-semibold text-sm">{headerLabel}</h3>
               <p className="text-xs text-text-muted">
-                {activeStep ? STEP_CONFIG[activeStep].text : 'Initializing...'}
+                {displayStep ? STEP_CONFIG[displayStep].text : 'Starting up...'}
               </p>
             </div>
           </div>
@@ -102,17 +139,17 @@ export function GenerationAnimation({ isGenerating, currentStep: externalStep }:
               className="h-full rounded-full gradient-brand"
               initial={{ width: '0%' }}
               animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
             />
           </div>
         </div>
 
         {/* Steps */}
-        <div className="px-4 py-3 max-h-[360px] overflow-y-auto sidebar-scroll">
+        <div className="px-4 py-3">
           <div className="space-y-1">
-            {STEP_ORDER.filter(s => s !== 'done').map((stepKey, i) => {
+            {VISIBLE_STEPS.map((stepKey, i) => {
               const step = STEP_CONFIG[stepKey]
-              const isActive = stepKey === activeStep
+              const isActive = stepKey === displayStep
               const isCompleted = completedSteps.has(stepKey)
               const isPending = !isActive && !isCompleted
 
@@ -124,7 +161,7 @@ export function GenerationAnimation({ isGenerating, currentStep: externalStep }:
                     opacity: isPending ? 0.3 : 1,
                     x: 0,
                   }}
-                  transition={{ delay: i * 0.05, duration: 0.3 }}
+                  transition={{ delay: i * 0.06, duration: 0.3 }}
                   className={cn(
                     'flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-300',
                     isActive && 'bg-surface-2',
@@ -188,28 +225,23 @@ export function GenerationAnimation({ isGenerating, currentStep: externalStep }:
           </div>
         </div>
 
-        {/* Footer with live step info */}
+        {/* Footer with friendly description */}
         <div className="px-6 py-3 border-t border-border bg-surface-2">
           <AnimatePresence mode="wait">
             <motion.p
-              key={activeStep}
+              key={displayStep}
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
               className="text-xs text-text-muted text-center italic"
             >
-              {activeStep === 'fetching_ideas' && 'Checking what ideas already exist so yours is unique...'}
-              {activeStep === 'market_intel' && 'Gathering trending products & market categories...'}
-              {activeStep === 'reddit' && 'Finding real problems people are complaining about...'}
-              {activeStep === 'trustmrr' && 'Calibrating revenue estimates with verified startup data...'}
-              {activeStep === 'g2' && 'Mapping buyer personas & market demand...'}
-              {activeStep === 'twitter' && 'Spotting what builders are shipping in real-time...'}
-              {activeStep === 'building_context' && 'Compiling all intelligence into the AI prompt...'}
-              {activeStep === 'calling_ai' && 'AI model is thinking — this takes 10-30 seconds...'}
-              {activeStep === 'parsing' && 'Extracting pricing, tech stack, team, marketing...'}
-              {activeStep === 'dedup_check' && 'Making sure this idea is truly one-of-a-kind...'}
-              {activeStep === 'done' && 'Your idea is ready!'}
-              {!activeStep && 'Starting up the generation pipeline...'}
+              {displayStep === 'preparing' && 'Looking at what\'s already been generated so yours is unique...'}
+              {displayStep === 'researching' && 'Scanning real-time trends, communities, and market data...'}
+              {displayStep === 'building_context' && 'Tailoring the prompt to your skills and preferences...'}
+              {displayStep === 'generating' && 'The AI is working hard — this takes 10-30 seconds...'}
+              {displayStep === 'finalizing' && 'Validating quality, pricing, and uniqueness...'}
+              {displayStep === 'done' && 'All done — scroll down to see your new idea!'}
+              {!displayStep && 'Warming up the idea engine...'}
             </motion.p>
           </AnimatePresence>
         </div>
