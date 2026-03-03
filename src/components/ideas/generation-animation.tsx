@@ -1,54 +1,75 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Brain, Search, Globe, FlaskConical, ChefHat, DollarSign,
-  Wrench, Rocket, CheckCircle2, Loader2, PartyPopper
+  Brain, Search, Globe, MessageSquare, BarChart3, TrendingUp,
+  Database, Cpu, FileJson, ShieldCheck, CheckCircle2, Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { GenerationStep } from '@/lib/ai'
 
-const THINKING_STEPS = [
-  { icon: Brain, text: "Brainstorming wild SaaS ideas...", subtext: "Channeling inner startup guru", color: 'text-brand' },
-  { icon: Search, text: "Scanning for gaps in the market...", subtext: "Looking where nobody else is", color: 'text-accent' },
-  { icon: Globe, text: "Exploring the web for inspiration...", subtext: "Surfing 10,000 Product Hunt launches", color: 'text-emerald' },
-  { icon: FlaskConical, text: "Testing idea viability...", subtext: "Running mental experiments", color: 'text-amber' },
-  { icon: ChefHat, text: "Cooking the SaaS idea...", subtext: "Adding secret sauce & spices", color: 'text-brand' },
-  { icon: DollarSign, text: "Cooking the MRR projections...", subtext: "Making the numbers look spicy", color: 'text-emerald' },
-  { icon: Wrench, text: "Crafting the tech stack...", subtext: "Picking the shiniest tools", color: 'text-accent' },
-  { icon: ChefHat, text: "Cooking the full breakdown...", subtext: "Baking pricing tiers & team roles", color: 'text-brand' },
-  { icon: Rocket, text: "Polishing the launch strategy...", subtext: "Almost ready for takeoff!", color: 'text-rose' },
-  { icon: PartyPopper, text: "Finalizing your SaaS idea...", subtext: "This one's going to be fire", color: 'text-brand' },
+const STEP_CONFIG: Record<GenerationStep, {
+  icon: typeof Brain; text: string; subtext: string; color: string
+}> = {
+  fetching_ideas:    { icon: Database,    text: 'Loading existing ideas for dedup...',        subtext: 'Querying Supabase for 200 recent ideas',    color: 'text-accent' },
+  market_intel:      { icon: TrendingUp,  text: 'Fetching real-time market intelligence...',  subtext: 'Product Hunt, trending SaaS categories',    color: 'text-emerald' },
+  reddit:            { icon: MessageSquare,text: 'Scanning Reddit for pain points...',         subtext: 'r/SaaS, r/startups, r/Entrepreneur',        color: 'text-brand' },
+  trustmrr:          { icon: BarChart3,   text: 'Pulling TrustMRR revenue data...',           subtext: 'Verified MRR & growth benchmarks',           color: 'text-emerald' },
+  g2:                { icon: Search,      text: 'Analyzing G2 market segments...',            subtext: 'Buyer personas & competitive landscape',     color: 'text-accent' },
+  twitter:           { icon: Globe,       text: 'Reading Twitter/X builder pulse...',         subtext: 'What devs are shipping right now',           color: 'text-brand' },
+  building_context:  { icon: Brain,       text: 'Building context & blacklist...',            subtext: 'Dedup rules, market gaps, category balance', color: 'text-amber' },
+  calling_ai:        { icon: Cpu,         text: 'Generating idea with AI model...',           subtext: 'This is the big one — hang tight',           color: 'text-brand' },
+  parsing:           { icon: FileJson,    text: 'Parsing & validating response...',           subtext: 'Extracting structured JSON data',            color: 'text-accent' },
+  dedup_check:       { icon: ShieldCheck, text: 'Running duplicate check...',                 subtext: 'Ensuring uniqueness against all ideas',      color: 'text-emerald' },
+  done:              { icon: CheckCircle2,text: 'Idea ready!',                                subtext: '',                                           color: 'text-emerald' },
+}
+
+const STEP_ORDER: GenerationStep[] = [
+  'fetching_ideas', 'market_intel', 'reddit', 'trustmrr', 'g2', 'twitter',
+  'building_context', 'calling_ai', 'parsing', 'dedup_check', 'done',
 ]
 
 interface GenerationAnimationProps {
   isGenerating: boolean
+  currentStep?: GenerationStep | null
   onComplete?: () => void
 }
 
-export function GenerationAnimation({ isGenerating }: GenerationAnimationProps) {
-  const [currentStep, setCurrentStep] = useState(0)
-  const [completedSteps, setCompletedSteps] = useState<number[]>([])
+export function GenerationAnimation({ isGenerating, currentStep: externalStep }: GenerationAnimationProps) {
+  const [completedSteps, setCompletedSteps] = useState<Set<GenerationStep>>(new Set())
+  const [activeStep, setActiveStep] = useState<GenerationStep | null>(null)
+  const prevStepRef = useRef<GenerationStep | null>(null)
 
   useEffect(() => {
     if (!isGenerating) {
-      setCurrentStep(0)
-      setCompletedSteps([])
+      setCompletedSteps(new Set())
+      setActiveStep(null)
+      prevStepRef.current = null
       return
     }
-
-    const interval = setInterval(() => {
-      setCurrentStep(prev => {
-        if (prev < THINKING_STEPS.length - 1) {
-          setCompletedSteps(completed => [...completed, prev])
-          return prev + 1
-        }
-        return prev
-      })
-    }, 2200)
-
-    return () => clearInterval(interval)
   }, [isGenerating])
 
+  useEffect(() => {
+    if (!externalStep || !isGenerating) return
+    // Mark previous step as completed
+    if (prevStepRef.current && prevStepRef.current !== externalStep) {
+      setCompletedSteps(prev => new Set(prev).add(prevStepRef.current!))
+    }
+    setActiveStep(externalStep)
+    prevStepRef.current = externalStep
+
+    if (externalStep === 'done') {
+      setCompletedSteps(prev => {
+        const next = new Set(prev)
+        STEP_ORDER.forEach(s => next.add(s))
+        return next
+      })
+    }
+  }, [externalStep, isGenerating])
+
   if (!isGenerating) return null
+
+  const activeIdx = activeStep ? STEP_ORDER.indexOf(activeStep) : 0
+  const progress = Math.min(((activeIdx + 1) / STEP_ORDER.length) * 100, 100)
 
   return (
     <motion.div
@@ -68,8 +89,10 @@ export function GenerationAnimation({ isGenerating }: GenerationAnimationProps) 
               <div className="absolute inset-0 rounded-xl gradient-brand animate-pulse-ring opacity-30" />
             </div>
             <div>
-              <h3 className="font-semibold text-sm">AI is cooking something special</h3>
-              <p className="text-xs text-text-muted">Step {currentStep + 1} of {THINKING_STEPS.length}</p>
+              <h3 className="font-semibold text-sm">Generating your SaaS idea</h3>
+              <p className="text-xs text-text-muted">
+                {activeStep ? STEP_CONFIG[activeStep].text : 'Initializing...'}
+              </p>
             </div>
           </div>
 
@@ -78,7 +101,7 @@ export function GenerationAnimation({ isGenerating }: GenerationAnimationProps) 
             <motion.div
               className="h-full rounded-full gradient-brand"
               initial={{ width: '0%' }}
-              animate={{ width: `${((currentStep + 1) / THINKING_STEPS.length) * 100}%` }}
+              animate={{ width: `${progress}%` }}
               transition={{ duration: 0.5, ease: 'easeOut' }}
             />
           </div>
@@ -87,20 +110,21 @@ export function GenerationAnimation({ isGenerating }: GenerationAnimationProps) 
         {/* Steps */}
         <div className="px-4 py-3 max-h-[360px] overflow-y-auto sidebar-scroll">
           <div className="space-y-1">
-            {THINKING_STEPS.map((step, i) => {
-              const isActive = i === currentStep
-              const isCompleted = completedSteps.includes(i)
-              const isPending = i > currentStep
+            {STEP_ORDER.filter(s => s !== 'done').map((stepKey, i) => {
+              const step = STEP_CONFIG[stepKey]
+              const isActive = stepKey === activeStep
+              const isCompleted = completedSteps.has(stepKey)
+              const isPending = !isActive && !isCompleted
 
               return (
                 <motion.div
-                  key={i}
+                  key={stepKey}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{
                     opacity: isPending ? 0.3 : 1,
                     x: 0,
                   }}
-                  transition={{ delay: i * 0.08, duration: 0.3 }}
+                  transition={{ delay: i * 0.05, duration: 0.3 }}
                   className={cn(
                     'flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-300',
                     isActive && 'bg-surface-2',
@@ -164,26 +188,28 @@ export function GenerationAnimation({ isGenerating }: GenerationAnimationProps) 
           </div>
         </div>
 
-        {/* Fun footer */}
+        {/* Footer with live step info */}
         <div className="px-6 py-3 border-t border-border bg-surface-2">
           <AnimatePresence mode="wait">
             <motion.p
-              key={currentStep}
+              key={activeStep}
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -5 }}
               className="text-xs text-text-muted text-center italic"
             >
-              {currentStep === 0 && "Warming up the creative engines..."}
-              {currentStep === 1 && "Every great startup started with a crazy idea..."}
-              {currentStep === 2 && "Did you know? 90% of startups fail. Yours won't."}
-              {currentStep === 3 && "Testing... testing... is this thing on?"}
-              {currentStep === 4 && "Gordon Ramsay would be proud of this recipe"}
-              {currentStep === 5 && "Money printer goes brrr..."}
-              {currentStep === 6 && "This tech stack is *chef's kiss*"}
-              {currentStep === 7 && "The secret ingredient is always more features"}
-              {currentStep === 8 && "Houston, we have a SaaS idea!"}
-              {currentStep === 9 && "Drumroll please..."}
+              {activeStep === 'fetching_ideas' && 'Checking what ideas already exist so yours is unique...'}
+              {activeStep === 'market_intel' && 'Gathering trending products & market categories...'}
+              {activeStep === 'reddit' && 'Finding real problems people are complaining about...'}
+              {activeStep === 'trustmrr' && 'Calibrating revenue estimates with verified startup data...'}
+              {activeStep === 'g2' && 'Mapping buyer personas & market demand...'}
+              {activeStep === 'twitter' && 'Spotting what builders are shipping in real-time...'}
+              {activeStep === 'building_context' && 'Compiling all intelligence into the AI prompt...'}
+              {activeStep === 'calling_ai' && 'AI model is thinking — this takes 10-30 seconds...'}
+              {activeStep === 'parsing' && 'Extracting pricing, tech stack, team, marketing...'}
+              {activeStep === 'dedup_check' && 'Making sure this idea is truly one-of-a-kind...'}
+              {activeStep === 'done' && 'Your idea is ready!'}
+              {!activeStep && 'Starting up the generation pipeline...'}
             </motion.p>
           </AnimatePresence>
         </div>

@@ -181,6 +181,19 @@ You MUST respond in valid JSON format matching this exact structure:
   "cons": ["con1", "con2"]
 }`
 
+export type GenerationStep =
+  | 'fetching_ideas'
+  | 'market_intel'
+  | 'reddit'
+  | 'trustmrr'
+  | 'g2'
+  | 'twitter'
+  | 'building_context'
+  | 'calling_ai'
+  | 'parsing'
+  | 'dedup_check'
+  | 'done'
+
 export async function generateSaasIdea(options?: {
   userSkills?: string[]
   userInterests?: string[]
@@ -188,7 +201,9 @@ export async function generateSaasIdea(options?: {
   experienceLevel?: string
   voteFeedback?: { liked_categories: string[]; disliked_categories: string[] }
   priorityGeneration?: boolean
+  onProgress?: (step: GenerationStep) => void
 }): Promise<Record<string, unknown> | null> {
+  const report = (step: GenerationStep) => options?.onProgress?.(step)
   let userContext = ''
 
   if (options?.userSkills?.length) {
@@ -213,15 +228,17 @@ export async function generateSaasIdea(options?: {
   }
 
   // Fetch existing ideas for dedup + market intelligence + reddit + trustmrr in parallel
+  report('fetching_ideas')
   const [existingIdeas, marketData, redditContext, trustmrrContext, g2Context, twitterContext] = await Promise.all([
     fetchExistingIdeas().catch(() => [] as Array<{ title: string; description: string | null; category: string | null }>),
-    getMarketIntelligence().catch(() => ({ trending: [], categories: [] })),
-    getRedditInsights().catch(() => ''),
-    getTrustMRRInsights().catch(() => ''),
-    getG2Insights().catch(() => ''),
-    getTwitterInsights().catch(() => ''),
+    getMarketIntelligence().then(r => { report('market_intel'); return r }).catch(() => { report('market_intel'); return { trending: [], categories: [] } }),
+    getRedditInsights().then(r => { report('reddit'); return r }).catch(() => { report('reddit'); return '' }),
+    getTrustMRRInsights().then(r => { report('trustmrr'); return r }).catch(() => { report('trustmrr'); return '' }),
+    getG2Insights().then(r => { report('g2'); return r }).catch(() => { report('g2'); return '' }),
+    getTwitterInsights().then(r => { report('twitter'); return r }).catch(() => { report('twitter'); return '' }),
   ])
 
+  report('building_context')
   const blacklist = buildBlacklist(existingIdeas)
   const marketContext = buildMarketContext(marketData)
   const marketSection = marketContext
@@ -249,6 +266,7 @@ export async function generateSaasIdea(options?: {
     const userMessage = `Generate a completely unique SaaS business idea that doesn't exist yet. Make it innovative and revenue-generating. Include FULL breakdown of monetization, tech stack, team, marketing, and lead generation.${userContext}${marketSection}${redditSection}${trustmrrSection}${g2Section}${twitterSection}${blacklist}${retryHint}\n\nIMPORTANT: Your idea must NOT be a copy of any company listed above or any idea in the blacklist. Use Reddit community insights for REAL pain points, TrustMRR data for verified revenue benchmarks, G2 market intelligence for buyer personas, and Twitter/X pulse for real-time builder trends. Be creative and contrarian.\n\nRespond with ONLY valid JSON, no markdown, no code blocks.`
 
     try {
+      report('calling_ai')
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -272,6 +290,7 @@ export async function generateSaasIdea(options?: {
       const content = data.choices?.[0]?.message?.content
       if (!content) continue
 
+      report('parsing')
       const cleaned = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
       let idea: Record<string, unknown>
       try {
@@ -282,6 +301,7 @@ export async function generateSaasIdea(options?: {
       }
 
       // Post-generation duplicate check
+      report('dedup_check')
       const check = isTooSimilar(
         (idea.title as string) || '',
         (idea.description as string) || '',

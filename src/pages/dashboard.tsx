@@ -10,7 +10,7 @@ import { GenerationAnimation } from '@/components/ideas/generation-animation'
 import { useAuth } from '@/hooks/use-auth'
 import { useSubscription } from '@/hooks/use-subscription'
 import { supabase } from '@/lib/supabase'
-import { generateSaasIdea, saveIdeaToSupabase } from '@/lib/ai'
+import { generateSaasIdea, saveIdeaToSupabase, type GenerationStep } from '@/lib/ai'
 import { useBookmarks } from '@/hooks/use-bookmarks'
 import { Logo } from '@/components/ui/logo'
 import { UpgradePrompt } from '@/components/subscription/upgrade-prompt'
@@ -25,6 +25,7 @@ export function DashboardPage() {
   const [savedIdeas, setSavedIdeas] = useState<SaasIdea[]>([])
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
+  const [genStep, setGenStep] = useState<GenerationStep | null>(null)
   const { bookmarkedIds } = useBookmarks()
 
   const fetchMyIdeas = useCallback(async () => {
@@ -77,6 +78,7 @@ export function DashboardPage() {
     if (!user) return
     if (!checkCanGenerate()) return
     setGenerating(true)
+    setGenStep(null)
     try {
       const { data: skills } = await supabase
         .from('user_skills')
@@ -109,15 +111,18 @@ export function DashboardPage() {
           disliked_categories: [...new Set(dislikedCategories)] as string[],
         },
         priorityGeneration: !isFree,
+        onProgress: (step) => setGenStep(step),
       })
 
       if (idea) {
+        setGenStep('done')
         await saveIdeaToSupabase(idea, false, user.id)
         await incrementDailyGeneration()
         await fetchMyIdeas()
       }
     } finally {
       setGenerating(false)
+      setGenStep(null)
     }
   }
 
@@ -181,7 +186,7 @@ export function DashboardPage() {
               exit={{ opacity: 0, height: 0 }}
               className="mb-8"
             >
-              <GenerationAnimation isGenerating={generating} />
+              <GenerationAnimation isGenerating={generating} currentStep={genStep} />
             </motion.div>
           )}
         </AnimatePresence>
