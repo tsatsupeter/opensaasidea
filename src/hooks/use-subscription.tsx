@@ -50,16 +50,30 @@ export function useSubscription() {
   const createCheckout = useCallback(async (productId: string) => {
     if (!user) return null
 
-    const { data, error } = await supabase.functions.invoke('create-checkout', {
-      body: { product_id: productId },
-    })
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { product_id: productId },
+      })
 
-    if (error) {
-      console.error('Checkout error:', error)
+      if (error) {
+        console.error('Checkout error:', error)
+        // Try to parse response body from FunctionsHttpError
+        if (error.context?.body) {
+          try {
+            const body = typeof error.context.body === 'string'
+              ? JSON.parse(error.context.body)
+              : error.context.body
+            if (body?.checkout_url) return body.checkout_url as string
+          } catch { /* ignore parse errors */ }
+        }
+        return null
+      }
+
+      return data?.checkout_url as string | null
+    } catch (err) {
+      console.error('Checkout exception:', err)
       return null
     }
-
-    return data?.checkout_url as string | null
   }, [user])
 
   return {
