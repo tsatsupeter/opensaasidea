@@ -1,7 +1,6 @@
 import { supabase } from './supabase'
 import { getMarketIntelligence, buildMarketContext, getRedditInsights, getTrustMRRInsights, getG2Insights, getTwitterInsights } from './market-data'
 
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY
 const MAX_RETRIES = 3
 
 // --- Deduplication helpers ---
@@ -267,13 +266,15 @@ export async function generateSaasIdea(options?: {
 
     try {
       report('calling_ai')
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = sessionData?.session?.access_token || ''
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const response = await fetch(`${supabaseUrl}/functions/v1/ai-completion`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'OpenSaaSIdea',
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
         },
         body: JSON.stringify({
           model: options?.priorityGeneration ? 'anthropic/claude-sonnet-4' : 'deepseek/deepseek-chat',
