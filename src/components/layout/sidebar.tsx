@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Compass, LayoutDashboard, Home, Moon, Sun,
   LogIn, LogOut, Shield, ChevronDown, Flame, TrendingUp,
-  BarChart3, User, Camera, Settings, ChevronRight
+  BarChart3, User, Camera, Settings, ChevronRight, Crown
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
@@ -179,6 +179,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                       )}
                     </AnimatePresence>
 
+                    <NavLink href="/pricing" icon={Crown} label="Pricing" color="text-brand" />
                     {isAdmin && <NavLink href="/admin" icon={Shield} label="Admin" />}
                   </motion.div>
                 )}

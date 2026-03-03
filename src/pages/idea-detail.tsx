@@ -3,17 +3,20 @@ import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, Loader2, Globe, Smartphone, Monitor,
-  Puzzle, Code2, Layers, Share2, Bookmark, BookmarkCheck, Calendar, Eye, Users, TrendingUp, DollarSign, Zap, Lock, MessageSquare
+  Puzzle, Code2, Layers, Share2, Bookmark, BookmarkCheck, Calendar, Eye, Users, TrendingUp, DollarSign, Zap, Lock, MessageSquare, FileDown, Crown
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { useRecent } from '@/hooks/use-recent'
 import { useBookmarks } from '@/hooks/use-bookmarks'
+import { useSubscription } from '@/hooks/use-subscription'
 import { useToast } from '@/components/ui/toast'
+import { exportIdeaToPDF } from '@/lib/pdf-export'
 import { VoteButton } from '@/components/ideas/vote-button'
 import { CommentSection } from '@/components/comments/comment-section'
 import { formatCurrency, formatNumber, timeAgo } from '@/lib/utils'
 import { categoryColor, toSlug, useCategories } from '@/lib/categories'
+import { getAffiliateLink } from '@/lib/affiliates'
 import type { SaasIdea, PricingTier, TeamRole, TechStack, Competitor } from '@/types/database'
 
 const platformIcons: Record<string, typeof Globe> = {
@@ -31,7 +34,9 @@ export function IdeaDetailPage() {
   const [loading, setLoading] = useState(true)
   const [isPublic, setIsPublic] = useState(false)
   const [toggling, setToggling] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const { isBookmarked, toggleBookmark } = useBookmarks()
+  const { isPro } = useSubscription()
   const { toast } = useToast()
 
   useEffect(() => {
@@ -440,6 +445,28 @@ export function IdeaDetailPage() {
                 {isBookmarked(idea.id) ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
                 {isBookmarked(idea.id) ? 'Saved' : 'Save'}
               </button>
+              <button
+                onClick={async () => {
+                  if (!isPro) {
+                    toast('Upgrade to Pro to export PDFs')
+                    return
+                  }
+                  setExporting(true)
+                  try {
+                    await exportIdeaToPDF(idea)
+                    toast('PDF downloaded!')
+                  } catch {
+                    toast('Failed to export PDF')
+                  }
+                  setExporting(false)
+                }}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors cursor-pointer ${
+                  isPro ? 'text-text-muted hover:bg-surface-2' : 'text-text-muted/50'
+                }`}
+              >
+                {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
+                {isPro ? 'Export PDF' : <><Crown className="h-3 w-3 text-brand" /> PDF</>}
+              </button>
               {idea.generated_for === user?.id && (
                 <button
                   onClick={async () => {
@@ -594,9 +621,23 @@ export function IdeaDetailPage() {
                     <div key={category}>
                       <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">{category.replace('_', ' / ')}</p>
                       <div className="flex flex-wrap gap-1">
-                        {techs.map((t: string) => (
-                          <span key={t} className="text-[10px] font-medium bg-surface-2 border border-border rounded-full px-2 py-0.5 text-text-secondary">{t}</span>
-                        ))}
+                        {techs.map((t: string) => {
+                          const affiliate = getAffiliateLink(t)
+                          return affiliate ? (
+                            <a
+                              key={t}
+                              href={affiliate.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] font-medium bg-brand/10 border border-brand/20 rounded-full px-2 py-0.5 text-brand hover:bg-brand/20 transition-colors"
+                              title={affiliate.tag}
+                            >
+                              {t} ↗
+                            </a>
+                          ) : (
+                            <span key={t} className="text-[10px] font-medium bg-surface-2 border border-border rounded-full px-2 py-0.5 text-text-secondary">{t}</span>
+                          )
+                        })}
                       </div>
                     </div>
                   )

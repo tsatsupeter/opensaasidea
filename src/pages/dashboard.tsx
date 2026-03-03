@@ -8,15 +8,18 @@ import { Badge } from '@/components/ui/badge'
 import { IdeaCard } from '@/components/ideas/idea-card'
 import { GenerationAnimation } from '@/components/ideas/generation-animation'
 import { useAuth } from '@/hooks/use-auth'
+import { useSubscription } from '@/hooks/use-subscription'
 import { supabase } from '@/lib/supabase'
 import { generateSaasIdea, saveIdeaToSupabase } from '@/lib/ai'
 import { useBookmarks } from '@/hooks/use-bookmarks'
 import { Logo } from '@/components/ui/logo'
+import { UpgradePrompt } from '@/components/subscription/upgrade-prompt'
 import type { SaasIdea } from '@/types/database'
 
 export function DashboardPage() {
   const navigate = useNavigate()
   const { user, profile, loading: authLoading } = useAuth()
+  const { checkCanGenerate, remainingIdeas, isFree, tier, incrementDailyGeneration } = useSubscription()
   const [privateIdeas, setPrivateIdeas] = useState<SaasIdea[]>([])
   const [publicIdeas, setPublicIdeas] = useState<SaasIdea[]>([])
   const [savedIdeas, setSavedIdeas] = useState<SaasIdea[]>([])
@@ -72,6 +75,7 @@ export function DashboardPage() {
 
   const handleGenerate = async () => {
     if (!user) return
+    if (!checkCanGenerate()) return
     setGenerating(true)
     try {
       const { data: skills } = await supabase
@@ -108,6 +112,7 @@ export function DashboardPage() {
 
       if (idea) {
         await saveIdeaToSupabase(idea, false, user.id)
+        await incrementDailyGeneration()
         await fetchMyIdeas()
       }
     } finally {
@@ -142,10 +147,17 @@ export function DashboardPage() {
             </p>
           </div>
           {!generating && (
-            <Button onClick={handleGenerate} className="shrink-0 group">
-              <Logo className="h-4 w-4 group-hover:rotate-12 transition-transform" />
-              Generate My Idea
-            </Button>
+            <div className="flex items-center gap-3 shrink-0">
+              {remainingIdeas !== null && (
+                <span className="text-xs text-text-muted">
+                  {remainingIdeas} idea{remainingIdeas !== 1 ? 's' : ''} left today
+                </span>
+              )}
+              <Button onClick={handleGenerate} className="group" disabled={!checkCanGenerate()}>
+                <Logo className="h-4 w-4 group-hover:rotate-12 transition-transform" />
+                Generate My Idea
+              </Button>
+            </div>
           )}
         </div>
 

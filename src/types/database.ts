@@ -14,6 +14,12 @@ export interface Database {
           interests: string[]
           preferred_platforms: string[]
           onboarding_completed: boolean
+          subscription_tier: 'free' | 'pro' | 'team'
+          subscription_id: string | null
+          subscription_status: string | null
+          subscription_expires_at: string | null
+          daily_ideas_generated: number
+          last_generation_date: string | null
           created_at: string
           updated_at: string
         }
@@ -200,3 +206,36 @@ export type Vote = Database['public']['Tables']['votes']['Row']
 export type UserSkill = Database['public']['Tables']['user_skills']['Row']
 export type Comment = Database['public']['Tables']['comments']['Row']
 export type CommentVote = Database['public']['Tables']['comment_votes']['Row']
+
+export type SubscriptionTier = 'free' | 'pro' | 'team'
+
+export interface Subscription {
+  id: string
+  user_id: string
+  dodo_subscription_id: string | null
+  dodo_customer_id: string | null
+  product_id: string
+  tier: SubscriptionTier
+  status: 'active' | 'on_hold' | 'cancelled' | 'expired' | 'failed'
+  billing_period: 'monthly' | 'yearly' | null
+  amount: number | null
+  currency: string
+  current_period_start: string | null
+  current_period_end: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface Payment {
+  id: string
+  user_id: string
+  subscription_id: string | null
+  dodo_payment_id: string | null
+  amount: number
+  currency: string
+  status: 'pending' | 'succeeded' | 'failed' | 'refunded'
+  product_type: 'subscription' | 'one_time'
+  product_id: string | null
+  metadata: Record<string, unknown>
+  created_at: string
+}
