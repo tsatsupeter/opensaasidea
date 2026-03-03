@@ -44,11 +44,11 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
-          <AuthModalProvider>
           <NotificationsProvider>
           <RecentProvider>
             <ToastProvider>
             <BrowserRouter>
+              <AuthModalProvider>
               <Routes>
                 <Route element={<RootLayout />}>
                   <Route path="/" element={<HomePage />} />
@@ -80,11 +80,11 @@ function App() {
                   <Route path="/accessibility" element={<AccessibilityPage />} />
                 </Route>
               </Routes>
+              </AuthModalProvider>
             </BrowserRouter>
             </ToastProvider>
           </RecentProvider>
           </NotificationsProvider>
-          </AuthModalProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
