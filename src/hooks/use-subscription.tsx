@@ -2,14 +2,20 @@ import { useAuth } from '@/hooks/use-auth'
 import { getTierConfig, canGenerateIdea, canSaveIdea, canExportPDF, getRemainingIdeas } from '@/lib/subscription'
 import type { SubscriptionTier } from '@/types/database'
 import { supabase } from '@/lib/supabase'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 
 export function useSubscription() {
-  const { user, profile } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
 
   const tier: SubscriptionTier = (profile?.subscription_tier as SubscriptionTier) || 'free'
   const config = getTierConfig(tier)
-  const dailyGenerated = profile?.daily_ideas_generated || 0
+
+  // Date-aware daily count: reset to 0 if last_generation_date is not today
+  const dailyGenerated = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0]
+    if (profile?.last_generation_date !== today) return 0
+    return profile?.daily_ideas_generated || 0
+  }, [profile?.last_generation_date, profile?.daily_ideas_generated])
 
   const checkCanGenerate = useCallback((): boolean => {
     return canGenerateIdea(tier, dailyGenerated)
@@ -36,7 +42,10 @@ export function useSubscription() {
         last_generation_date: today,
       })
       .eq('id', user.id)
-  }, [user, profile])
+
+    // Refresh profile so React state reflects the new count
+    await refreshProfile()
+  }, [user, profile, refreshProfile])
 
   const createCheckout = useCallback(async (productId: string) => {
     if (!user) return null

@@ -59,7 +59,7 @@ export function useBookmarks() {
 
     setLoading(false)
     return !isCurrentlyBookmarked
-  }, [user, bookmarkedIds])
+  }, [user, profile, bookmarkedIds])
 
   const isBookmarked = useCallback((ideaId: string) => bookmarkedIds.has(ideaId), [bookmarkedIds])
 
