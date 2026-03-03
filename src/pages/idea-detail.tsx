@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useRecent } from '@/hooks/use-recent'
 import { useBookmarks } from '@/hooks/use-bookmarks'
 import { useSubscription } from '@/hooks/use-subscription'
+import { useTeam } from '@/hooks/use-team'
 import { useToast } from '@/components/ui/toast'
 import { exportIdeaToPDF } from '@/lib/pdf-export'
 import { DODO_PRODUCTS } from '@/lib/subscription'
@@ -42,7 +43,9 @@ export function IdeaDetailPage() {
   const [buyingReport, setBuyingReport] = useState(false)
   const [hasPurchasedReport, setHasPurchasedReport] = useState(false)
   const { isBookmarked, toggleBookmark, bookmarkedIds } = useBookmarks()
-  const { isPro, isFree, createCheckout } = useSubscription()
+  const { isPro, isFree, isTeam, createCheckout } = useSubscription()
+  const { team, shareIdeaToTeam } = useTeam()
+  const [sharingToTeam, setSharingToTeam] = useState(false)
   const { toast } = useToast()
 
   // Determines if user can view Pro content (Pro subscriber OR purchased report for this idea)
@@ -514,6 +517,20 @@ export function IdeaDetailPage() {
               >
                 <Share2 className="h-3.5 w-3.5" /> Share
               </button>
+              {isTeam && team && (
+                <button
+                  onClick={async () => {
+                    setSharingToTeam(true)
+                    const ok = await shareIdeaToTeam(idea.id)
+                    toast(ok ? 'Shared to team workspace!' : 'Already shared or failed')
+                    setSharingToTeam(false)
+                  }}
+                  disabled={sharingToTeam}
+                  className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-accent hover:bg-accent/10 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  <Users className="h-3.5 w-3.5" /> {sharingToTeam ? 'Sharing...' : 'Team'}
+                </button>
+              )}
               <button
                 onClick={async () => {
                   if (!user) return

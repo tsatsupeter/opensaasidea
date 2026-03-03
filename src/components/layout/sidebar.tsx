@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Compass, LayoutDashboard, Home, Moon, Sun,
   LogIn, LogOut, Shield, ChevronDown, Flame, TrendingUp,
-  BarChart3, User, Camera, Settings, ChevronRight, Crown
+  BarChart3, User, Users, Camera, Settings, ChevronRight, Crown
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
@@ -147,6 +147,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                     className="overflow-hidden"
                   >
                     <NavLink href="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+                    {tier === 'team' && <NavLink href="/team" icon={Users} label="Team" />}
                     <NavLink href="/stats" icon={BarChart3} label="Stats" />
 
                     {/* Profile sub-nav */}
