@@ -585,10 +585,10 @@ function ApiKeysTab({ apiKeys, newApiKey, keyName, setKeyName, generating, onGen
           <h3 className="text-[13px] font-semibold">API Usage</h3>
           <div className="bg-surface-2 rounded-lg p-3 text-[11px] font-mono space-y-1">
             <p className="text-text-muted"># Fetch public ideas</p>
-            <p>curl -H "Authorization: Bearer YOUR_API_KEY" \</p>
+            <p>curl -H "x-api-key: YOUR_API_KEY" \</p>
             <p className="pl-4">https://opensaasidea.com/v1/api/ideas</p>
           </div>
-          <p className="text-[10px] text-text-muted">Include your API key in the Authorization header. Read-only access.</p>
+          <p className="text-[10px] text-text-muted">Include your API key in the x-api-key header. Read-only access.</p>
         </CardContent>
       </Card>
     </div>

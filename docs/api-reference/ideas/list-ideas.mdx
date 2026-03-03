@@ -63,14 +63,14 @@ Returns a paginated list of public SaaS ideas. Supports filtering by category an
 <CodeGroup>
 
 ```bash cURL
-curl -H "Authorization: Bearer YOUR_API_KEY" \
+curl -H "x-api-key: YOUR_API_KEY" \
   "https://opensaasidea.com/v1/api/ideas?limit=5&sort=popular"
 ```
 
 ```javascript JavaScript
 const res = await fetch(
   "https://opensaasidea.com/v1/api/ideas?limit=5&sort=popular",
-  { headers: { Authorization: "Bearer YOUR_API_KEY" } }
+  { headers: { "x-api-key": "YOUR_API_KEY" } }
 );
 const data = await res.json();
 ```
@@ -80,7 +80,7 @@ import requests
 
 res = requests.get(
     "https://opensaasidea.com/v1/api/ideas",
-    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    headers={"x-api-key": "YOUR_API_KEY"},
     params={"limit": 5, "sort": "popular"}
 )
 ```

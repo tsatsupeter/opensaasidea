@@ -29,14 +29,14 @@ Returns all available idea categories with the number of ideas in each. This is 
 <CodeGroup>
 
 ```bash cURL
-curl -H "Authorization: Bearer YOUR_API_KEY" \
+curl -H "x-api-key: YOUR_API_KEY" \
   "https://opensaasidea.com/v1/api/categories"
 ```
 
 ```javascript JavaScript
 const res = await fetch(
   "https://opensaasidea.com/v1/api/categories",
-  { headers: { Authorization: "Bearer YOUR_API_KEY" } }
+  { headers: { "x-api-key": "YOUR_API_KEY" } }
 );
 const data = await res.json();
 ```
@@ -46,7 +46,7 @@ import requests
 
 res = requests.get(
     "https://opensaasidea.com/v1/api/categories",
-    headers={"Authorization": "Bearer YOUR_API_KEY"}
+    headers={"x-api-key": "YOUR_API_KEY"}
 )
 data = res.json()
 ```

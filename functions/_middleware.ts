@@ -71,7 +71,7 @@ async function proxyRequest(request: Request, targetUrl: string): Promise<Respon
   const respHeaders = new Headers(response.headers)
   respHeaders.set('Access-Control-Allow-Origin', '*')
   respHeaders.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
-  respHeaders.set('Access-Control-Allow-Headers', 'Authorization, apikey, Content-Type, x-client-info, x-supabase-api-version')
+  respHeaders.set('Access-Control-Allow-Headers', 'Authorization, apikey, x-api-key, Content-Type, x-client-info, x-supabase-api-version')
   respHeaders.set('Access-Control-Expose-Headers', 'Content-Range, X-Total-Count')
 
   // Handle CORS preflight

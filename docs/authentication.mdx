@@ -1,14 +1,14 @@
 ---
 title: "Authentication"
-description: "Secure your API requests with Bearer token authentication."
+description: "Secure your API requests with x-api-key header authentication."
 ---
 
 # Authentication
 
-All API requests must include a valid API key in the `Authorization` header using the Bearer scheme.
+All API requests must include a valid API key in the `x-api-key` header.
 
 ```
-Authorization: Bearer osk_your_api_key_here
+x-api-key: osk_your_api_key_here
 ```
 
 ## Generating Keys
@@ -29,7 +29,7 @@ Your first API key automatically grants **$5.00 free credit** to test the API. N
 <CodeGroup>
 
 ```bash cURL
-curl -H "Authorization: Bearer osk_abc123def456..." \
+curl -H "x-api-key: osk_abc123def456..." \
   https://opensaasidea.com/v1/api/ideas?limit=5
 ```
 
@@ -38,7 +38,7 @@ const res = await fetch(
   "https://opensaasidea.com/v1/api/ideas?limit=5",
   {
     headers: {
-      Authorization: "Bearer osk_abc123def456..."
+      "x-api-key": "osk_abc123def456..."
     }
   }
 );
@@ -49,7 +49,7 @@ import requests
 
 res = requests.get(
     "https://opensaasidea.com/v1/api/ideas",
-    headers={"Authorization": "Bearer osk_abc123def456..."},
+    headers={"x-api-key": "osk_abc123def456..."},
     params={"limit": 5}
 )
 ```
@@ -68,7 +68,7 @@ If authentication fails, you'll receive one of these responses:
 ```json 401 — Invalid API Key
 {
   "error": "invalid_api_key",
-  "message": "Provide a valid API key via Authorization: Bearer osk_..."
+  "message": "Provide a valid API key via x-api-key: osk_..."
 }
 ```
 

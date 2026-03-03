@@ -262,10 +262,10 @@ export function DeveloperApiPage() {
                 </div>
                 <div className="bg-surface-2 rounded-lg p-3 font-mono text-[11px] space-y-1 relative">
                   <div className="absolute top-2 right-2">
-                    <CopyBtn text={`curl -H "Authorization: Bearer YOUR_API_KEY" \\\n  ${API_BASE}/ideas`} label="quickstart" />
+                    <CopyBtn text={`curl -H "x-api-key: YOUR_API_KEY" \\\n  ${API_BASE}/ideas`} label="quickstart" />
                   </div>
                   <p className="text-text-muted"># Fetch latest public ideas</p>
-                  <p>curl -H <span className="text-brand">"Authorization: Bearer YOUR_API_KEY"</span> \</p>
+                  <p>curl -H <span className="text-brand">"x-api-key: YOUR_API_KEY"</span> \</p>
                   <p className="pl-4 text-accent">{API_BASE}/ideas</p>
                 </div>
 

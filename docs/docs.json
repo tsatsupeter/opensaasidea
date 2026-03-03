@@ -68,7 +68,8 @@
     "mdx": {
       "server": "https://opensaasidea.com/v1/api",
       "auth": {
-        "method": "bearer"
+        "method": "key",
+        "name": "x-api-key"
       }
     }
   },

@@ -51,14 +51,14 @@ Search public ideas by title, tagline, or category. Returns matching results wit
 <CodeGroup>
 
 ```bash cURL
-curl -H "Authorization: Bearer YOUR_API_KEY" \
+curl -H "x-api-key: YOUR_API_KEY" \
   "https://opensaasidea.com/v1/api/ideas/search?q=ai%20resume&limit=10"
 ```
 
 ```javascript JavaScript
 const res = await fetch(
   "https://opensaasidea.com/v1/api/ideas/search?q=ai+resume&limit=10",
-  { headers: { Authorization: "Bearer YOUR_API_KEY" } }
+  { headers: { "x-api-key": "YOUR_API_KEY" } }
 );
 const data = await res.json();
 ```
@@ -68,7 +68,7 @@ import requests
 
 res = requests.get(
     "https://opensaasidea.com/v1/api/ideas/search",
-    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    headers={"x-api-key": "YOUR_API_KEY"},
     params={"q": "ai resume", "limit": 10}
 )
 ```
