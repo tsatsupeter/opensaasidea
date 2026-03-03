@@ -39,12 +39,12 @@ export function useSubscription() {
     await refreshProfile()
   }, [user, refreshProfile])
 
-  const createCheckout = useCallback(async (productId: string) => {
+  const createCheckout = useCallback(async (productId: string, options?: { idea_id?: string; idea_slug?: string }) => {
     if (!user) return null
 
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: { product_id: productId },
+        body: { product_id: productId, ...options },
       })
 
       if (error) {

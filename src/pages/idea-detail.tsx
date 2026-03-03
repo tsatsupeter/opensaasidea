@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, Loader2, Globe, Smartphone, Monitor,
@@ -12,6 +12,7 @@ import { useBookmarks } from '@/hooks/use-bookmarks'
 import { useSubscription } from '@/hooks/use-subscription'
 import { useToast } from '@/components/ui/toast'
 import { exportIdeaToPDF } from '@/lib/pdf-export'
+import { DODO_PRODUCTS } from '@/lib/subscription'
 import { VoteButton } from '@/components/ideas/vote-button'
 import { CommentSection } from '@/components/comments/comment-section'
 import { UpgradePrompt } from '@/components/subscription/upgrade-prompt'
@@ -27,6 +28,8 @@ const platformIcons: Record<string, typeof Globe> = {
 
 export function IdeaDetailPage() {
   const { slug } = useParams<{ slug: string }>()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const { addRecent } = useRecent()
   const { categories } = useCategories()
@@ -36,43 +39,83 @@ export function IdeaDetailPage() {
   const [isPublic, setIsPublic] = useState(false)
   const [toggling, setToggling] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [buyingReport, setBuyingReport] = useState(false)
+  const [hasPurchasedReport, setHasPurchasedReport] = useState(false)
   const { isBookmarked, toggleBookmark, bookmarkedIds } = useBookmarks()
-  const { isPro, isFree } = useSubscription()
+  const { isPro, isFree, createCheckout } = useSubscription()
   const { toast } = useToast()
 
-  useEffect(() => {
+  // Determines if user can view Pro content (Pro subscriber OR purchased report for this idea)
+  const canViewPro = isPro || hasPurchasedReport
+
+  const fetchIdeaData = async () => {
     if (!slug) return
-    const fetchData = async () => {
-      // Use secure RPC that strips Pro-only fields server-side
-      const { data } = await (supabase.rpc as any)('get_idea_by_slug', { p_slug: slug })
+    // Use secure RPC that strips Pro-only fields server-side
+    const { data } = await (supabase.rpc as any)('get_idea_by_slug', { p_slug: slug })
 
-      const ideaData = data as SaasIdea | null
-      setIdea(ideaData)
+    const ideaData = data as (SaasIdea & { has_purchased_report?: boolean }) | null
+    setIdea(ideaData)
 
-      if (ideaData) {
-        setIsPublic(ideaData.is_public)
-        addRecent({
-          id: ideaData.id,
-          title: ideaData.title,
-          category: ideaData.category || 'SaaS',
-          path: `/idea/${ideaData.slug || ideaData.id}`,
-          upvotes: ideaData.upvotes || 0,
-        })
-      }
-
-      if (user && ideaData) {
-        const { data: voteData } = await supabase
-          .from('votes')
-          .select('vote_type')
-          .eq('user_id', user.id)
-          .eq('idea_id', ideaData.id)
-          .single()
-        if (voteData) setUserVote((voteData as any).vote_type)
-      }
-      setLoading(false)
+    if (ideaData) {
+      setIsPublic(ideaData.is_public)
+      setHasPurchasedReport(!!ideaData.has_purchased_report)
+      addRecent({
+        id: ideaData.id,
+        title: ideaData.title,
+        category: ideaData.category || 'SaaS',
+        path: `/idea/${ideaData.slug || ideaData.id}`,
+        upvotes: ideaData.upvotes || 0,
+      })
     }
-    fetchData()
+
+    if (user && ideaData) {
+      const { data: voteData } = await supabase
+        .from('votes')
+        .select('vote_type')
+        .eq('user_id', user.id)
+        .eq('idea_id', ideaData.id)
+        .single()
+      if (voteData) setUserVote((voteData as any).vote_type)
+    }
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    fetchIdeaData()
   }, [slug, user, addRecent])
+
+  // Handle return from successful report purchase
+  useEffect(() => {
+    if (searchParams.get('report_purchased') === 'true') {
+      toast('Report purchased! Full details are now unlocked.')
+      // Remove query param from URL
+      navigate(`/idea/${slug}`, { replace: true })
+      // Re-fetch to get unlocked data
+      fetchIdeaData()
+    }
+  }, [searchParams])
+
+  const handleBuyReport = async () => {
+    if (!user) {
+      navigate('/login')
+      return
+    }
+    if (!idea) return
+    setBuyingReport(true)
+    try {
+      const url = await createCheckout(DODO_PRODUCTS.deep_dive_report, {
+        idea_id: idea.id,
+        idea_slug: idea.slug || idea.id,
+      })
+      if (url) {
+        window.location.href = url
+      } else {
+        toast('Failed to create checkout. Please try again.')
+      }
+    } finally {
+      setBuyingReport(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -173,7 +216,7 @@ export function IdeaDetailPage() {
                   )}
                   {idea.estimated_monthly_sales && <li>Monthly Sales: <strong className="text-emerald">{formatCurrency(idea.estimated_monthly_sales)}</strong></li>}
                 </ul>
-                {isPro ? (
+                {canViewPro ? (
                   <>
                     <ul className="list-disc list-inside space-y-1 ml-1 mt-1">
                       {idea.estimated_daily_sales && <li>Daily Sales: <strong className="text-emerald">{formatCurrency(idea.estimated_daily_sales)}</strong></li>}
@@ -193,16 +236,21 @@ export function IdeaDetailPage() {
                     )}
                   </>
                 ) : (
-                  <div className="mt-3 rounded-lg border border-brand/20 bg-surface-1/50 px-4 py-3 flex items-center gap-2">
+                  <div className="mt-3 rounded-lg border border-brand/20 bg-surface-1/50 px-4 py-3 flex flex-wrap items-center gap-2">
                     <Crown className="h-4 w-4 text-brand shrink-0" />
                     <p className="text-[13px] font-semibold text-brand">Pro feature — Detailed revenue breakdown</p>
-                    <Link to="/pricing" className="ml-auto text-[11px] font-medium text-brand hover:underline shrink-0">Upgrade</Link>
+                    <div className="flex items-center gap-2 ml-auto">
+                      <button onClick={handleBuyReport} disabled={buyingReport} className="text-[11px] font-semibold text-white bg-brand rounded-full px-3 py-1 hover:bg-brand/90 transition-colors disabled:opacity-50">
+                        {buyingReport ? 'Loading...' : 'Buy Report $9.99'}
+                      </button>
+                      <Link to="/pricing" className="text-[11px] font-medium text-brand hover:underline">or Upgrade</Link>
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* Pricing — Pro only */}
-              {isPro && pricingTiers.length > 0 && (
+              {canViewPro && pricingTiers.length > 0 && (
                 <div>
                   <p className="text-text-primary font-semibold mb-2">Pricing Tiers:</p>
                   {pricingTiers.map((t, i) => (
@@ -222,11 +270,16 @@ export function IdeaDetailPage() {
                   ))}
                 </div>
               )}
-              {!isPro && pricingTiers.length > 0 && (
-                <div className="rounded-lg border border-brand/20 bg-surface-1/50 px-4 py-3 flex items-center gap-2">
+              {!canViewPro && pricingTiers.length > 0 && (
+                <div className="rounded-lg border border-brand/20 bg-surface-1/50 px-4 py-3 flex flex-wrap items-center gap-2">
                   <Crown className="h-4 w-4 text-brand shrink-0" />
                   <p className="text-[13px] font-semibold text-brand">Pro feature — Pricing tier details</p>
-                  <Link to="/pricing" className="ml-auto text-[11px] font-medium text-brand hover:underline shrink-0">Upgrade</Link>
+                  <div className="flex items-center gap-2 ml-auto">
+                    <button onClick={handleBuyReport} disabled={buyingReport} className="text-[11px] font-semibold text-white bg-brand rounded-full px-3 py-1 hover:bg-brand/90 transition-colors disabled:opacity-50">
+                      {buyingReport ? 'Loading...' : 'Buy Report $9.99'}
+                    </button>
+                    <Link to="/pricing" className="text-[11px] font-medium text-brand hover:underline">or Upgrade</Link>
+                  </div>
                 </div>
               )}
 
@@ -246,7 +299,7 @@ export function IdeaDetailPage() {
               )}
 
               {/* === PRO-GATED SECTIONS: Team, Lead Gen, Marketing, SEO, Competitors === */}
-              {isPro ? (
+              {canViewPro ? (
                 <>
                   {/* Team */}
                   {teamRoles.length > 0 && (
@@ -372,19 +425,30 @@ export function IdeaDetailPage() {
                   )}
                 </>
               ) : (
-                /* Free user — no content rendered, just upgrade prompt */
+                /* Free user — no content rendered, just upgrade prompt + buy report option */
                 <div className="rounded-xl border border-border bg-surface-1/30 p-6 text-center space-y-3">
                   <div className="mx-auto h-12 w-12 rounded-full bg-brand/10 flex items-center justify-center">
                     <Crown className="h-6 w-6 text-brand" />
                   </div>
                   <h3 className="text-[15px] font-bold text-text-primary">Detailed Market Reports</h3>
-                  <p className="text-[13px] text-text-muted max-w-md mx-auto">Upgrade to Pro to unlock team breakdowns, lead generation strategies, marketing playbooks, SEO plans, and competitive analysis.</p>
-                  <Link
-                    to="/pricing"
-                    className="inline-flex items-center gap-1.5 bg-brand text-white rounded-full px-5 py-2 text-[13px] font-semibold hover:bg-brand/90 transition-colors"
-                  >
-                    <Crown className="h-3.5 w-3.5" /> Upgrade to Pro
-                  </Link>
+                  <p className="text-[13px] text-text-muted max-w-md mx-auto">Unlock team breakdowns, lead generation strategies, marketing playbooks, SEO plans, and competitive analysis.</p>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <button
+                      onClick={handleBuyReport}
+                      disabled={buyingReport}
+                      className="inline-flex items-center gap-1.5 bg-brand text-white rounded-full px-5 py-2 text-[13px] font-semibold hover:bg-brand/90 transition-colors disabled:opacity-50"
+                    >
+                      {buyingReport ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <DollarSign className="h-3.5 w-3.5" />}
+                      {buyingReport ? 'Creating checkout...' : 'Buy This Report — $9.99'}
+                    </button>
+                    <Link
+                      to="/pricing"
+                      className="inline-flex items-center gap-1.5 border border-brand/30 text-brand rounded-full px-5 py-2 text-[13px] font-semibold hover:bg-brand/5 transition-colors"
+                    >
+                      <Crown className="h-3.5 w-3.5" /> Upgrade to Pro
+                    </Link>
+                  </div>
+                  <p className="text-[11px] text-text-muted">One-time purchase for this idea, or upgrade for unlimited access</p>
                 </div>
               )}
 
@@ -469,8 +533,8 @@ export function IdeaDetailPage() {
               </button>
               <button
                 onClick={async () => {
-                  if (!isPro) {
-                    toast('Upgrade to Pro to export PDFs')
+                  if (!canViewPro) {
+                    toast('Upgrade to Pro or buy this report to export PDF')
                     return
                   }
                   setExporting(true)
@@ -483,11 +547,11 @@ export function IdeaDetailPage() {
                   setExporting(false)
                 }}
                 className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors cursor-pointer ${
-                  isPro ? 'text-text-muted hover:bg-surface-2' : 'text-text-muted/50'
+                  canViewPro ? 'text-text-muted hover:bg-surface-2' : 'text-text-muted/50'
                 }`}
               >
                 {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
-                {isPro ? 'Export PDF' : <><Crown className="h-3 w-3 text-brand" /> PDF</>}
+                {canViewPro ? 'Export PDF' : <><Crown className="h-3 w-3 text-brand" /> PDF</>}
               </button>
               {idea.generated_for === user?.id && (
                 <button
@@ -591,7 +655,7 @@ export function IdeaDetailPage() {
                 {idea.estimated_monthly_sales && (
                   <SidebarRow icon={DollarSign} label="Monthly Sales" value={formatCurrency(idea.estimated_monthly_sales)} highlight="emerald" />
                 )}
-                {isPro && (
+                {canViewPro && (
                   <>
                     {idea.estimated_daily_sales && (
                       <SidebarRow icon={DollarSign} label="Daily Sales" value={formatCurrency(idea.estimated_daily_sales)} />
@@ -607,17 +671,17 @@ export function IdeaDetailPage() {
                     )}
                   </>
                 )}
-                {!isPro && (
-                  <Link to="/pricing" className="flex items-center gap-1.5 text-[11px] text-brand font-medium hover:underline mt-1">
-                    <Crown className="h-3 w-3" /> Unlock full revenue breakdown
-                  </Link>
+                {!canViewPro && (
+                  <button onClick={handleBuyReport} disabled={buyingReport} className="flex items-center gap-1.5 text-[11px] text-brand font-medium hover:underline mt-1">
+                    <Crown className="h-3 w-3" /> {buyingReport ? 'Loading...' : 'Unlock report — $9.99'}
+                  </button>
                 )}
               </div>
             </div>
           )}
 
           {/* Team card — Pro only */}
-          {isPro && teamRoles.length > 0 && (
+          {canViewPro && teamRoles.length > 0 && (
             <div className="rounded-xl border border-border bg-surface-0 overflow-hidden">
               <div className="px-4 py-3 border-b border-border">
                 <h4 className="text-[12px] font-semibold uppercase tracking-wider text-text-muted">Team</h4>
@@ -678,7 +742,7 @@ export function IdeaDetailPage() {
           )}
 
           {/* Competitors card — Pro only */}
-          {isPro && competitors.length > 0 && (
+          {canViewPro && competitors.length > 0 && (
             <div className="rounded-xl border border-border bg-surface-0 overflow-hidden">
               <div className="px-4 py-3 border-b border-border">
                 <h4 className="text-[12px] font-semibold uppercase tracking-wider text-text-muted">Competitors</h4>
