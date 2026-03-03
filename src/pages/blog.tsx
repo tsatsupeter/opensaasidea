@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Newspaper, Calendar, ArrowRight, Clock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/card'
+import { siteConfig } from '@/lib/site-config'
 
 const posts = [
   {
@@ -13,7 +14,7 @@ const posts = [
   },
   {
     title: 'Introducing the Developer API',
-    excerpt: 'Programmatic access to our entire SaaS idea database. Build integrations, dashboards, and tools on top of OpenSaaSIdea.',
+    excerpt: 'Programmatic access to our entire idea database. Build integrations, dashboards, and tools with our API.',
     date: '2025-02-25',
     readTime: '3 min',
     category: 'Product',
@@ -44,7 +45,7 @@ export function BlogPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Blog</h1>
-            <p className="text-sm text-text-muted">Updates, guides, and stories from the OpenSaaSIdea team.</p>
+            <p className="text-sm text-text-muted">Updates, guides, and stories from the {siteConfig.name} team.</p>
           </div>
         </div>
       </motion.div>
@@ -73,7 +74,7 @@ export function BlogPage() {
       <Card>
         <CardContent className="p-6 text-center space-y-2">
           <p className="text-[13px] text-text-muted">More posts coming soon. Stay tuned!</p>
-          <p className="text-[11px] text-text-muted">Want to contribute? Email blog@opensaasidea.com</p>
+          <p className="text-[11px] text-text-muted">Want to contribute? Email blog@{siteConfig.domain}</p>
         </CardContent>
       </Card>
     </div>

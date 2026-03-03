@@ -20,6 +20,7 @@ import { UpgradePrompt } from '@/components/subscription/upgrade-prompt'
 import { formatCurrency, formatNumber, timeAgo } from '@/lib/utils'
 import { categoryColor, toSlug, useCategories } from '@/lib/categories'
 import { getAffiliateLink } from '@/lib/affiliates'
+import { siteConfig } from '@/lib/site-config'
 import type { SaasIdea, PricingTier, TeamRole, TechStack, Competitor } from '@/types/database'
 
 const platformIcons: Record<string, typeof Globe> = {
@@ -787,7 +788,7 @@ export function IdeaDetailPage() {
               <Link to="/accessibility" className="text-[11px] text-text-muted hover:text-text-secondary hover:underline">Accessibility</Link>
             </div>
             <p className="text-[10px] text-text-muted">
-              OpenSaaSIdea, Inc. © {new Date().getFullYear()}. All rights reserved.
+              {siteConfig.name}, Inc. © {new Date().getFullYear()}. All rights reserved.
             </p>
           </div>
         </div>

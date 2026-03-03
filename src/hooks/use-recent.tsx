@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { siteConfig } from '@/lib/site-config'
 
 export interface RecentItem {
   id: string
@@ -15,7 +16,7 @@ interface RecentContextValue {
   clearRecent: () => void
 }
 
-const STORAGE_KEY = 'opensaasidea-recent'
+const STORAGE_KEY = `${siteConfig.themeStorageKey.replace('-theme', '')}-recent`
 const MAX_RECENT = 12
 
 function loadRecent(): RecentItem[] {

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { Info, Lightbulb, Target, Heart, Code2, Zap } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { siteConfig } from '@/lib/site-config'
 
 export function AboutPage() {
   return (
@@ -11,8 +12,8 @@ export function AboutPage() {
             <Info className="h-6 w-6 text-accent" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">About OpenSaaSIdea</h1>
-            <p className="text-sm text-text-muted">AI-powered SaaS idea generation for builders.</p>
+            <h1 className="text-2xl font-bold">About {siteConfig.name}</h1>
+            <p className="text-sm text-text-muted">{siteConfig.tagline}</p>
           </div>
         </div>
       </motion.div>
@@ -21,7 +22,7 @@ export function AboutPage() {
         <CardContent className="p-6 space-y-4">
           <h2 className="text-[16px] font-bold">Our Mission</h2>
           <p className="text-[13px] text-text-secondary leading-relaxed">
-            OpenSaaSIdea helps developers, entrepreneurs, and teams discover validated SaaS ideas backed by real market data.
+            {siteConfig.name} helps developers, entrepreneurs, and teams discover validated ideas backed by real market data.
             We use AI to analyze trends, competition, and revenue potential — so you can focus on building, not brainstorming.
           </p>
         </CardContent>
@@ -29,7 +30,7 @@ export function AboutPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { icon: Lightbulb, title: 'AI-Powered Ideas', desc: 'Fresh SaaS ideas generated daily with revenue estimates and tech stack recommendations.' },
+          { icon: Lightbulb, title: 'AI-Powered Ideas', desc: 'Fresh ideas generated daily with revenue estimates and execution plans.' },
           { icon: Target, title: 'Market Validated', desc: 'Each idea includes competitor analysis, target audience, and realistic MRR projections.' },
           { icon: Code2, title: 'Developer First', desc: 'Built for developers with full API access, detailed tech stacks, and implementation guides.' },
         ].map(item => (
@@ -61,7 +62,7 @@ export function AboutPage() {
           <p className="text-[13px] text-text-secondary">
             Built with <span className="text-rose">♥</span> using React, Supabase, and AI.
           </p>
-          <p className="text-[11px] text-text-muted">Questions? Email us at hello@opensaasidea.com</p>
+          <p className="text-[11px] text-text-muted">Questions? Email us at hello@{siteConfig.domain}</p>
         </CardContent>
       </Card>
     </div>

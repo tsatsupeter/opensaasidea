@@ -4,6 +4,7 @@ import { Compass, LayoutDashboard, LogIn, Menu, X, LogOut, User } from 'lucide-r
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
+import { siteConfig, getBrandParts } from '@/lib/site-config'
 
 const navLinks = [
   { href: '/explore', label: 'Explore', icon: Compass },
@@ -24,9 +25,9 @@ export function Navbar() {
     >
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-2 group">
-          <img src="/logo.png" alt="OpenSaaSIdea" className="h-9 w-9 rounded-lg object-contain" />
+          <img src="/logo.png" alt={siteConfig.logoAlt} className="h-9 w-9 rounded-lg object-contain" />
           <span className="text-lg font-bold tracking-tight">
-            Open<span className="text-brand">SaaS</span>Idea
+            {getBrandParts().prefix}<span className="text-brand">{getBrandParts().brand}</span>{getBrandParts().suffix}
           </span>
         </Link>
 

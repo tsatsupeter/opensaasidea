@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { ThumbsUp } from 'lucide-react'
 import { useRecent } from '@/hooks/use-recent'
 import { categoryColor, toSlug } from '@/lib/categories'
+import { siteConfig } from '@/lib/site-config'
 
 function timeAgoShort(ts: number): string {
   const seconds = Math.floor((Date.now() - ts) / 1000)
@@ -80,7 +81,7 @@ export function RightSidebar() {
           <Link to="/accessibility" className="text-[11px] text-text-muted hover:text-text-secondary hover:underline">Accessibility</Link>
         </div>
         <p className="text-[10px] text-text-muted">
-          OpenSaaSIdea, Inc. © {new Date().getFullYear()}. All rights reserved.
+          {siteConfig.name}, Inc. © {new Date().getFullYear()}. All rights reserved.
         </p>
       </div>
     </aside>

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { useAuth } from '@/hooks/use-auth'
+import { siteConfig, getBrandParts } from '@/lib/site-config'
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -50,9 +51,9 @@ export function RegisterPage() {
       >
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <img src="/logo.png" alt="OpenSaaSIdea" className="h-10 w-10 rounded-xl object-contain" />
+            <img src="/logo.png" alt={siteConfig.logoAlt} className="h-10 w-10 rounded-xl object-contain" />
             <span className="text-xl font-bold">
-              Open<span className="text-brand">SaaS</span>Idea
+              {getBrandParts().prefix}<span className="text-brand">{getBrandParts().brand}</span>{getBrandParts().suffix}
             </span>
           </Link>
         </div>
@@ -60,7 +61,7 @@ export function RegisterPage() {
         <Card className="border-border/50">
           <CardHeader className="text-center">
             <CardTitle className="text-xl">Create your account</CardTitle>
-            <CardDescription>Start getting personalized SaaS ideas daily</CardDescription>
+            <CardDescription>Start getting personalized ideas daily</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">

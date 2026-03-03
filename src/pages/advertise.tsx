@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Megaphone, Mail, BarChart3, Users, Zap, Globe } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { siteConfig } from '@/lib/site-config'
 
 export function AdvertisePage() {
   return (
@@ -12,8 +13,8 @@ export function AdvertisePage() {
             <Megaphone className="h-6 w-6 text-brand" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Advertise on OpenSaaSIdea</h1>
-            <p className="text-sm text-text-muted">Reach thousands of SaaS founders, developers, and entrepreneurs.</p>
+            <h1 className="text-2xl font-bold">Advertise on {siteConfig.name}</h1>
+            <p className="text-sm text-text-muted">Reach thousands of founders, developers, and entrepreneurs.</p>
           </div>
         </div>
       </motion.div>
@@ -54,8 +55,8 @@ export function AdvertisePage() {
               </div>
             ))}
           </div>
-          <a href="mailto:ads@opensaasidea.com?subject=Advertising Inquiry">
-            <Button className="w-full mt-2"><Mail className="h-4 w-4 mr-1.5" /> Contact Us — ads@opensaasidea.com</Button>
+          <a href={`mailto:ads@${siteConfig.domain}?subject=Advertising Inquiry`}>
+            <Button className="w-full mt-2"><Mail className="h-4 w-4 mr-1.5" /> Contact Us — ads@{siteConfig.domain}</Button>
           </a>
         </CardContent>
       </Card>

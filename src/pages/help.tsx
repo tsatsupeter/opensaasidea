@@ -3,6 +3,7 @@ import { HelpCircle, Mail, MessageSquare, Book, Zap, ExternalLink } from 'lucide
 import { Link } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { siteConfig } from '@/lib/site-config'
 
 export function HelpPage() {
   const faqs = [
@@ -29,12 +30,12 @@ export function HelpPage() {
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <a href="mailto:support@opensaasidea.com?subject=Support Request">
+        <a href={`mailto:support@${siteConfig.domain}?subject=Support Request`}>
           <Card className="hover:border-accent/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-4 text-center space-y-2">
               <Mail className="h-5 w-5 text-accent mx-auto" />
               <p className="text-[13px] font-semibold">Email Support</p>
-              <p className="text-[11px] text-text-muted">support@opensaasidea.com</p>
+              <p className="text-[11px] text-text-muted">support@{siteConfig.domain}</p>
             </CardContent>
           </Card>
         </a>

@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { IdeaCard } from '@/components/ideas/idea-card'
 import { Logo } from '@/components/ui/logo'
 import { SortDropdown, type SortBy } from '@/components/ui/sort-dropdown'
+import { siteConfig } from '@/lib/site-config'
 import type { SaasIdea } from '@/types/database'
 
 function getDefaultSort(path: string): SortBy {
@@ -104,7 +105,7 @@ export function HomePage() {
           </div>
           <h3 className="text-lg font-semibold mb-2">No ideas yet</h3>
           <p className="text-sm text-text-secondary max-w-sm mx-auto">
-            New SaaS ideas are auto-generated daily. Check back soon!
+            {siteConfig.emptyStateText}
           </p>
         </div>
       ) : (

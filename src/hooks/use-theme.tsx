@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
+import { siteConfig } from '@/lib/site-config'
 
 type Theme = 'light' | 'dark'
 
@@ -13,7 +14,7 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('opensaasidea-theme') as Theme | null
+      const stored = localStorage.getItem(siteConfig.themeStorageKey) as Theme | null
       if (stored) return stored
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
     }
@@ -24,7 +25,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement
     root.classList.remove('light', 'dark')
     root.classList.add(theme)
-    localStorage.setItem('opensaasidea-theme', theme)
+    localStorage.setItem(siteConfig.themeStorageKey, theme)
   }, [theme])
 
   const toggleTheme = useCallback(() => {

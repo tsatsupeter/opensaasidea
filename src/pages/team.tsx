@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useSubscription } from '@/hooks/use-subscription'
+import { siteConfig } from '@/lib/site-config'
 import { useTeam } from '@/hooks/use-team'
 import { useToast } from '@/components/ui/toast'
 import { Card, CardContent } from '@/components/ui/card'
@@ -586,7 +587,7 @@ function ApiKeysTab({ apiKeys, newApiKey, keyName, setKeyName, generating, onGen
           <div className="bg-surface-2 rounded-lg p-3 text-[11px] font-mono space-y-1">
             <p className="text-text-muted"># Fetch public ideas</p>
             <p>curl -H "x-api-key: YOUR_API_KEY" \</p>
-            <p className="pl-4">https://opensaasidea.com/v1/api/ideas</p>
+            <p className="pl-4">https://{siteConfig.domain}/v1/api/ideas</p>
           </div>
           <p className="text-[10px] text-text-muted">Include your API key in the x-api-key header. Read-only access.</p>
         </CardContent>
@@ -611,12 +612,12 @@ function SupportTab() {
             As a Team plan member, you get priority support. Reach out to us anytime and we'll respond within 24 hours.
           </p>
           <a
-            href="mailto:support@opensaasidea.com?subject=Team Support Request"
+            href={`mailto:support@${siteConfig.domain}?subject=Team Support Request`}
             className="inline-flex items-center gap-1.5 bg-accent text-white rounded-full px-5 py-2 text-[13px] font-semibold hover:bg-accent/90 transition-colors"
           >
             <Headphones className="h-3.5 w-3.5" /> Contact Priority Support
           </a>
-          <p className="text-[11px] text-text-muted">support@opensaasidea.com</p>
+          <p className="text-[11px] text-text-muted">support@{siteConfig.domain}</p>
         </CardContent>
       </Card>
 

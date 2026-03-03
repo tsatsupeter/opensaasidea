@@ -13,9 +13,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
+import { siteConfig } from '@/lib/site-config'
 
-const API_BASE = 'https://opensaasidea.com/v1/api'
-const DOCS_URL = 'https://opensaasidea.mintlify.app'
+const API_BASE = `https://${siteConfig.domain}/v1/api`
+const DOCS_URL = `https://${siteConfig.domain.replace('.com', '')}.mintlify.app`
 
 export function DeveloperApiPage() {
   const { user } = useAuth()

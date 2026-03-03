@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import { Menu, Plus } from 'lucide-react'
+import { Plus, Menu } from 'lucide-react'
+import { siteConfig, getBrandParts } from '@/lib/site-config'
 import { Sidebar } from './sidebar'
 import { RightSidebar } from './right-sidebar'
 import { SearchBar } from '@/components/ui/search-bar'
@@ -38,9 +39,9 @@ export function RootLayout() {
             <Menu className="h-4 w-4 text-text-secondary" />
           </button>
           <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="OpenSaaSIdea" className="h-8 w-8 rounded-lg object-contain" />
+            <img src="/logo.png" alt={siteConfig.logoAlt} className="h-8 w-8 rounded-lg object-contain" />
             <span className="text-sm font-bold hidden sm:block">
-              Open<span className="text-brand">SaaS</span>Idea
+              {getBrandParts().prefix}<span className="text-brand">{getBrandParts().brand}</span>{getBrandParts().suffix}
             </span>
           </Link>
         </div>

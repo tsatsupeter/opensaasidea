@@ -4,15 +4,15 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="AI-powered SaaS idea generator with revenue breakdowns, tech stacks, and team planning." />
-    <title>OpenSaaSIdea — AI SaaS Idea Generator</title>
+    <meta name="description" content="AI-powered idea generator with revenue breakdowns, execution plans, and team planning." />
+    <title>OpenProjectIdea — AI Idea Generator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   </head>
   <body class="antialiased">
     <script>
-      (function(){var t=localStorage.getItem('opensaasidea-theme');if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.classList.add(t)})()
+      (function(){var t=localStorage.getItem('opensaasidea-theme')||localStorage.getItem('openprojectidea-theme');if(!t)t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.classList.add(t)})()
     </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
