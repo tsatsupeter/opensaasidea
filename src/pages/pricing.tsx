@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/use-auth'
 import { useSubscription } from '@/hooks/use-subscription'
 import { useToast } from '@/components/ui/toast'
-import { TIERS, getProductId, DODO_PRODUCTS } from '@/lib/subscription'
+import { TIERS, getProductId } from '@/lib/subscription'
 import type { SubscriptionTier } from '@/types/database'
 
 const TIER_HIGHLIGHT: Record<SubscriptionTier, string> = {
@@ -55,24 +55,6 @@ export function PricingPage() {
     try {
       const productId = getProductId(tier as 'pro' | 'team', billing)
       const url = await createCheckout(productId)
-      if (url) {
-        window.location.href = url
-      } else {
-        toast('Failed to create checkout. Please try again.')
-      }
-    } finally {
-      setLoadingTier(null)
-    }
-  }
-
-  const handleBuyReport = async () => {
-    if (!user) {
-      navigate('/login')
-      return
-    }
-    setLoadingTier('report')
-    try {
-      const url = await createCheckout(DODO_PRODUCTS.deep_dive_report)
       if (url) {
         window.location.href = url
       } else {
@@ -261,15 +243,11 @@ export function PricingPage() {
                     <p className="text-xs text-text-muted mb-3">per report</p>
                     <Button
                       variant="outline"
-                      onClick={handleBuyReport}
-                      disabled={loadingTier === 'report'}
+                      onClick={() => navigate('/explore')}
                     >
-                      {loadingTier === 'report' ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        'Buy Report'
-                      )}
+                      Browse Ideas
                     </Button>
+                    <p className="text-[10px] text-text-muted mt-2">Buy from any idea page</p>
                   </>
                 )}
               </div>
