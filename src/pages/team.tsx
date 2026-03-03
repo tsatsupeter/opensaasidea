@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Users, Plus, Trash2, Crown, Shield, UserPlus, Loader2,
@@ -7,6 +7,7 @@ import {
   LayoutDashboard, Settings, ExternalLink, Headphones, Mail,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { useAuthModal } from '@/components/ui/auth-modal'
 import { useSubscription } from '@/hooks/use-subscription'
 import { siteConfig } from '@/lib/site-config'
 import { useTeam } from '@/hooks/use-team'
@@ -23,7 +24,7 @@ type Tab = 'ideas' | 'members' | 'settings'
 
 export function TeamPage() {
   const { user } = useAuth()
-  const navigate = useNavigate()
+  const { openAuthModal } = useAuthModal()
   const { isTeam, tier } = useSubscription()
   const {
     team, members, teamIdeas, customCategories, apiKeys, loading, dataLoading,
@@ -47,7 +48,7 @@ export function TeamPage() {
       <div className="max-w-2xl mx-auto py-20 text-center space-y-4">
         <Users className="h-12 w-12 text-text-muted mx-auto" />
         <h2 className="text-xl font-bold">Sign in to access Team features</h2>
-        <Button onClick={() => navigate('/login')}>Sign In</Button>
+        <Button onClick={() => openAuthModal('login')}>Sign In</Button>
       </div>
     )
   }

@@ -4,7 +4,7 @@ import { ThumbsUp, ThumbsDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
-import { useNavigate } from 'react-router-dom'
+import { useAuthModal } from '@/components/ui/auth-modal'
 
 interface VoteButtonProps {
   ideaId: string
@@ -16,45 +16,49 @@ interface VoteButtonProps {
 
 export function VoteButton({ ideaId, upvotes, downvotes, currentVote: initialVote, onVoteChange }: VoteButtonProps) {
   const { user } = useAuth()
-  const navigate = useNavigate()
+  const { openAuthModal } = useAuthModal()
   const [vote, setVote] = useState<'up' | 'down' | null>(initialVote ?? null)
   const [counts, setCounts] = useState({ up: upvotes, down: downvotes })
   const [animating, setAnimating] = useState<'up' | 'down' | null>(null)
 
   const handleVote = async (type: 'up' | 'down') => {
     if (!user) {
-      navigate('/login')
+      openAuthModal('login')
       return
     }
 
     setAnimating(type)
     setTimeout(() => setAnimating(null), 300)
 
-    if (vote === type) {
-      // Remove vote
-      setVote(null)
-      setCounts(prev => ({
-        ...prev,
-        [type]: prev[type] - 1,
-      }))
-      await supabase.from('votes').delete().eq('user_id', user.id).eq('idea_id', ideaId)
-    } else if (vote) {
-      // Switch vote
-      const oldType = vote
-      setVote(type)
-      setCounts(prev => ({
-        [oldType]: prev[oldType as 'up' | 'down'] - 1,
-        [type]: prev[type] + 1,
-      } as { up: number; down: number }))
-      await (supabase.from('votes') as any).update({ vote_type: type }).eq('user_id', user.id).eq('idea_id', ideaId)
-    } else {
-      // New vote
-      setVote(type)
-      setCounts(prev => ({
-        ...prev,
-        [type]: prev[type] + 1,
-      }))
-      await supabase.from('votes').insert({ user_id: user.id, idea_id: ideaId, vote_type: type } as any)
+    try {
+      if (vote === type) {
+        // Remove vote
+        setVote(null)
+        setCounts(prev => ({
+          ...prev,
+          [type]: prev[type] - 1,
+        }))
+        await supabase.from('votes').delete().eq('user_id', user.id).eq('idea_id', ideaId)
+      } else if (vote) {
+        // Switch vote
+        const oldType = vote
+        setVote(type)
+        setCounts(prev => ({
+          [oldType]: prev[oldType as 'up' | 'down'] - 1,
+          [type]: prev[type] + 1,
+        } as { up: number; down: number }))
+        await (supabase.from('votes') as any).update({ vote_type: type }).eq('user_id', user.id).eq('idea_id', ideaId)
+      } else {
+        // New vote
+        setVote(type)
+        setCounts(prev => ({
+          ...prev,
+          [type]: prev[type] + 1,
+        }))
+        await supabase.from('votes').insert({ user_id: user.id, idea_id: ideaId, vote_type: type } as any)
+      }
+    } catch (err) {
+      console.error('Vote failed:', err)
     }
 
     onVoteChange?.()

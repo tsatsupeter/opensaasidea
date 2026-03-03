@@ -4,6 +4,7 @@ import { Bell, Check, CheckCheck, Trash2, Users, X, Settings } from 'lucide-reac
 import { useNotifications, type Notification } from '@/hooks/use-notifications'
 import { useTeam } from '@/hooks/use-team'
 import { useAuth } from '@/hooks/use-auth'
+import { useAuthModal } from '@/components/ui/auth-modal'
 import { useToast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -39,6 +40,7 @@ export function NotificationsPage() {
   const { acceptInvite } = useTeam()
   const { toast } = useToast()
   const navigate = useNavigate()
+  const { openAuthModal } = useAuthModal()
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
 
   if (!user) {
@@ -47,7 +49,7 @@ export function NotificationsPage() {
         <Bell className="h-10 w-10 text-text-muted mx-auto" />
         <h2 className="text-xl font-bold">Sign in to view notifications</h2>
         <p className="text-sm text-text-muted">You need to be logged in to see your notifications.</p>
-        <Button onClick={() => navigate('/login')}>Sign In</Button>
+        <Button onClick={() => openAuthModal('login')}>Sign In</Button>
       </div>
     )
   }

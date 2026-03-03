@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useAuthModal } from '@/components/ui/auth-modal'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   User, Globe, Lock, Bookmark, Clock, ThumbsUp, ThumbsDown,
-  Loader2, MapPin, Calendar, Briefcase, FileText, MessageSquare
+  MapPin, Calendar, Briefcase, FileText, MessageSquare
 } from 'lucide-react'
+import { ProfileSkeleton } from '@/components/ui/skeleton'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { IdeaCard } from '@/components/ideas/idea-card'
@@ -26,7 +27,7 @@ const TABS: { id: ProfileTab; label: string; icon: typeof Globe }[] = [
 ]
 
 export function ProfilePage() {
-  const navigate = useNavigate()
+  const { openAuthModal } = useAuthModal()
   const { user, profile, loading: authLoading } = useAuth()
   const { bookmarkedIds } = useBookmarks()
   const { recentItems } = useRecent()
@@ -42,105 +43,104 @@ export function ProfilePage() {
   const fetchData = useCallback(async () => {
     if (!user) return
     setLoading(true)
-
-    // Fetch all user ideas
-    const { data: allIdeas } = await supabase
-      .from('saas_ideas')
-      .select(SAFE_IDEA_COLUMNS)
-      .eq('generated_for', user.id)
-      .order('created_at', { ascending: false })
-      .limit(100)
-
-    const ideas = (allIdeas as SaasIdea[]) || []
-    const pub = ideas.filter(i => i.is_public)
-    const priv = ideas.filter(i => !i.is_public)
-    setPublicIdeas(pub)
-    setPrivateIdeas(priv)
-
-    // Fetch saved
-    if (bookmarkedIds.size > 0) {
-      const { data: saved } = await supabase
+    try {
+      // Fetch all user ideas
+      const { data: allIdeas } = await supabase
         .from('saas_ideas')
         .select(SAFE_IDEA_COLUMNS)
-        .in('id', Array.from(bookmarkedIds))
+        .eq('generated_for', user.id)
         .order('created_at', { ascending: false })
-      setSavedIdeas((saved as SaasIdea[]) || [])
+        .limit(100)
+
+      const ideas = (allIdeas as SaasIdea[]) || []
+      const pub = ideas.filter(i => i.is_public)
+      const priv = ideas.filter(i => !i.is_public)
+      setPublicIdeas(pub)
+      setPrivateIdeas(priv)
+
+      // Fetch saved
+      if (bookmarkedIds.size > 0) {
+        const { data: saved } = await supabase
+          .from('saas_ideas')
+          .select(SAFE_IDEA_COLUMNS)
+          .in('id', Array.from(bookmarkedIds))
+          .order('created_at', { ascending: false })
+        setSavedIdeas((saved as SaasIdea[]) || [])
+      }
+
+      // Fetch votes
+      const { data: votes } = await (supabase.from('votes') as any)
+        .select('idea_id, vote_type')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (votes && votes.length > 0) {
+        const voteIdeaIds = votes.map((v: any) => v.idea_id)
+        const { data: voteIdeas } = await supabase
+          .from('saas_ideas')
+          .select(SAFE_IDEA_COLUMNS)
+          .in('id', voteIdeaIds)
+
+        const ideaMap = new Map((voteIdeas || []).map((i: any) => [i.id, i as SaasIdea]))
+        const merged = votes
+          .map((v: any) => ({ idea: ideaMap.get(v.idea_id), vote_type: v.vote_type as 'up' | 'down' }))
+          .filter((v: any) => v.idea)
+        setVotedIdeas(merged)
+      }
+
+      // Fetch user comments
+      const { data: rawComments } = await (supabase.from('comments') as any)
+        .select('id, content, idea_id, upvotes, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (rawComments && rawComments.length > 0) {
+        const commentIdeaIds = [...new Set(rawComments.map((c: any) => c.idea_id))]
+        const { data: commentIdeas } = await supabase
+          .from('saas_ideas')
+          .select('id, title, slug')
+          .in('id', commentIdeaIds as string[])
+        const ideaMap = new Map((commentIdeas || []).map((i: any) => [i.id, i]))
+        setUserComments(rawComments.map((c: any) => ({
+          ...c,
+          idea_title: ideaMap.get(c.idea_id)?.title || 'Unknown idea',
+          idea_slug: ideaMap.get(c.idea_id)?.slug || null,
+        })))
+      } else {
+        setUserComments([])
+      }
+
+      // Stats
+      const upVotes = (votes || []).filter((v: any) => v.vote_type === 'up').length
+      const downVotes = (votes || []).filter((v: any) => v.vote_type === 'down').length
+      setStats({
+        total: ideas.length,
+        public: pub.length,
+        private: priv.length,
+        saved: bookmarkedIds.size,
+        upvotes: upVotes,
+        downvotes: downVotes,
+        comments: (rawComments || []).length,
+      })
+    } catch (err) {
+      console.error('Profile fetch failed:', err)
+    } finally {
+      setLoading(false)
     }
-
-    // Fetch votes
-    const { data: votes } = await (supabase.from('votes') as any)
-      .select('idea_id, vote_type')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(50)
-
-    if (votes && votes.length > 0) {
-      const voteIdeaIds = votes.map((v: any) => v.idea_id)
-      const { data: voteIdeas } = await supabase
-        .from('saas_ideas')
-        .select(SAFE_IDEA_COLUMNS)
-        .in('id', voteIdeaIds)
-
-      const ideaMap = new Map((voteIdeas || []).map((i: any) => [i.id, i as SaasIdea]))
-      const merged = votes
-        .map((v: any) => ({ idea: ideaMap.get(v.idea_id), vote_type: v.vote_type as 'up' | 'down' }))
-        .filter((v: any) => v.idea)
-      setVotedIdeas(merged)
-    }
-
-    // Fetch user comments
-    const { data: rawComments } = await (supabase.from('comments') as any)
-      .select('id, content, idea_id, upvotes, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(50)
-
-    if (rawComments && rawComments.length > 0) {
-      const commentIdeaIds = [...new Set(rawComments.map((c: any) => c.idea_id))]
-      const { data: commentIdeas } = await supabase
-        .from('saas_ideas')
-        .select('id, title, slug')
-        .in('id', commentIdeaIds as string[])
-      const ideaMap = new Map((commentIdeas || []).map((i: any) => [i.id, i]))
-      setUserComments(rawComments.map((c: any) => ({
-        ...c,
-        idea_title: ideaMap.get(c.idea_id)?.title || 'Unknown idea',
-        idea_slug: ideaMap.get(c.idea_id)?.slug || null,
-      })))
-    } else {
-      setUserComments([])
-    }
-
-    // Stats
-    const upVotes = (votes || []).filter((v: any) => v.vote_type === 'up').length
-    const downVotes = (votes || []).filter((v: any) => v.vote_type === 'down').length
-    setStats({
-      total: ideas.length,
-      public: pub.length,
-      private: priv.length,
-      saved: bookmarkedIds.size,
-      upvotes: upVotes,
-      downvotes: downVotes,
-      comments: (rawComments || []).length,
-    })
-
-    setLoading(false)
   }, [user, bookmarkedIds])
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/login')
+      openAuthModal('login')
       return
     }
     if (user) fetchData()
-  }, [user, authLoading, navigate, fetchData])
+  }, [user, authLoading, openAuthModal, fetchData])
 
   if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-brand" />
-      </div>
-    )
+    return <ProfileSkeleton />
   }
 
   const historyIdeas = recentItems

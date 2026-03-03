@@ -44,13 +44,13 @@ export const TIERS: Record<SubscriptionTier, TierConfig> = {
   free: {
     name: 'Free',
     tier: 'free',
-    tagline: 'Get started with SaaS ideas',
+    tagline: 'Get started for free',
     monthlyPrice: 0,
     yearlyPrice: 0,
     features: [
+      '1 idea per day',
       'Browse public ideas',
       'Vote & comment on ideas',
-      '1 private idea per day',
       'Save up to 10 ideas',
       'Basic idea details',
     ],
@@ -73,8 +73,8 @@ export const TIERS: Record<SubscriptionTier, TierConfig> = {
     monthlyPrice: 15,
     yearlyPrice: 144,
     features: [
+      '10 ideas per day',
       'Everything in Free',
-      'Unlimited private ideas',
       'Detailed market reports',
       'Export ideas to PDF',
       'Priority AI generation',
@@ -82,7 +82,7 @@ export const TIERS: Record<SubscriptionTier, TierConfig> = {
       'Deep-dive business plans',
     ],
     limits: {
-      dailyIdeas: -1,
+      dailyIdeas: 10,
       maxSavedIdeas: -1,
       pdfExports: true,
       detailedReports: true,
@@ -100,16 +100,16 @@ export const TIERS: Record<SubscriptionTier, TierConfig> = {
     monthlyPrice: 45,
     yearlyPrice: 468,
     features: [
+      '30 ideas per day',
       'Everything in Pro',
       'Shared team workspace',
       'Up to 5 team members',
       'Team idea voting & assignment',
       'API access',
       'Priority support',
-      'Custom idea categories',
     ],
     limits: {
-      dailyIdeas: -1,
+      dailyIdeas: 30,
       maxSavedIdeas: -1,
       pdfExports: true,
       detailedReports: true,

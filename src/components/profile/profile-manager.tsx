@@ -455,7 +455,7 @@ export function ProfileManager() {
                           </div>
                           <div>
                             <p className="text-sm font-medium">Drop your CV here or click to browse</p>
-                            <p className="text-xs text-text-muted mt-1">PDF, PNG, JPG, WebP — up to 10MB</p>
+                            <p className="text-xs text-text-muted mt-1">PDF, PNG, JPG, WebP - up to 10MB</p>
                           </div>
                         </div>
                       )}

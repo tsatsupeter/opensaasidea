@@ -376,6 +376,36 @@ export async function generateSaasIdea(options?: {
   return null
 }
 
+const VALID_PLATFORMS = ['web', 'mobile', 'desktop', 'browser_extension', 'api', 'multi_platform'] as const
+const VALID_MONETIZATION = ['subscription', 'freemium', 'one_time', 'marketplace', 'advertising', 'affiliate', 'hybrid'] as const
+
+function normalizePlatform(raw: unknown): string | null {
+  if (!raw || typeof raw !== 'string') return null
+  const lower = raw.toLowerCase().replace(/[^a-z_ ]/g, '').trim()
+  if (VALID_PLATFORMS.includes(lower as any)) return lower
+  if (/multi|cross|all/i.test(lower)) return 'multi_platform'
+  if (/mobile|ios|android|app/i.test(lower)) return 'mobile'
+  if (/desktop|mac|windows|electron/i.test(lower)) return 'desktop'
+  if (/browser.?ext|chrome.?ext|addon|plugin/i.test(lower)) return 'browser_extension'
+  if (/api|backend|server/i.test(lower)) return 'api'
+  if (/web|saas|cloud|online/i.test(lower)) return 'web'
+  return 'web'
+}
+
+function normalizeMonetization(raw: unknown): string | null {
+  if (!raw || typeof raw !== 'string') return null
+  const lower = raw.toLowerCase().replace(/[^a-z_ ]/g, '').trim()
+  if (VALID_MONETIZATION.includes(lower as any)) return lower
+  if (/subscri|recurring|monthly|annual/i.test(lower)) return 'subscription'
+  if (/freemium|free.?tier|free.?plan/i.test(lower)) return 'freemium'
+  if (/one.?time|lifetime|single/i.test(lower)) return 'one_time'
+  if (/market|platform|two.?sided/i.test(lower)) return 'marketplace'
+  if (/ad|sponsor|display/i.test(lower)) return 'advertising'
+  if (/affili|referr|commission/i.test(lower)) return 'affiliate'
+  if (/hybrid|mixed|combo|multiple/i.test(lower)) return 'hybrid'
+  return 'subscription'
+}
+
 export async function saveIdeaToSupabase(
   idea: Record<string, unknown>,
   isPublic: boolean,
@@ -388,8 +418,8 @@ export async function saveIdeaToSupabase(
     is_public: isPublic,
     generated_for: userId || null,
     category: idea.category as string,
-    platform: idea.platform as string,
-    monetization_model: idea.monetization_model as string,
+    platform: normalizePlatform(idea.platform),
+    monetization_model: normalizeMonetization(idea.monetization_model),
     pricing_tiers: idea.pricing_tiers,
     estimated_mrr_low: idea.estimated_mrr_low as number,
     estimated_mrr_high: idea.estimated_mrr_high as number,
@@ -410,12 +440,10 @@ export async function saveIdeaToSupabase(
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('saas_ideas')
     .insert(row as any)
-    .select()
-    .single()
 
   if (error) console.error('Save error:', error)
-  return { data, error }
+  return { error }
 }

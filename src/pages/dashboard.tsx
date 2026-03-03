@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { LayoutDashboard, Loader2, Lock, Globe, RefreshCw, BookmarkCheck, Crown } from 'lucide-react'
+import { LayoutDashboard, Lock, Globe, RefreshCw, BookmarkCheck, Crown } from 'lucide-react'
+import { DashboardSkeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { IdeaCard } from '@/components/ideas/idea-card'
 import { GenerationAnimation } from '@/components/ideas/generation-animation'
 import { useAuth } from '@/hooks/use-auth'
+import { useAuthModal } from '@/components/ui/auth-modal'
 import { useSubscription } from '@/hooks/use-subscription'
 import { supabase, SAFE_IDEA_COLUMNS } from '@/lib/supabase'
 import { generateSaasIdea, saveIdeaToSupabase, type GenerationStep } from '@/lib/ai'
@@ -19,6 +21,7 @@ import type { SaasIdea } from '@/types/database'
 
 export function DashboardPage() {
   const navigate = useNavigate()
+  const { openAuthModal } = useAuthModal()
   const { user, profile, loading: authLoading } = useAuth()
   const { checkCanGenerate, remainingIdeas, isFree, tier, incrementDailyGeneration } = useSubscription()
   const [privateIdeas, setPrivateIdeas] = useState<SaasIdea[]>([])
@@ -32,17 +35,22 @@ export function DashboardPage() {
   const fetchMyIdeas = useCallback(async () => {
     if (!user) return
     setLoading(true)
-    const { data } = await supabase
-      .from('saas_ideas')
-      .select(SAFE_IDEA_COLUMNS)
-      .eq('generated_for', user.id)
-      .order('created_at', { ascending: false })
-      .limit(50)
-    const all = (data as SaasIdea[]) || []
-    setPrivateIdeas(all.filter(i => !i.is_public))
-    setPublicIdeas(all.filter(i => i.is_public))
-
-    setLoading(false)
+    try {
+      const { data, error } = await supabase
+        .from('saas_ideas')
+        .select(SAFE_IDEA_COLUMNS)
+        .eq('generated_for', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50)
+      if (error) console.error('Dashboard ideas error:', error)
+      const all = (data as SaasIdea[]) || []
+      setPrivateIdeas(all.filter(i => !i.is_public))
+      setPublicIdeas(all.filter(i => i.is_public))
+    } catch (err) {
+      console.error('Dashboard fetch failed:', err)
+    } finally {
+      setLoading(false)
+    }
   }, [user])
 
   const fetchSavedIdeas = useCallback(async () => {
@@ -50,13 +58,17 @@ export function DashboardPage() {
       setSavedIdeas([])
       return
     }
-    const ids = Array.from(bookmarkedIds)
-    const { data } = await supabase
-      .from('saas_ideas')
-      .select(SAFE_IDEA_COLUMNS)
-      .in('id', ids)
-      .order('created_at', { ascending: false })
-    setSavedIdeas((data as SaasIdea[]) || [])
+    try {
+      const ids = Array.from(bookmarkedIds)
+      const { data } = await supabase
+        .from('saas_ideas')
+        .select(SAFE_IDEA_COLUMNS)
+        .in('id', ids)
+        .order('created_at', { ascending: false })
+      setSavedIdeas((data as SaasIdea[]) || [])
+    } catch (err) {
+      console.error('Saved ideas fetch failed:', err)
+    }
   }, [user, bookmarkedIds])
 
   useEffect(() => {
@@ -65,7 +77,7 @@ export function DashboardPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/login')
+      openAuthModal('login')
       return
     }
     if (user && profile && !profile.onboarding_completed) {
@@ -73,7 +85,7 @@ export function DashboardPage() {
       return
     }
     if (user) fetchMyIdeas()
-  }, [user, profile, authLoading, navigate, fetchMyIdeas])
+  }, [user, profile, authLoading, openAuthModal, navigate, fetchMyIdeas])
 
   const handleGenerate = async () => {
     if (!user) return
@@ -117,8 +129,12 @@ export function DashboardPage() {
 
       if (idea) {
         setGenStep('done')
-        await saveIdeaToSupabase(idea, false, user.id)
-        await incrementDailyGeneration()
+        const { error: saveErr } = await saveIdeaToSupabase(idea, false, user.id)
+        if (saveErr) {
+          console.error('Failed to save idea:', saveErr)
+        } else {
+          await incrementDailyGeneration()
+        }
         await fetchMyIdeas()
         // Let users see the "done" state for a moment
         await new Promise(r => setTimeout(r, 1500))
@@ -130,11 +146,7 @@ export function DashboardPage() {
   }
 
   if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-brand" />
-      </div>
-    )
+    return <DashboardSkeleton />
   }
 
   return (

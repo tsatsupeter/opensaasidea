@@ -23,25 +23,29 @@ export function useBookmarks() {
       setSavedIdeas([])
       return
     }
-    const { data } = await supabase
-      .from('bookmarks')
-      .select('idea_id')
-      .eq('user_id', user.id)
-    if (data) {
-      const ids = data.map((b: any) => b.idea_id)
-      setBookmarkedIds(new Set(ids))
-      // Fetch idea details for sidebar
-      if (ids.length > 0) {
-        const { data: ideas } = await supabase
-          .from('saas_ideas')
-          .select('id, title, slug, category')
-          .in('id', ids)
-          .order('created_at', { ascending: false })
-          .limit(5)
-        setSavedIdeas((ideas as SavedIdea[]) || [])
-      } else {
-        setSavedIdeas([])
+    try {
+      const { data } = await supabase
+        .from('bookmarks')
+        .select('idea_id')
+        .eq('user_id', user.id)
+      if (data) {
+        const ids = data.map((b: any) => b.idea_id)
+        setBookmarkedIds(new Set(ids))
+        // Fetch idea details for sidebar
+        if (ids.length > 0) {
+          const { data: ideas } = await supabase
+            .from('saas_ideas')
+            .select('id, title, slug, category')
+            .in('id', ids)
+            .order('created_at', { ascending: false })
+            .limit(5)
+          setSavedIdeas((ideas as SavedIdea[]) || [])
+        } else {
+          setSavedIdeas([])
+        }
       }
+    } catch (err) {
+      console.error('Bookmarks fetch failed:', err)
     }
   }, [user])
 
@@ -52,36 +56,44 @@ export function useBookmarks() {
   const toggleBookmark = useCallback(async (ideaId: string): Promise<boolean | 'limit'> => {
     if (!user) return false
     setLoading(true)
-    const isCurrentlyBookmarked = bookmarkedIds.has(ideaId)
+    try {
+      const isCurrentlyBookmarked = bookmarkedIds.has(ideaId)
 
-    // Enforce save limit for non-bookmarked ideas
-    if (!isCurrentlyBookmarked) {
-      const tier = (profile?.subscription_tier as SubscriptionTier) || 'free'
-      if (!canSaveIdea(tier, bookmarkedIds.size)) {
-        setLoading(false)
-        return 'limit'
+      // Enforce save limit for non-bookmarked ideas
+      if (!isCurrentlyBookmarked) {
+        const tier = (profile?.subscription_tier as SubscriptionTier) || 'free'
+        if (!canSaveIdea(tier, bookmarkedIds.size)) {
+          setLoading(false)
+          return 'limit'
+        }
       }
-    }
 
-    if (isCurrentlyBookmarked) {
-      setBookmarkedIds(prev => {
-        const next = new Set(prev)
-        next.delete(ideaId)
-        return next
-      })
-      await (supabase.from('bookmarks') as any)
-        .delete()
-        .eq('user_id', user.id)
-        .eq('idea_id', ideaId)
-    } else {
-      setBookmarkedIds(prev => new Set(prev).add(ideaId))
-      await (supabase.from('bookmarks') as any)
-        .insert({ user_id: user.id, idea_id: ideaId })
-    }
+      if (isCurrentlyBookmarked) {
+        setBookmarkedIds(prev => {
+          const next = new Set(prev)
+          next.delete(ideaId)
+          return next
+        })
+        await (supabase.from('bookmarks') as any)
+          .delete()
+          .eq('user_id', user.id)
+          .eq('idea_id', ideaId)
+      } else {
+        setBookmarkedIds(prev => new Set(prev).add(ideaId))
+        await (supabase.from('bookmarks') as any)
+          .insert({ user_id: user.id, idea_id: ideaId })
+      }
 
-    setLoading(false)
-    return !isCurrentlyBookmarked
-  }, [user, profile, bookmarkedIds])
+      // Refresh savedIdeas list
+      await fetchBookmarks()
+      return !isCurrentlyBookmarked
+    } catch (err) {
+      console.error('Bookmark toggle failed:', err)
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }, [user, profile, bookmarkedIds, fetchBookmarks])
 
   const isBookmarked = useCallback((ideaId: string) => bookmarkedIds.has(ideaId), [bookmarkedIds])
 

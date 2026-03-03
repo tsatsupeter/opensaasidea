@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase'
 import { useBookmarks } from '@/hooks/use-bookmarks'
 import { useToast } from '@/components/ui/toast'
 import { useAuth } from '@/hooks/use-auth'
+import { useAuthModal } from '@/components/ui/auth-modal'
 import type { SaasIdea } from '@/types/database'
 
 interface IdeaCardProps {
@@ -21,6 +22,7 @@ interface IdeaCardProps {
 
 export function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicToggle }: IdeaCardProps) {
   const navigate = useNavigate()
+  const { openAuthModal } = useAuthModal()
   const { user } = useAuth()
   const { isBookmarked, toggleBookmark } = useBookmarks()
   const { toast } = useToast()
@@ -37,17 +39,22 @@ export function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicT
   const handleTogglePublic = async () => {
     if (!user || idea.generated_for !== user.id) return
     setSharing(true)
-    const newVal = !isPublic
-    const { error } = await (supabase
-      .from('saas_ideas') as any)
-      .update({ is_public: newVal })
-      .eq('id', idea.id)
-    if (!error) {
-      setIsPublic(newVal)
-      toast(newVal ? 'Shared to public' : 'Made private')
-      onPublicToggle?.()
+    try {
+      const newVal = !isPublic
+      const { error } = await (supabase
+        .from('saas_ideas') as any)
+        .update({ is_public: newVal })
+        .eq('id', idea.id)
+      if (!error) {
+        setIsPublic(newVal)
+        toast(newVal ? 'Shared to public' : 'Made private')
+        onPublicToggle?.()
+      }
+    } catch (err) {
+      console.error('Toggle public failed:', err)
+    } finally {
+      setSharing(false)
     }
-    setSharing(false)
   }
 
   return (
@@ -163,7 +170,7 @@ export function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicT
             </button>
             <button
               onClick={async () => {
-                if (!user) { navigate('/login'); return }
+                if (!user) { openAuthModal('login'); return }
                 const result = await toggleBookmark(idea.id)
                 if (result === 'limit') {
                   toast('Save limit reached. Upgrade to Pro for unlimited saves!')

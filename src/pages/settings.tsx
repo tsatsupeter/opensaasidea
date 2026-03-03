@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useAuthModal } from '@/components/ui/auth-modal'
 import { motion } from 'framer-motion'
 import { Settings, Camera, Loader2, Check, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,15 +10,15 @@ import { ProfileManager } from '@/components/profile/profile-manager'
 import { useEffect } from 'react'
 
 export function SettingsPage() {
-  const navigate = useNavigate()
+  const { openAuthModal } = useAuthModal()
   const { user, profile, loading: authLoading, refreshProfile } = useAuth()
   const [uploading, setUploading] = useState(false)
   const [avatarMsg, setAvatarMsg] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!authLoading && !user) navigate('/login')
-  }, [user, authLoading, navigate])
+    if (!authLoading && !user) openAuthModal('login')
+  }, [user, authLoading, openAuthModal])
 
   const handleAvatarUpload = async (file: File) => {
     if (!user) return

@@ -248,7 +248,6 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
           {/* Advantage */}
           <div className="space-y-0.5 pb-2">
             <span className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-text-muted block">Advantage</span>
-            <NavLink href="/advertise" icon={Megaphone} label="Advertise" />
             <NavLink href="/developer/api" icon={Code2} label="Developer API" />
             <NavLink href="/about" icon={Info} label="About" />
             <NavLink href="/help" icon={HelpCircle} label="Help" />

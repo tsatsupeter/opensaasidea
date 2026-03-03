@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Brain, Search, TrendingUp, Sparkles,
+  Brain, Search, TrendingUp, Check,
   Wand2, CheckCircle2, Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -19,8 +19,8 @@ const STEP_CONFIG: Record<GenerationStep, StepDisplay> = {
   preparing:        { icon: Search,       text: 'Checking existing ideas...',          subtext: 'Making sure your idea will be unique',           color: 'text-accent' },
   researching:      { icon: TrendingUp,   text: 'Researching market trends...',        subtext: 'Analyzing demand, gaps, and opportunities',      color: 'text-emerald' },
   building_context: { icon: Brain,        text: 'Personalizing your brief...',         subtext: 'Matching your skills and interests',              color: 'text-amber' },
-  generating:       { icon: Wand2,        text: 'AI is crafting your idea...',         subtext: 'This is the exciting part — almost there!',      color: 'text-brand' },
-  finalizing:       { icon: Sparkles,     text: 'Polishing & verifying...',            subtext: 'Ensuring quality and uniqueness',                 color: 'text-accent' },
+  generating:       { icon: Wand2,        text: 'AI is crafting your idea...',         subtext: 'This is the exciting part, almost there!',       color: 'text-brand' },
+  finalizing:       { icon: Check,         text: 'Polishing & verifying...',            subtext: 'Ensuring quality and uniqueness',                 color: 'text-accent' },
   done:             { icon: CheckCircle2, text: 'Your idea is ready!',                 subtext: '',                                                color: 'text-emerald' },
 }
 
@@ -238,9 +238,9 @@ export function GenerationAnimation({ isGenerating, currentStep: externalStep }:
               {displayStep === 'preparing' && 'Looking at what\'s already been generated so yours is unique...'}
               {displayStep === 'researching' && 'Scanning real-time trends, communities, and market data...'}
               {displayStep === 'building_context' && 'Tailoring the prompt to your skills and preferences...'}
-              {displayStep === 'generating' && 'The AI is working hard — this takes 10-30 seconds...'}
+              {displayStep === 'generating' && 'The AI is working hard. This takes 10-30 seconds...'}
               {displayStep === 'finalizing' && 'Validating quality, pricing, and uniqueness...'}
-              {displayStep === 'done' && 'All done — scroll down to see your new idea!'}
+              {displayStep === 'done' && 'All done! Scroll down to see your new idea.'}
               {!displayStep && 'Warming up the idea engine...'}
             </motion.p>
           </AnimatePresence>

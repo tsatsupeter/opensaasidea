@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageSquare, ThumbsUp, ThumbsDown, Reply, Pencil, Trash2, Loader2, ChevronDown, ChevronUp, Send } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { useAuthModal } from '@/components/ui/auth-modal'
 import { useComments, type CommentWithAuthor } from '@/hooks/use-comments'
 import { timeAgo } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -14,7 +14,7 @@ interface CommentSectionProps {
 
 export function CommentSection({ ideaId, commentCount }: CommentSectionProps) {
   const { user } = useAuth()
-  const navigate = useNavigate()
+  const { openAuthModal } = useAuthModal()
   const { comments, loading, submitting, fetchComments, addComment, editComment, deleteComment, voteComment } = useComments(ideaId)
   const [newComment, setNewComment] = useState('')
   const [sortBy, setSortBy] = useState<'best' | 'newest' | 'oldest'>('best')
@@ -24,7 +24,7 @@ export function CommentSection({ ideaId, commentCount }: CommentSectionProps) {
   }, [fetchComments])
 
   const handleSubmit = async () => {
-    if (!user) { navigate('/login'); return }
+    if (!user) { openAuthModal('login'); return }
     if (!newComment.trim()) return
     const success = await addComment(newComment)
     if (success) setNewComment('')
@@ -150,7 +150,7 @@ interface CommentThreadProps {
 
 function CommentThread({ comment, depth, onVote, onReply, onEdit, onDelete, submitting }: CommentThreadProps) {
   const { user } = useAuth()
-  const navigate = useNavigate()
+  const { openAuthModal } = useAuthModal()
   const [showReply, setShowReply] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [editing, setEditing] = useState(false)
@@ -163,7 +163,7 @@ function CommentThread({ comment, depth, onVote, onReply, onEdit, onDelete, subm
   const maxDepth = 6
 
   const handleReply = async () => {
-    if (!user) { navigate('/login'); return }
+    if (!user) { openAuthModal('login'); return }
     if (!replyText.trim()) return
     const success = await onReply(replyText, comment.id)
     if (success) {
@@ -302,7 +302,7 @@ function CommentThread({ comment, depth, onVote, onReply, onEdit, onDelete, subm
                   {depth < maxDepth && (
                     <button
                       onClick={() => {
-                        if (!user) { navigate('/login'); return }
+                        if (!user) { openAuthModal('login'); return }
                         setShowReply(!showReply)
                       }}
                       className="flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-medium text-text-muted hover:bg-surface-2 transition-colors cursor-pointer ml-1"

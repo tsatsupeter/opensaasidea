@@ -24,7 +24,6 @@ import { CheckoutSuccessPage } from '@/pages/checkout-success'
 import { TeamPage } from '@/pages/team'
 import { TeamInvitePage } from '@/pages/team-invite'
 import { DeveloperApiPage } from '@/pages/developer-api'
-import { AdvertisePage } from '@/pages/advertise'
 import { AboutPage } from '@/pages/about'
 import { HelpPage } from '@/pages/help'
 import { BlogPage } from '@/pages/blog'
@@ -70,7 +69,6 @@ function App() {
                   <Route path="/team/invite/:token" element={<TeamInvitePage />} />
                   <Route path="/notifications" element={<NotificationsPage />} />
                   <Route path="/developer/api" element={<DeveloperApiPage />} />
-                  <Route path="/advertise" element={<AdvertisePage />} />
                   <Route path="/about" element={<AboutPage />} />
                   <Route path="/help" element={<HelpPage />} />
                   <Route path="/blog" element={<BlogPage />} />

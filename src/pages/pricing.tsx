@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useAuthModal } from '@/components/ui/auth-modal'
 import { motion } from 'framer-motion'
 import { Check, Zap, Users, Crown, Loader2, ArrowRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -37,17 +37,19 @@ const TIER_BORDER: Record<SubscriptionTier, string> = {
 
 export function PricingPage() {
   const { user } = useAuth()
-  const navigate = useNavigate()
-  const { tier: currentTier, createCheckout } = useSubscription()
+  const { openAuthModal } = useAuthModal()
+  const { tier: currentTier, billingPeriod: currentBilling, createCheckout } = useSubscription()
   const { toast } = useToast()
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly')
   const [loadingTier, setLoadingTier] = useState<string | null>(null)
 
   const handleUpgrade = async (tier: SubscriptionTier) => {
-    if (tier === 'free' || tier === currentTier) return
+    if (tier === 'free') return
+    // Allow checkout if different tier OR same tier but switching billing period
+    if (tier === currentTier && billing === currentBilling) return
 
     if (!user) {
-      navigate('/login')
+      openAuthModal('login')
       return
     }
 
@@ -111,7 +113,7 @@ export function PricingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
           {tiers.map((config, i) => {
             const Icon = TIER_ICONS[config.tier]
-            const isCurrent = currentTier === config.tier
+            const isCurrent = currentTier === config.tier && (config.tier === 'free' || billing === currentBilling)
             const price = billing === 'monthly' ? config.monthlyPrice : Math.round(config.yearlyPrice / 12)
             const totalYearly = config.yearlyPrice
             const isPopular = config.tier === 'pro'
@@ -158,7 +160,7 @@ export function PricingPage() {
                           </div>
                           {billing === 'yearly' && (
                             <p className="text-xs text-text-muted mt-1">
-                              ${totalYearly}/year — billed annually
+                              ${totalYearly}/year, billed annually
                             </p>
                           )}
                         </div>
@@ -184,7 +186,9 @@ export function PricingPage() {
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <>
-                            Upgrade to {config.name}
+                            {currentTier === config.tier && billing !== currentBilling
+                              ? `Switch to ${billing === 'yearly' ? 'Yearly' : 'Monthly'}`
+                              : `Upgrade to ${config.name}`}
                             <ArrowRight className="h-4 w-4 ml-1" />
                           </>
                         )}
@@ -241,12 +245,9 @@ export function PricingPage() {
                   <>
                     <p className="text-3xl font-extrabold">$9.99</p>
                     <p className="text-xs text-text-muted mb-3">per report</p>
-                    <Button
-                      variant="outline"
-                      onClick={() => navigate('/explore')}
-                    >
-                      Browse Ideas
-                    </Button>
+                    <a href="/explore">
+                      <Button variant="outline">Browse Ideas</Button>
+                    </a>
                     <p className="text-[10px] text-text-muted mt-2">Buy from any idea page</p>
                   </>
                 )}

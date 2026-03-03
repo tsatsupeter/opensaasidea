@@ -120,7 +120,7 @@ export function AdminPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-text-secondary mb-4">
-              Manually trigger a new public SaaS idea generation. The system also auto-generates daily at 00:00 UTC.
+              Manually trigger a new public idea generation. The system also auto-generates daily at 00:00 UTC.
             </p>
 
             {!generating && (

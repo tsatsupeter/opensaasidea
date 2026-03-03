@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
+import { useAuthModal } from '@/components/ui/auth-modal'
 import { useRecent } from '@/hooks/use-recent'
 import { useBookmarks } from '@/hooks/use-bookmarks'
 import { useSubscription } from '@/hooks/use-subscription'
@@ -14,6 +15,7 @@ import { useTeam } from '@/hooks/use-team'
 import { useToast } from '@/components/ui/toast'
 import { exportIdeaToPDF } from '@/lib/pdf-export'
 import { DODO_PRODUCTS } from '@/lib/subscription'
+import { IdeaDetailSkeleton } from '@/components/ui/skeleton'
 import { VoteButton } from '@/components/ideas/vote-button'
 import { CommentSection } from '@/components/comments/comment-section'
 import { UpgradePrompt } from '@/components/subscription/upgrade-prompt'
@@ -54,34 +56,39 @@ export function IdeaDetailPage() {
 
   const fetchIdeaData = async () => {
     if (!slug) return
-    // Use secure RPC that strips Pro-only fields server-side
-    const { data } = await (supabase.rpc as any)('get_idea_by_slug', { p_slug: slug })
+    try {
+      // Use secure RPC that strips Pro-only fields server-side
+      const { data } = await (supabase.rpc as any)('get_idea_by_slug', { p_slug: slug })
 
-    const ideaData = data as (SaasIdea & { has_purchased_report?: boolean }) | null
-    setIdea(ideaData)
+      const ideaData = data as (SaasIdea & { has_purchased_report?: boolean }) | null
+      setIdea(ideaData)
 
-    if (ideaData) {
-      setIsPublic(ideaData.is_public)
-      setHasPurchasedReport(!!ideaData.has_purchased_report)
-      addRecent({
-        id: ideaData.id,
-        title: ideaData.title,
-        category: ideaData.category || 'SaaS',
-        path: `/idea/${ideaData.slug || ideaData.id}`,
-        upvotes: ideaData.upvotes || 0,
-      })
+      if (ideaData) {
+        setIsPublic(ideaData.is_public)
+        setHasPurchasedReport(!!ideaData.has_purchased_report)
+        addRecent({
+          id: ideaData.id,
+          title: ideaData.title,
+          category: ideaData.category || 'Other',
+          path: `/idea/${ideaData.slug || ideaData.id}`,
+          upvotes: ideaData.upvotes || 0,
+        })
+      }
+
+      if (user && ideaData) {
+        const { data: voteData } = await supabase
+          .from('votes')
+          .select('vote_type')
+          .eq('user_id', user.id)
+          .eq('idea_id', ideaData.id)
+          .single()
+        if (voteData) setUserVote((voteData as any).vote_type)
+      }
+    } catch (err) {
+      console.error('Idea detail fetch failed:', err)
+    } finally {
+      setLoading(false)
     }
-
-    if (user && ideaData) {
-      const { data: voteData } = await supabase
-        .from('votes')
-        .select('vote_type')
-        .eq('user_id', user.id)
-        .eq('idea_id', ideaData.id)
-        .single()
-      if (voteData) setUserVote((voteData as any).vote_type)
-    }
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -99,9 +106,11 @@ export function IdeaDetailPage() {
     }
   }, [searchParams])
 
+  const { openAuthModal } = useAuthModal()
+
   const handleBuyReport = async () => {
     if (!user) {
-      navigate('/login')
+      openAuthModal('login')
       return
     }
     if (!idea) return
@@ -122,11 +131,7 @@ export function IdeaDetailPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-brand" />
-      </div>
-    )
+    return <IdeaDetailSkeleton />
   }
 
   if (!idea) {
@@ -242,7 +247,7 @@ export function IdeaDetailPage() {
                 ) : (
                   <div className="mt-3 rounded-lg border border-brand/20 bg-surface-1/50 px-4 py-3 flex flex-wrap items-center gap-2">
                     <Crown className="h-4 w-4 text-brand shrink-0" />
-                    <p className="text-[13px] font-semibold text-brand">Pro feature — Detailed revenue breakdown</p>
+                    <p className="text-[13px] font-semibold text-brand">Pro feature: Detailed revenue breakdown</p>
                     <div className="flex items-center gap-2 ml-auto">
                       <button onClick={handleBuyReport} disabled={buyingReport} className="text-[11px] font-semibold text-white bg-brand rounded-full px-3 py-1 hover:bg-brand/90 transition-colors disabled:opacity-50">
                         {buyingReport ? 'Loading...' : 'Buy Report $9.99'}
@@ -260,7 +265,7 @@ export function IdeaDetailPage() {
                   {pricingTiers.map((t, i) => (
                     <div key={i} className="mb-3">
                       <p className="font-medium text-text-primary">
-                        {t.name} — <strong>{formatCurrency(t.price)}</strong>/{t.billing}
+                        {t.name} - <strong>{formatCurrency(t.price)}</strong>/{t.billing}
                         {i === 1 && <span className="text-brand ml-1">(most popular)</span>}
                       </p>
                       {t.features && t.features.length > 0 && (
@@ -277,7 +282,7 @@ export function IdeaDetailPage() {
               {!canViewPro && pricingTiers.length > 0 && (
                 <div className="rounded-lg border border-brand/20 bg-surface-1/50 px-4 py-3 flex flex-wrap items-center gap-2">
                   <Crown className="h-4 w-4 text-brand shrink-0" />
-                  <p className="text-[13px] font-semibold text-brand">Pro feature — Pricing tier details</p>
+                  <p className="text-[13px] font-semibold text-brand">Pro feature: Pricing tier details</p>
                   <div className="flex items-center gap-2 ml-auto">
                     <button onClick={handleBuyReport} disabled={buyingReport} className="text-[11px] font-semibold text-white bg-brand rounded-full px-3 py-1 hover:bg-brand/90 transition-colors disabled:opacity-50">
                       {buyingReport ? 'Loading...' : 'Buy Report $9.99'}
@@ -443,7 +448,7 @@ export function IdeaDetailPage() {
                       className="inline-flex items-center gap-1.5 bg-brand text-white rounded-full px-5 py-2 text-[13px] font-semibold hover:bg-brand/90 transition-colors disabled:opacity-50"
                     >
                       {buyingReport ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <DollarSign className="h-3.5 w-3.5" />}
-                      {buyingReport ? 'Creating checkout...' : 'Buy This Report — $9.99'}
+                      {buyingReport ? 'Creating checkout...' : 'Buy This Report - $9.99'}
                     </button>
                     <Link
                       to="/pricing"
@@ -614,7 +619,7 @@ export function IdeaDetailPage() {
               </div>
               <h3 className="text-[14px] font-bold">{catLabel}</h3>
               <p className="text-[11px] text-text-muted mt-0.5">
-                AI-generated SaaS ideas in the {catLabel} space.
+                AI-generated {siteConfig.mode === 'full' ? 'project' : 'SaaS'} ideas in the {catLabel} space.
               </p>
 
               <Link
@@ -654,8 +659,8 @@ export function IdeaDetailPage() {
             <div className="px-4 py-3 space-y-3">
               <SidebarRow icon={Calendar} label="Created" value={new Date(idea.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} />
               <SidebarRow icon={Eye} label="Visibility" value={idea.is_public ? 'Public' : 'Private'} />
-              <SidebarRow icon={Globe} label="Platform" value={idea.platform?.replace('_', ' ') || '—'} capitalize />
-              <SidebarRow icon={DollarSign} label="Model" value={idea.monetization_model?.replace('_', ' ') || '—'} capitalize />
+              <SidebarRow icon={Globe} label="Platform" value={idea.platform?.replace('_', ' ') || '-'} capitalize />
+              <SidebarRow icon={DollarSign} label="Model" value={idea.monetization_model?.replace('_', ' ') || '-'} capitalize />
               <SidebarRow icon={TrendingUp} label="Vote Score" value={String(idea.vote_score || 0)} highlight={idea.vote_score > 0 ? 'emerald' : idea.vote_score < 0 ? 'rose' : undefined} />
             </div>
           </div>
@@ -691,7 +696,7 @@ export function IdeaDetailPage() {
                 )}
                 {!canViewPro && (
                   <button onClick={handleBuyReport} disabled={buyingReport} className="flex items-center gap-1.5 text-[11px] text-brand font-medium hover:underline mt-1">
-                    <Crown className="h-3 w-3" /> {buyingReport ? 'Loading...' : 'Unlock report — $9.99'}
+                    <Crown className="h-3 w-3" /> {buyingReport ? 'Loading...' : 'Unlock report - $9.99'}
                   </button>
                 )}
               </div>

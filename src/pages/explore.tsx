@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Loader2, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react'
+import { FeedSkeleton, Skeleton } from '@/components/ui/skeleton'
 import { supabase, SAFE_IDEA_COLUMNS } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { IdeaCard } from '@/components/ideas/idea-card'
@@ -38,8 +39,13 @@ function CommunitiesGrid() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-brand" />
+      <div className="w-full space-y-4">
+        <Skeleton className="h-7 w-48" />
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 rounded-xl" />
+          ))}
+        </div>
       </div>
     )
   }
@@ -207,65 +213,72 @@ function CategoryFeedPage({ categorySlug }: { categorySlug: string }) {
 
   const fetchIdeas = useCallback(async () => {
     setLoading(true)
+    try {
+      // Determine DB sort column
+      let orderCol = 'vote_score'
+      let ascending = false
+      if (sortBy === 'newest') orderCol = 'created_at'
+      else if (sortBy === 'top') orderCol = 'upvotes'
+      else if (sortBy === 'hot' || sortBy === 'rising') orderCol = 'views'
+      else if (sortBy === 'mrr_high') orderCol = 'estimated_mrr_high'
+      else if (sortBy === 'mrr_low') { orderCol = 'estimated_mrr_low'; ascending = true }
 
-    // Determine DB sort column
-    let orderCol = 'vote_score'
-    let ascending = false
-    if (sortBy === 'newest') orderCol = 'created_at'
-    else if (sortBy === 'top') orderCol = 'upvotes'
-    else if (sortBy === 'hot' || sortBy === 'rising') orderCol = 'views'
-    else if (sortBy === 'mrr_high') orderCol = 'estimated_mrr_high'
-    else if (sortBy === 'mrr_low') { orderCol = 'estimated_mrr_low'; ascending = true }
+      const { data: allData, error } = await supabase
+        .from('saas_ideas')
+        .select(SAFE_IDEA_COLUMNS)
+        .eq('is_public', true)
+        .order(orderCol, { ascending })
+        .limit(200)
 
-    const { data: allData } = await supabase
-      .from('saas_ideas')
-      .select(SAFE_IDEA_COLUMNS)
-      .eq('is_public', true)
-      .order(orderCol, { ascending })
-      .limit(200)
+      if (error) console.error('Explore query error:', error)
 
-    let filtered = ((allData as SaasIdea[]) || []).filter(idea => {
-      return toSlug(idea.category || '') === categorySlug
-    })
-
-    // Client-side sort refinements
-    if (sortBy === 'hot') {
-      // Hot = high votes + recent
-      filtered.sort((a, b) => {
-        const aAge = (Date.now() - new Date(a.created_at).getTime()) / 3600000
-        const bAge = (Date.now() - new Date(b.created_at).getTime()) / 3600000
-        const aScore = (a.vote_score || 0) / Math.pow(aAge + 2, 1.5)
-        const bScore = (b.vote_score || 0) / Math.pow(bAge + 2, 1.5)
-        return bScore - aScore
+      let filtered = ((allData as SaasIdea[]) || []).filter(idea => {
+        return toSlug(idea.category || '') === categorySlug
       })
-    } else if (sortBy === 'rising') {
-      // Rising = newest with positive votes
-      filtered.sort((a, b) => {
-        const aAge = (Date.now() - new Date(a.created_at).getTime()) / 3600000
-        const bAge = (Date.now() - new Date(b.created_at).getTime()) / 3600000
-        const aScore = ((a.upvotes || 0) + (a.views || 0)) / (aAge + 1)
-        const bScore = ((b.upvotes || 0) + (b.views || 0)) / (bAge + 1)
-        return bScore - aScore
-      })
-    } else if (sortBy === 'mrr_low') {
-      // Filter out ideas without MRR, sort ascending
-      filtered = filtered.filter(i => i.estimated_mrr_low != null)
-      filtered.sort((a, b) => (a.estimated_mrr_low || 0) - (b.estimated_mrr_low || 0))
-    } else if (sortBy === 'mrr_high') {
-      filtered.sort((a, b) => (b.estimated_mrr_high || 0) - (a.estimated_mrr_high || 0))
+
+      // Client-side sort refinements
+      if (sortBy === 'hot') {
+        filtered.sort((a, b) => {
+          const aAge = (Date.now() - new Date(a.created_at).getTime()) / 3600000
+          const bAge = (Date.now() - new Date(b.created_at).getTime()) / 3600000
+          const aScore = (a.vote_score || 0) / Math.pow(aAge + 2, 1.5)
+          const bScore = (b.vote_score || 0) / Math.pow(bAge + 2, 1.5)
+          return bScore - aScore
+        })
+      } else if (sortBy === 'rising') {
+        filtered.sort((a, b) => {
+          const aAge = (Date.now() - new Date(a.created_at).getTime()) / 3600000
+          const bAge = (Date.now() - new Date(b.created_at).getTime()) / 3600000
+          const aScore = ((a.upvotes || 0) + (a.views || 0)) / (aAge + 1)
+          const bScore = ((b.upvotes || 0) + (b.views || 0)) / (bAge + 1)
+          return bScore - aScore
+        })
+      } else if (sortBy === 'mrr_low') {
+        filtered = filtered.filter(i => i.estimated_mrr_low != null)
+        filtered.sort((a, b) => (a.estimated_mrr_low || 0) - (b.estimated_mrr_low || 0))
+      } else if (sortBy === 'mrr_high') {
+        filtered.sort((a, b) => (b.estimated_mrr_high || 0) - (a.estimated_mrr_high || 0))
+      }
+
+      setIdeas(filtered)
+    } catch (err) {
+      console.error('Explore fetch failed:', err)
+    } finally {
+      setLoading(false)
     }
-
-    setIdeas(filtered)
-    setLoading(false)
   }, [sortBy, categorySlug])
 
   const fetchUserVotes = useCallback(async () => {
     if (!user) return
-    const { data } = await supabase.from('votes').select('idea_id, vote_type').eq('user_id', user.id)
-    if (data) {
-      const voteMap: Record<string, 'up' | 'down'> = {}
-      data.forEach((v: any) => { voteMap[v.idea_id] = v.vote_type })
-      setUserVotes(voteMap)
+    try {
+      const { data } = await supabase.from('votes').select('idea_id, vote_type').eq('user_id', user.id)
+      if (data) {
+        const voteMap: Record<string, 'up' | 'down'> = {}
+        data.forEach((v: any) => { voteMap[v.idea_id] = v.vote_type })
+        setUserVotes(voteMap)
+      }
+    } catch (err) {
+      console.error('Explore votes fetch failed:', err)
     }
   }, [user])
 
@@ -295,9 +308,7 @@ function CategoryFeedPage({ categorySlug }: { categorySlug: string }) {
 
       {/* Feed */}
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-brand" />
-        </div>
+        <FeedSkeleton count={6} />
       ) : ideas.length === 0 ? (
         <div className="text-center py-20">
           <div className={`h-14 w-14 rounded-2xl ${colors.bgColor} flex items-center justify-center mx-auto mb-4`}>

@@ -82,7 +82,7 @@ export function OnboardingPage() {
     },
     {
       title: 'About You',
-      subtitle: 'Tell us more (optional — helps AI generate better ideas)',
+      subtitle: 'Tell us more (optional, helps AI generate better ideas)',
       icon: Rocket,
     },
   ]

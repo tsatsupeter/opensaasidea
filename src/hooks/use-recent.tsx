@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
-import { siteConfig } from '@/lib/site-config'
 
 export interface RecentItem {
   id: string
@@ -16,39 +15,22 @@ interface RecentContextValue {
   clearRecent: () => void
 }
 
-const STORAGE_KEY = `${siteConfig.themeStorageKey.replace('-theme', '')}-recent`
 const MAX_RECENT = 12
-
-function loadRecent(): RecentItem[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    return stored ? JSON.parse(stored) : []
-  } catch {
-    return []
-  }
-}
-
-function saveRecent(items: RecentItem[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
-}
 
 const RecentContext = createContext<RecentContextValue | undefined>(undefined)
 
 export function RecentProvider({ children }: { children: ReactNode }) {
-  const [recentItems, setRecentItems] = useState<RecentItem[]>(loadRecent)
+  const [recentItems, setRecentItems] = useState<RecentItem[]>([])
 
   const addRecent = useCallback((item: Omit<RecentItem, 'viewedAt'>) => {
     setRecentItems(prev => {
       const filtered = prev.filter(r => r.id !== item.id)
-      const updated = [{ ...item, viewedAt: Date.now() }, ...filtered].slice(0, MAX_RECENT)
-      saveRecent(updated)
-      return updated
+      return [{ ...item, viewedAt: Date.now() }, ...filtered].slice(0, MAX_RECENT)
     })
   }, [])
 
   const clearRecent = useCallback(() => {
     setRecentItems([])
-    localStorage.removeItem(STORAGE_KEY)
   }, [])
 
   return (

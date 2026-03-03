@@ -7,6 +7,7 @@ import {
   CreditCard, Plus, Wallet, Gift, BookOpen, Trash2,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { useAuthModal } from '@/components/ui/auth-modal'
 import { useToast } from '@/components/ui/toast'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,7 @@ const DOCS_URL = `https://docs.openprojectidea.com`
 
 export function DeveloperApiPage() {
   const { user } = useAuth()
+  const { openAuthModal } = useAuthModal()
   const { toast } = useToast()
   const [copied, setCopied] = useState<string | null>(null)
 
@@ -179,7 +181,7 @@ export function DeveloperApiPage() {
             <Key className="h-8 w-8 text-text-muted mx-auto" />
             <p className="text-[14px] font-semibold">Sign in to get started</p>
             <p className="text-[12px] text-text-muted">Create an account to generate API keys and get $5.00 free credit.</p>
-            <Link to="/login"><Button>Sign In</Button></Link>
+            <Button onClick={() => openAuthModal('login')}>Sign In</Button>
           </CardContent>
         </Card>
       ) : (

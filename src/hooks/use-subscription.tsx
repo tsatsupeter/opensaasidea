@@ -2,13 +2,38 @@ import { useAuth } from '@/hooks/use-auth'
 import { getTierConfig, canGenerateIdea, canSaveIdea, canExportPDF, getRemainingIdeas } from '@/lib/subscription'
 import type { SubscriptionTier } from '@/types/database'
 import { supabase } from '@/lib/supabase'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState, useEffect } from 'react'
 
 export function useSubscription() {
   const { user, profile, refreshProfile } = useAuth()
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly' | null>(null)
 
   const tier: SubscriptionTier = (profile?.subscription_tier as SubscriptionTier) || 'free'
   const config = getTierConfig(tier)
+
+  // Fetch billing period from subscriptions table
+  useEffect(() => {
+    if (!user || tier === 'free') {
+      setBillingPeriod(null)
+      return
+    }
+    ;(async () => {
+      try {
+        const { data } = await supabase
+          .from('subscriptions' as any)
+          .select('billing_period')
+          .eq('user_id', user.id)
+          .eq('status', 'active')
+          .eq('tier', tier)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+        setBillingPeriod((data as any)?.billing_period ?? null)
+      } catch {
+        setBillingPeriod(null)
+      }
+    })()
+  }, [user, tier])
 
   // Date-aware daily count: reset to 0 if last_generation_date is not today
   const dailyGenerated = useMemo(() => {
@@ -34,7 +59,9 @@ export function useSubscription() {
   const incrementDailyGeneration = useCallback(async () => {
     if (!user) return
     // Use server-side RPC that enforces limits and can't be bypassed
-    await (supabase.rpc as any)('increment_daily_generation')
+    const { data, error } = await (supabase.rpc as any)('increment_daily_generation')
+    if (error) console.error('incrementDailyGeneration RPC error:', error)
+    else if (data?.error) console.error('incrementDailyGeneration RPC returned:', data)
     // Refresh profile so React state reflects the new count
     await refreshProfile()
   }, [user, refreshProfile])
@@ -71,6 +98,7 @@ export function useSubscription() {
   return {
     tier,
     config,
+    billingPeriod,
     isPro: tier === 'pro' || tier === 'team',
     isTeam: tier === 'team',
     isFree: tier === 'free',

@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
-import { siteConfig } from '@/lib/site-config'
 
 type Theme = 'light' | 'dark'
 
@@ -11,21 +10,20 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 
+function getSystemTheme(): Theme {
+  if (typeof window !== 'undefined') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+  return 'dark'
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(siteConfig.themeStorageKey) as Theme | null
-      if (stored) return stored
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    }
-    return 'dark'
-  })
+  const [theme, setThemeState] = useState<Theme>(getSystemTheme)
 
   useEffect(() => {
     const root = document.documentElement
     root.classList.remove('light', 'dark')
     root.classList.add(theme)
-    localStorage.setItem(siteConfig.themeStorageKey, theme)
   }, [theme])
 
   const toggleTheme = useCallback(() => {

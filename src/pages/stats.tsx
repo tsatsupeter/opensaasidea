@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useAuthModal } from '@/components/ui/auth-modal'
 import { motion } from 'framer-motion'
 import {
   BarChart3, TrendingUp, Eye, ThumbsUp, ThumbsDown, Calendar,
-  Loader2, Lightbulb, Globe, Lock, Bookmark, Zap, MessageSquare
+  Lightbulb, Globe, Lock, Bookmark, Zap, MessageSquare
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/use-auth'
 import { useBookmarks } from '@/hooks/use-bookmarks'
+import { StatsSkeleton } from '@/components/ui/skeleton'
 import { supabase, SAFE_IDEA_COLUMNS } from '@/lib/supabase'
 import type { SaasIdea } from '@/types/database'
 
@@ -19,7 +20,7 @@ interface CategoryStat {
 }
 
 export function StatsPage() {
-  const navigate = useNavigate()
+  const { openAuthModal } = useAuthModal()
   const { user, profile, loading: authLoading } = useAuth()
   const { bookmarkedIds } = useBookmarks()
   const [loading, setLoading] = useState(true)
@@ -32,81 +33,80 @@ export function StatsPage() {
   const fetchStats = useCallback(async () => {
     if (!user) return
     setLoading(true)
+    try {
+      const [ideasRes, votesRes, myCommentsRes] = await Promise.all([
+        supabase
+          .from('saas_ideas')
+          .select(SAFE_IDEA_COLUMNS)
+          .eq('generated_for', user.id)
+          .order('created_at', { ascending: false })
+          .limit(200),
+        (supabase.from('votes') as any)
+          .select('vote_type')
+          .eq('user_id', user.id),
+        (supabase.from('comments') as any)
+          .select('id, upvotes')
+          .eq('user_id', user.id),
+      ])
 
-    const [ideasRes, votesRes, myCommentsRes] = await Promise.all([
-      supabase
-        .from('saas_ideas')
-        .select(SAFE_IDEA_COLUMNS)
-        .eq('generated_for', user.id)
-        .order('created_at', { ascending: false })
-        .limit(200),
-      (supabase.from('votes') as any)
-        .select('vote_type')
-        .eq('user_id', user.id),
-      (supabase.from('comments') as any)
-        .select('id, upvotes')
-        .eq('user_id', user.id),
-    ])
+      const allIdeas = (ideasRes.data as SaasIdea[]) || []
+      setIdeas(allIdeas)
 
-    const allIdeas = (ideasRes.data as SaasIdea[]) || []
-    setIdeas(allIdeas)
+      const votes = votesRes.data || []
+      setVoteStats({
+        up: votes.filter((v: any) => v.vote_type === 'up').length,
+        down: votes.filter((v: any) => v.vote_type === 'down').length,
+      })
 
-    const votes = votesRes.data || []
-    setVoteStats({
-      up: votes.filter((v: any) => v.vote_type === 'up').length,
-      down: votes.filter((v: any) => v.vote_type === 'down').length,
-    })
+      // Comment stats
+      const myComments = myCommentsRes.data || []
+      const commentsWritten = myComments.length
+      const commentUpvotesTotal = myComments.reduce((s: number, c: any) => s + (c.upvotes || 0), 0)
+      const totalCommentsReceived = allIdeas.reduce((s, i) => s + (i.comment_count || 0), 0)
+      setCommentStats({ written: commentsWritten, received: totalCommentsReceived, commentUpvotes: commentUpvotesTotal })
 
-    // Comment stats
-    const myComments = myCommentsRes.data || []
-    const commentsWritten = myComments.length
-    const commentUpvotesTotal = myComments.reduce((s: number, c: any) => s + (c.upvotes || 0), 0)
-    const totalCommentsReceived = allIdeas.reduce((s, i) => s + (i.comment_count || 0), 0)
-    setCommentStats({ written: commentsWritten, received: totalCommentsReceived, commentUpvotes: commentUpvotesTotal })
+      // Category breakdown
+      const catMap: Record<string, { count: number; totalVotes: number }> = {}
+      for (const idea of allIdeas) {
+        const cat = idea.category || 'Uncategorized'
+        if (!catMap[cat]) catMap[cat] = { count: 0, totalVotes: 0 }
+        catMap[cat].count++
+        catMap[cat].totalVotes += (idea.upvotes || 0) - (idea.downvotes || 0)
+      }
+      const cats = Object.entries(catMap)
+        .map(([category, s]) => ({ category, ...s }))
+        .sort((a, b) => b.count - a.count)
+      setCategoryStats(cats)
 
-    // Category breakdown
-    const catMap: Record<string, { count: number; totalVotes: number }> = {}
-    for (const idea of allIdeas) {
-      const cat = idea.category || 'Uncategorized'
-      if (!catMap[cat]) catMap[cat] = { count: 0, totalVotes: 0 }
-      catMap[cat].count++
-      catMap[cat].totalVotes += (idea.upvotes || 0) - (idea.downvotes || 0)
+      // Streak calculation
+      const dates = new Set(allIdeas.map(i => i.created_at?.split('T')[0]).filter(Boolean))
+      let streak = 0
+      const today = new Date()
+      for (let i = 0; i < 365; i++) {
+        const d = new Date(today)
+        d.setDate(d.getDate() - i)
+        const key = d.toISOString().split('T')[0]
+        if (dates.has(key)) streak++
+        else break
+      }
+      setStreakDays(streak)
+    } catch (err) {
+      console.error('Stats fetch failed:', err)
+    } finally {
+      setLoading(false)
     }
-    const cats = Object.entries(catMap)
-      .map(([category, s]) => ({ category, ...s }))
-      .sort((a, b) => b.count - a.count)
-    setCategoryStats(cats)
-
-    // Streak calculation
-    const dates = new Set(allIdeas.map(i => i.created_at?.split('T')[0]).filter(Boolean))
-    let streak = 0
-    const today = new Date()
-    for (let i = 0; i < 365; i++) {
-      const d = new Date(today)
-      d.setDate(d.getDate() - i)
-      const key = d.toISOString().split('T')[0]
-      if (dates.has(key)) streak++
-      else break
-    }
-    setStreakDays(streak)
-
-    setLoading(false)
   }, [user])
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate('/login')
+      openAuthModal('login')
       return
     }
     if (user) fetchStats()
-  }, [user, authLoading, navigate, fetchStats])
+  }, [user, authLoading, openAuthModal, fetchStats])
 
   if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-brand" />
-      </div>
-    )
+    return <StatsSkeleton />
   }
 
   const totalIdeas = ideas.length
@@ -135,7 +135,7 @@ export function StatsPage() {
             Your Stats
           </h1>
           <p className="text-sm text-text-secondary mt-1">
-            Overview of your SaaS idea activity
+            Overview of your idea activity
           </p>
         </div>
 
@@ -235,7 +235,7 @@ export function StatsPage() {
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-border">
                   <span className="flex items-center gap-2 text-sm"><TrendingUp className="h-4 w-4 text-emerald" /> Avg Est. MRR</span>
-                  <span className="text-lg font-bold">{avgMRR > 0 ? `$${avgMRR.toLocaleString()}` : '—'}</span>
+                  <span className="text-lg font-bold">{avgMRR > 0 ? `$${avgMRR.toLocaleString()}` : '-'}</span>
                 </div>
                 <div className="flex items-center justify-between py-2 border-b border-border">
                   <span className="flex items-center gap-2 text-sm"><MessageSquare className="h-4 w-4 text-amber" /> Comments Written</span>
