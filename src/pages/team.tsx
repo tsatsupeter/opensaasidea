@@ -28,7 +28,7 @@ export function TeamPage() {
   const {
     team, members, teamIdeas, customCategories, apiKeys, loading, dataLoading,
     createTeam, inviteMember, removeMember, updateMemberRole,
-    updateTeamIdeaStatus, assignTeamIdea, voteOnTeamIdea,
+    updateTeamIdeaStatus, assignTeamIdea, voteOnTeamIdea, assignCategory,
     addCustomCategory, deleteCustomCategory,
     generateApiKey, revokeApiKey, deleteApiKey,
   } = useTeam()
@@ -164,7 +164,7 @@ export function TeamPage() {
 
       {/* Tab Content */}
       <motion.div key={tab} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-        {tab === 'ideas' && <IdeasTab teamIdeas={teamIdeas} members={members} user={user} isAdmin={isAdmin} updateTeamIdeaStatus={updateTeamIdeaStatus} assignTeamIdea={assignTeamIdea} voteOnTeamIdea={voteOnTeamIdea} toast={toast} />}
+        {tab === 'ideas' && <IdeasTab teamIdeas={teamIdeas} members={members} user={user} isAdmin={isAdmin} categories={customCategories} updateTeamIdeaStatus={updateTeamIdeaStatus} assignTeamIdea={assignTeamIdea} voteOnTeamIdea={voteOnTeamIdea} assignCategory={assignCategory} toast={toast} />}
         {tab === 'members' && (
           <MembersTab
             members={members} isOwner={isOwner} isAdmin={isAdmin} userId={user.id}
@@ -229,13 +229,16 @@ export function TeamPage() {
 // ============================================================
 // IDEAS TAB
 // ============================================================
-function IdeasTab({ teamIdeas, members, user, isAdmin, updateTeamIdeaStatus, assignTeamIdea, voteOnTeamIdea, toast }: {
+function IdeasTab({ teamIdeas, members, user, isAdmin, categories, updateTeamIdeaStatus, assignTeamIdea, voteOnTeamIdea, assignCategory, toast }: {
   teamIdeas: TeamIdea[]; members: TeamMember[]; user: any; isAdmin: boolean
+  categories: { id: string; name: string }[]
   updateTeamIdeaStatus: (id: string, s: TeamIdea['status']) => Promise<void>
   assignTeamIdea: (id: string, uid: string | null) => Promise<void>
   voteOnTeamIdea: (id: string, v: 'approve' | 'reject' | 'maybe') => Promise<void>
+  assignCategory: (id: string, catId: string | null) => Promise<void>
   toast: (msg: string) => void
 }) {
+  const [filterCat, setFilterCat] = useState<string | null>(null)
   const statusColors: Record<string, string> = {
     new: 'bg-blue-500/10 text-blue-400',
     reviewing: 'bg-amber/10 text-amber',
@@ -243,6 +246,7 @@ function IdeasTab({ teamIdeas, members, user, isAdmin, updateTeamIdeaStatus, ass
     rejected: 'bg-rose/10 text-rose',
     in_progress: 'bg-accent/10 text-accent',
   }
+  const catMap = new Map(categories.map(c => [c.id, c.name]))
 
   if (teamIdeas.length === 0) {
     return (
@@ -284,13 +288,52 @@ function IdeasTab({ teamIdeas, members, user, isAdmin, updateTeamIdeaStatus, ass
     )
   }
 
+  const filtered = filterCat ? teamIdeas.filter(ti => ti.category_id === filterCat) : teamIdeas
+
   return (
     <div className="space-y-3">
-      {teamIdeas.map(ti => {
+      {/* Category filter bar */}
+      {categories.length > 0 && teamIdeas.length > 0 && (
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+          <button
+            onClick={() => setFilterCat(null)}
+            className={`text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap cursor-pointer ${
+              !filterCat ? 'bg-accent text-white' : 'bg-surface-2 text-text-muted hover:text-text-secondary'
+            }`}
+          >
+            All ({teamIdeas.length})
+          </button>
+          {categories.map(cat => {
+            const count = teamIdeas.filter(ti => ti.category_id === cat.id).length
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setFilterCat(filterCat === cat.id ? null : cat.id)}
+                className={`text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap cursor-pointer ${
+                  filterCat === cat.id ? 'bg-accent text-white' : 'bg-surface-2 text-text-muted hover:text-text-secondary'
+                }`}
+              >
+                {cat.name} {count > 0 && `(${count})`}
+              </button>
+            )
+          })}
+          <button
+            onClick={() => setFilterCat('none')}
+            className={`text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap cursor-pointer ${
+              filterCat === 'none' ? 'bg-accent text-white' : 'bg-surface-2 text-text-muted hover:text-text-secondary'
+            }`}
+          >
+            Uncategorized ({teamIdeas.filter(ti => !ti.category_id).length})
+          </button>
+        </div>
+      )}
+
+      {(filterCat === 'none' ? teamIdeas.filter(ti => !ti.category_id) : filtered).map(ti => {
         const myVote = ti.votes?.find(v => v.user_id === user.id)
         const approves = ti.votes?.filter(v => v.vote === 'approve').length || 0
         const rejects = ti.votes?.filter(v => v.vote === 'reject').length || 0
         const maybes = ti.votes?.filter(v => v.vote === 'maybe').length || 0
+        const catName = ti.category_id ? catMap.get(ti.category_id) : null
 
         return (
           <Card key={ti.id} className="overflow-hidden">
@@ -308,10 +351,15 @@ function IdeasTab({ teamIdeas, members, user, isAdmin, updateTeamIdeaStatus, ass
                     <span className={`text-[10px] font-semibold uppercase rounded-full px-2 py-0.5 ${statusColors[ti.status] || ''}`}>
                       {ti.status.replace('_', ' ')}
                     </span>
+                    {catName && (
+                      <span className="flex items-center gap-1 text-[10px] font-medium bg-accent/10 text-accent rounded-full px-2 py-0.5">
+                        <Tag className="h-2.5 w-2.5" /> {catName}
+                      </span>
+                    )}
                     {ti.idea?.category && <Badge variant="secondary" className="text-[10px]">{ti.idea.category}</Badge>}
                     {ti.idea?.estimated_mrr_low && ti.idea?.estimated_mrr_high && (
                       <span className="text-[11px] text-emerald font-medium">
-                        {formatCurrency(ti.idea.estimated_mrr_low)} – {formatCurrency(ti.idea.estimated_mrr_high)}/mo
+                        {formatCurrency(ti.idea.estimated_mrr_low)} - {formatCurrency(ti.idea.estimated_mrr_high)}/mo
                       </span>
                     )}
                     <span className="text-[10px] text-text-muted">by {ti.shared_by_profile?.full_name || 'Unknown'}</span>
@@ -346,7 +394,7 @@ function IdeasTab({ teamIdeas, members, user, isAdmin, updateTeamIdeaStatus, ass
 
               {/* Admin controls */}
               {isAdmin && (
-                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
+                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border flex-wrap">
                   <select
                     value={ti.status}
                     onChange={e => updateTeamIdeaStatus(ti.id, e.target.value as TeamIdea['status'])}
@@ -368,6 +416,18 @@ function IdeasTab({ teamIdeas, members, user, isAdmin, updateTeamIdeaStatus, ass
                       <option key={m.user_id!} value={m.user_id!}>{m.profile?.full_name || m.invited_email || 'Unknown'}</option>
                     ))}
                   </select>
+                  {categories.length > 0 && (
+                    <select
+                      value={ti.category_id || ''}
+                      onChange={e => assignCategory(ti.id, e.target.value || null)}
+                      className="text-[11px] bg-surface-2 border border-border rounded-lg px-2 py-1 text-text-secondary"
+                    >
+                      <option value="">No category</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  )}
                   {ti.assigned_to_profile && (
                     <span className="text-[11px] text-accent">Assigned to {ti.assigned_to_profile.full_name}</span>
                   )}

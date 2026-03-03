@@ -34,6 +34,7 @@ export interface TeamIdea {
   idea_id: string
   shared_by: string
   assigned_to: string | null
+  category_id: string | null
   status: 'new' | 'reviewing' | 'approved' | 'rejected' | 'in_progress'
   notes: string | null
   created_at: string
@@ -301,6 +302,11 @@ export function useTeam() {
     await fetchTeamIdeas()
   }, [user, fetchTeamIdeas])
 
+  const assignCategory = useCallback(async (teamIdeaId: string, categoryId: string | null) => {
+    await db('team_ideas').update({ category_id: categoryId }).eq('id', teamIdeaId)
+    await fetchTeamIdeas()
+  }, [fetchTeamIdeas])
+
   const addCustomCategory = useCallback(async (name: string, description?: string) => {
     if (!user) return false
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -388,7 +394,7 @@ export function useTeam() {
   return {
     team, members, teamIdeas, customCategories, apiKeys, loading, dataLoading,
     createTeam, inviteMember, removeMember, updateMemberRole,
-    shareIdeaToTeam, updateTeamIdeaStatus, assignTeamIdea, voteOnTeamIdea,
+    shareIdeaToTeam, updateTeamIdeaStatus, assignTeamIdea, voteOnTeamIdea, assignCategory,
     addCustomCategory, deleteCustomCategory,
     generateApiKey, revokeApiKey, deleteApiKey,
     acceptInvite, fetchTeamIdeas,
