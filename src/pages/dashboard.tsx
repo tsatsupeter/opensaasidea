@@ -23,7 +23,7 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const { openAuthModal } = useAuthModal()
   const { user, profile, loading: authLoading } = useAuth()
-  const { checkCanGenerate, remainingIdeas, isFree, tier, incrementDailyGeneration } = useSubscription()
+  const { checkCanGenerate, serverCheckCanGenerate, remainingIdeas, isFree, tier, incrementDailyGeneration } = useSubscription()
   const [privateIdeas, setPrivateIdeas] = useState<SaasIdea[]>([])
   const [publicIdeas, setPublicIdeas] = useState<SaasIdea[]>([])
   const [savedIdeas, setSavedIdeas] = useState<SaasIdea[]>([])
@@ -90,8 +90,26 @@ export function DashboardPage() {
   const handleGenerate = async () => {
     if (!user) return
     if (!checkCanGenerate()) return
+
+    // Fresh server-side limit check before starting
+    const canGo = await serverCheckCanGenerate()
+    if (!canGo) {
+      console.warn('Server-side limit check failed')
+      return
+    }
+
     setGenerating(true)
     setGenStep(null)
+
+    // Optimistic deduction: increment count BEFORE generating
+    // This prevents double-generation even if the user somehow triggers twice
+    const incremented = await incrementDailyGeneration()
+    if (!incremented) {
+      console.warn('Failed to increment daily generation — limit may be reached')
+      setGenerating(false)
+      return
+    }
+
     try {
       const { data: skills } = await supabase
         .from('user_skills')
@@ -132,11 +150,8 @@ export function DashboardPage() {
         const { error: saveErr } = await saveIdeaToSupabase(idea, false, user.id)
         if (saveErr) {
           console.error('Failed to save idea:', saveErr)
-        } else {
-          await incrementDailyGeneration()
         }
         await fetchMyIdeas()
-        // Let users see the "done" state for a moment
         await new Promise(r => setTimeout(r, 1500))
       }
     } finally {
