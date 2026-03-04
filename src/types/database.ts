@@ -46,9 +46,10 @@ export interface Database {
           description: string
           is_public: boolean
           generated_for: string | null
+          idea_type: 'saas' | 'project'
           category: string
-          platform: 'web' | 'mobile' | 'desktop' | 'browser_extension' | 'api' | 'multi_platform'
-          monetization_model: 'subscription' | 'freemium' | 'one_time' | 'marketplace' | 'advertising' | 'affiliate' | 'hybrid'
+          platform: 'web' | 'mobile' | 'desktop' | 'browser_extension' | 'api' | 'multi_platform' | 'physical' | 'local' | 'hybrid'
+          monetization_model: 'subscription' | 'freemium' | 'one_time' | 'marketplace' | 'advertising' | 'affiliate' | 'hybrid' | 'retail' | 'wholesale' | 'service_fee'
           pricing_tiers: PricingTier[]
           estimated_mrr_low: number | null
           estimated_mrr_high: number | null

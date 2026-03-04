@@ -35,10 +35,12 @@ export function HomePage() {
       else if (sortBy === 'mrr_high') orderCol = 'estimated_mrr_high'
       else if (sortBy === 'mrr_low') { orderCol = 'estimated_mrr_low'; ascending = true }
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('saas_ideas')
         .select(SAFE_IDEA_COLUMNS)
         .eq('is_public', true)
+      if (siteConfig.mode === 'saas') query = query.eq('idea_type', 'saas')
+      const { data, error } = await query
         .order(orderCol, { ascending })
         .limit(100)
 

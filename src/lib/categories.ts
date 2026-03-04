@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
+import { siteConfig } from './site-config'
 
 export interface DynamicCategory {
   slug: string
@@ -45,10 +46,12 @@ export function useCategories() {
 
   useEffect(() => {
     const fetch = async () => {
-      const { data } = await supabase
+      let query = supabase
         .from('saas_ideas')
         .select('category')
         .eq('is_public', true)
+      if (siteConfig.mode === 'saas') query = query.eq('idea_type', 'saas')
+      const { data } = await query
 
       if (data) {
         const counts: Record<string, number> = {}

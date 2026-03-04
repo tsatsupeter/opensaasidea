@@ -376,8 +376,8 @@ export async function generateSaasIdea(options?: {
   return null
 }
 
-const VALID_PLATFORMS = ['web', 'mobile', 'desktop', 'browser_extension', 'api', 'multi_platform'] as const
-const VALID_MONETIZATION = ['subscription', 'freemium', 'one_time', 'marketplace', 'advertising', 'affiliate', 'hybrid'] as const
+const VALID_PLATFORMS = ['web', 'mobile', 'desktop', 'browser_extension', 'api', 'multi_platform', 'physical', 'local', 'hybrid'] as const
+const VALID_MONETIZATION = ['subscription', 'freemium', 'one_time', 'marketplace', 'advertising', 'affiliate', 'hybrid', 'retail', 'wholesale', 'service_fee'] as const
 
 function normalizePlatform(raw: unknown): string | null {
   if (!raw || typeof raw !== 'string') return null
@@ -389,6 +389,9 @@ function normalizePlatform(raw: unknown): string | null {
   if (/browser.?ext|chrome.?ext|addon|plugin/i.test(lower)) return 'browser_extension'
   if (/api|backend|server/i.test(lower)) return 'api'
   if (/web|saas|cloud|online/i.test(lower)) return 'web'
+  if (/physical|hardware|device|product/i.test(lower)) return 'physical'
+  if (/local|shop|store|restaurant|service/i.test(lower)) return 'local'
+  if (/hybrid|both|mixed/i.test(lower)) return 'hybrid'
   return 'web'
 }
 
@@ -403,6 +406,9 @@ function normalizeMonetization(raw: unknown): string | null {
   if (/ad|sponsor|display/i.test(lower)) return 'advertising'
   if (/affili|referr|commission/i.test(lower)) return 'affiliate'
   if (/hybrid|mixed|combo|multiple/i.test(lower)) return 'hybrid'
+  if (/retail|shop|store|direct/i.test(lower)) return 'retail'
+  if (/wholesale|bulk|b2b.?sale/i.test(lower)) return 'wholesale'
+  if (/service.?fee|commission|per.?job|per.?hour/i.test(lower)) return 'service_fee'
   return 'subscription'
 }
 
@@ -417,6 +423,7 @@ export async function saveIdeaToSupabase(
     description: idea.description as string,
     is_public: isPublic,
     generated_for: userId || null,
+    idea_type: siteConfig.mode === 'full' ? 'project' : 'saas',
     category: idea.category as string,
     platform: normalizePlatform(idea.platform),
     monetization_model: normalizeMonetization(idea.monetization_model),

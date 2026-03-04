@@ -9,6 +9,7 @@ import { IdeaCard } from '@/components/ideas/idea-card'
 import { Logo } from '@/components/ui/logo'
 import { SortDropdown, type SortBy } from '@/components/ui/sort-dropdown'
 import type { SaasIdea } from '@/types/database'
+import { siteConfig } from '@/lib/site-config'
 import { useCategories, categoryColor, toSlug, type DynamicCategory } from '@/lib/categories'
 
 export function ExplorePage() {
@@ -223,10 +224,12 @@ function CategoryFeedPage({ categorySlug }: { categorySlug: string }) {
       else if (sortBy === 'mrr_high') orderCol = 'estimated_mrr_high'
       else if (sortBy === 'mrr_low') { orderCol = 'estimated_mrr_low'; ascending = true }
 
-      const { data: allData, error } = await supabase
+      let query = supabase
         .from('saas_ideas')
         .select(SAFE_IDEA_COLUMNS)
         .eq('is_public', true)
+      if (siteConfig.mode === 'saas') query = query.eq('idea_type', 'saas')
+      const { data: allData, error } = await query
         .order(orderCol, { ascending })
         .limit(200)
 
