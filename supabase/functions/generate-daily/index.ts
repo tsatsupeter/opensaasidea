@@ -324,8 +324,8 @@ Deno.serve(async (req: Request) => {
 
     const saasToday = saasCountRes.count || 0;
     const projectToday = projectCountRes.count || 0;
-    const saasToGenerate = Math.max(0, 5 - saasToday);
-    const projectToGenerate = Math.max(0, 5 - projectToday);
+    const saasToGenerate = Math.max(0, 1 - saasToday);
+    const projectToGenerate = Math.max(0, 1 - projectToday);
 
     const sharedOpts = { openrouterKey: OPENROUTER_API_KEY, supabaseClient: supabase, existingIdeas, blacklist, marketSection, redditSection, trustmrrSection, g2Section, twitterSection };
 
