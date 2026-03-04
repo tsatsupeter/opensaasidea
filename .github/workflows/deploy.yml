@@ -5,12 +5,12 @@ on:
     branches: [main]
 
 jobs:
-  deploy:
+  deploy-saas:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       deployments: write
-    name: Build & Deploy
+    name: Build & Deploy OpenSaaSIdea
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,17 +24,51 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
+      - name: Build (SaaS mode)
         run: npm run build
         env:
+          VITE_SITE_MODE: saas
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          VITE_OPENROUTER_API_KEY: ${{ secrets.VITE_OPENROUTER_API_KEY }}
 
-      - name: Deploy to Cloudflare Pages
+      - name: Deploy opensaasidea.com
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=opensaasidea
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-full:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    name: Build & Deploy OpenProjectIdea
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (Full mode)
+        run: npm run build
+        env:
+          VITE_SITE_MODE: full
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Deploy openprojectidea.com
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=openprojectidea
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
