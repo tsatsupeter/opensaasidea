@@ -85,8 +85,8 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       )}
       <aside
         className={cn(
-          'fixed left-0 top-[6.5rem] md:top-14 bottom-0 z-40 flex flex-col border-r border-border transition-all duration-300 bg-[var(--sidebar-bg)] w-[240px]',
-          mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          'fixed left-0 md:top-14 bottom-0 z-40 flex flex-col border-r border-border transition-all duration-300 bg-[var(--sidebar-bg)] w-[240px]',
+          mobileOpen ? 'translate-x-0 top-12' : '-translate-x-full top-[6.5rem] lg:translate-x-0 lg:top-14'
         )}
       >
         <nav className="flex-1 px-2 py-3 overflow-y-auto sidebar-scroll space-y-0.5">

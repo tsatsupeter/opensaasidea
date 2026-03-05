@@ -90,17 +90,19 @@ export function RootLayout() {
           </div>
         </div>
 
-        {/* Row 2: search — mobile only */}
-        <div className="md:hidden px-3 pb-2.5">
-          <SearchBar />
-        </div>
+        {/* Row 2: search — mobile only, hidden when sidebar open */}
+        {!mobileOpen && (
+          <div className="md:hidden px-3 pb-2.5">
+            <SearchBar />
+          </div>
+        )}
       </header>
 
       {/* Sidebar below top bar */}
       <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
 
       {/* Main content area */}
-      <div className={`pt-[6.5rem] md:pt-14 lg:pl-[240px] transition-all duration-300 ${!noRight ? 'xl:pr-[300px]' : ''}`}>
+      <div className={`${mobileOpen ? 'pt-12' : 'pt-[6.5rem]'} md:pt-14 lg:pl-[240px] transition-all duration-300 ${!noRight ? 'xl:pr-[300px]' : ''}`}>
         <main className="px-3 sm:px-4 lg:px-6 py-4 sm:py-5 w-full min-w-0 overflow-x-hidden">
           <Outlet />
         </main>
