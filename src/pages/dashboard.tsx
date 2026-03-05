@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LayoutDashboard, Lock, Globe, RefreshCw, BookmarkCheck, Crown } from 'lucide-react'
@@ -12,19 +12,30 @@ import { useAuth } from '@/hooks/use-auth'
 import { useAuthModal } from '@/components/ui/auth-modal'
 import { useSubscription } from '@/hooks/use-subscription'
 import { supabase, SAFE_IDEA_COLUMNS } from '@/lib/supabase'
-import { generateSaasIdea, saveIdeaToSupabase, type GenerationStep } from '@/lib/ai'
+import type { GenerationStep } from '@/lib/ai'
 import { useBookmarks } from '@/hooks/use-bookmarks'
 import { Logo } from '@/components/ui/logo'
 import { UpgradePrompt } from '@/components/subscription/upgrade-prompt'
 import { siteConfig } from '@/lib/site-config'
-import { createNotification } from '@/hooks/use-notifications'
 import type { SaasIdea } from '@/types/database'
+
+const GEN_PENDING_KEY = 'gen_pending'
+const GEN_PENDING_MAX_AGE = 120_000 // 2 minutes
+
+// Time-based step schedule (ms from start)
+const STEP_SCHEDULE: Array<{ step: GenerationStep; delay: number }> = [
+  { step: 'preparing', delay: 0 },
+  { step: 'researching', delay: 2000 },
+  { step: 'building_context', delay: 6000 },
+  { step: 'generating', delay: 8500 },
+  { step: 'finalizing', delay: 24000 },
+]
 
 export function DashboardPage() {
   const navigate = useNavigate()
   const { openAuthModal } = useAuthModal()
   const { user, profile, loading: authLoading } = useAuth()
-  const { checkCanGenerate, serverCheckCanGenerate, remainingIdeas, isFree, tier, incrementDailyGeneration, decrementDailyGeneration } = useSubscription()
+  const { checkCanGenerate, serverCheckCanGenerate, remainingIdeas, isFree, tier, incrementDailyGeneration } = useSubscription()
   const [privateIdeas, setPrivateIdeas] = useState<SaasIdea[]>([])
   const [publicIdeas, setPublicIdeas] = useState<SaasIdea[]>([])
   const [savedIdeas, setSavedIdeas] = useState<SaasIdea[]>([])
@@ -33,15 +44,29 @@ export function DashboardPage() {
   const [genStep, setGenStep] = useState<GenerationStep | null>(null)
   const { bookmarkedIds } = useBookmarks()
 
+  const stepTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
+
   // Warn user before leaving while generating
   useEffect(() => {
     if (!generating) return
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault()
-    }
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault() }
     window.addEventListener('beforeunload', handler)
     return () => window.removeEventListener('beforeunload', handler)
   }, [generating])
+
+  // Time-based step progression
+  const startStepTimers = useCallback(() => {
+    stepTimersRef.current.forEach(clearTimeout)
+    stepTimersRef.current = []
+    for (const { step, delay } of STEP_SCHEDULE) {
+      stepTimersRef.current.push(setTimeout(() => setGenStep(step), delay))
+    }
+  }, [])
+
+  const clearStepTimers = useCallback(() => {
+    stepTimersRef.current.forEach(clearTimeout)
+    stepTimersRef.current = []
+  }, [])
 
   const fetchMyIdeas = useCallback(async () => {
     if (!user) return
@@ -98,11 +123,56 @@ export function DashboardPage() {
     if (user) fetchMyIdeas()
   }, [user, profile, authLoading, openAuthModal, navigate, fetchMyIdeas])
 
+  // Refresh recovery: check for pending generation on mount
+  useEffect(() => {
+    if (!user || authLoading) return
+    const pending = localStorage.getItem(GEN_PENDING_KEY)
+    if (!pending) return
+    const elapsed = Date.now() - parseInt(pending, 10)
+    if (elapsed > GEN_PENDING_MAX_AGE) {
+      localStorage.removeItem(GEN_PENDING_KEY)
+      return
+    }
+    // Generation was in progress — poll for newly created idea
+    setGenerating(true)
+    startStepTimers()
+    let cancelled = false
+    const poll = async () => {
+      const since = new Date(parseInt(pending, 10)).toISOString()
+      const { data } = await supabase
+        .from('saas_ideas')
+        .select('id, slug, title')
+        .eq('generated_for', user.id)
+        .gte('created_at', since)
+        .order('created_at', { ascending: false })
+        .limit(1)
+      if (data && data.length > 0) {
+        localStorage.removeItem(GEN_PENDING_KEY)
+        clearStepTimers()
+        setGenStep('done')
+        await fetchMyIdeas()
+        await new Promise(r => setTimeout(r, 1500))
+        setGenerating(false)
+        setGenStep(null)
+        return
+      }
+      if (!cancelled && Date.now() - parseInt(pending, 10) < GEN_PENDING_MAX_AGE) {
+        setTimeout(poll, 3000)
+      } else {
+        localStorage.removeItem(GEN_PENDING_KEY)
+        setGenerating(false)
+        setGenStep(null)
+        clearStepTimers()
+      }
+    }
+    poll()
+    return () => { cancelled = true }
+  }, [user, authLoading, startStepTimers, clearStepTimers, fetchMyIdeas])
+
   const handleGenerate = async () => {
     if (!user) return
     if (!checkCanGenerate()) return
 
-    // Fresh server-side limit check before starting
     const canGo = await serverCheckCanGenerate()
     if (!canGo) {
       console.warn('Server-side limit check failed')
@@ -112,8 +182,6 @@ export function DashboardPage() {
     setGenerating(true)
     setGenStep(null)
 
-    // Optimistic deduction: increment count BEFORE generating
-    // This prevents double-generation even if the user somehow triggers twice
     const incremented = await incrementDailyGeneration()
     if (!incremented) {
       console.warn('Failed to increment daily generation — limit may be reached')
@@ -121,64 +189,51 @@ export function DashboardPage() {
       return
     }
 
+    // Mark generation as pending (survives refresh)
+    localStorage.setItem(GEN_PENDING_KEY, Date.now().toString())
+    startStepTimers()
+
     try {
-      const { data: skills } = await supabase
-        .from('user_skills')
-        .select('skill_name')
-        .eq('user_id', user.id)
+      // Gather user context for personalization
+      const [{ data: skills }, { data: feedback }] = await Promise.all([
+        supabase.from('user_skills').select('skill_name').eq('user_id', user.id),
+        supabase.from('saas_ideas').select('category, vote_score').eq('generated_for', user.id).order('vote_score', { ascending: false }).limit(20),
+      ])
 
-      const { data: feedback } = await supabase
-        .from('saas_ideas')
-        .select('category, vote_score')
-        .eq('generated_for', user.id)
-        .order('vote_score', { ascending: false })
-        .limit(20)
+      const likedCategories = (feedback || []).filter((f: any) => f.vote_score > 0).map((f: any) => f.category).filter(Boolean)
+      const dislikedCategories = (feedback || []).filter((f: any) => f.vote_score < 0).map((f: any) => f.category).filter(Boolean)
 
-      const likedCategories = (feedback || [])
-        .filter((f: any) => f.vote_score > 0)
-        .map((f: any) => f.category)
-        .filter(Boolean)
-      const dislikedCategories = (feedback || [])
-        .filter((f: any) => f.vote_score < 0)
-        .map((f: any) => f.category)
-        .filter(Boolean)
-
-      const idea = await generateSaasIdea({
-        userSkills: (skills || []).map((s: any) => s.skill_name),
-        userInterests: profile?.interests || [],
-        preferredPlatforms: profile?.preferred_platforms || [],
-        experienceLevel: profile?.experience_level || undefined,
-        voteFeedback: {
-          liked_categories: [...new Set(likedCategories)] as string[],
-          disliked_categories: [...new Set(dislikedCategories)] as string[],
+      // Call server-side edge function (runs to completion even if client disconnects)
+      const { data, error } = await supabase.functions.invoke('generate-user-idea', {
+        body: {
+          skills: (skills || []).map((s: any) => s.skill_name),
+          interests: profile?.interests || [],
+          platforms: profile?.preferred_platforms || [],
+          experience_level: profile?.experience_level || undefined,
+          vote_feedback: {
+            liked_categories: [...new Set(likedCategories)] as string[],
+            disliked_categories: [...new Set(dislikedCategories)] as string[],
+          },
+          site_mode: siteConfig.mode,
+          priority: !isFree,
         },
-        priorityGeneration: !isFree,
-        onProgress: (step) => setGenStep(step),
       })
 
-      if (idea) {
+      localStorage.removeItem(GEN_PENDING_KEY)
+      clearStepTimers()
+
+      if (error || !data?.success) {
+        console.error('Generation failed:', error || data?.error)
+        // Server already handles credit rollback on failure
+      } else {
         setGenStep('done')
-        const saveResult = await saveIdeaToSupabase(idea, false, user.id)
-        if (saveResult.error) {
-          console.error('Failed to save idea:', saveResult.error)
-        }
-        // Notify user their idea is ready
-        const ideaTitle = idea.title || 'New Idea'
-        const saved = (saveResult.data as any)?.[0]
-        const ideaSlug = saved?.slug || saved?.id || ''
-        await createNotification(
-          user.id,
-          'idea_generated',
-          `Your idea "${ideaTitle}" is ready!`,
-          'View the full breakdown including revenue estimates, tech stack, and go-to-market strategy.',
-          { idea_slug: ideaSlug, idea_title: ideaTitle }
-        )
         await fetchMyIdeas()
         await new Promise(r => setTimeout(r, 1500))
-      } else {
-        // Generation failed — roll back the credit
-        await decrementDailyGeneration()
       }
+    } catch (err) {
+      console.error('Generation error:', err)
+      localStorage.removeItem(GEN_PENDING_KEY)
+      clearStepTimers()
     } finally {
       setGenerating(false)
       setGenStep(null)
