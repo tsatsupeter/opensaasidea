@@ -97,6 +97,26 @@ export function useSubscription() {
     }
   }, [user, refreshProfile])
 
+  const decrementDailyGeneration = useCallback(async (): Promise<boolean> => {
+    if (!user) return false
+    try {
+      const { data, error } = await (supabase.rpc as any)('decrement_daily_generation')
+      if (error) {
+        console.error('decrementDailyGeneration RPC error:', error)
+        return false
+      }
+      if (data?.error) {
+        console.warn('decrementDailyGeneration RPC:', data)
+        return false
+      }
+      await refreshProfile()
+      return true
+    } catch (err) {
+      console.error('decrementDailyGeneration exception:', err)
+      return false
+    }
+  }, [user, refreshProfile])
+
   const createCheckout = useCallback(async (productId: string, options?: { idea_id?: string; idea_slug?: string }) => {
     if (!user) return null
 
@@ -140,6 +160,7 @@ export function useSubscription() {
     checkCanSave,
     checkCanExport,
     incrementDailyGeneration,
+    decrementDailyGeneration,
     createCheckout,
   }
 }

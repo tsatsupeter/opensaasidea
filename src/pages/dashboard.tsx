@@ -24,7 +24,7 @@ export function DashboardPage() {
   const navigate = useNavigate()
   const { openAuthModal } = useAuthModal()
   const { user, profile, loading: authLoading } = useAuth()
-  const { checkCanGenerate, serverCheckCanGenerate, remainingIdeas, isFree, tier, incrementDailyGeneration } = useSubscription()
+  const { checkCanGenerate, serverCheckCanGenerate, remainingIdeas, isFree, tier, incrementDailyGeneration, decrementDailyGeneration } = useSubscription()
   const [privateIdeas, setPrivateIdeas] = useState<SaasIdea[]>([])
   const [publicIdeas, setPublicIdeas] = useState<SaasIdea[]>([])
   const [savedIdeas, setSavedIdeas] = useState<SaasIdea[]>([])
@@ -32,6 +32,16 @@ export function DashboardPage() {
   const [generating, setGenerating] = useState(false)
   const [genStep, setGenStep] = useState<GenerationStep | null>(null)
   const { bookmarkedIds } = useBookmarks()
+
+  // Warn user before leaving while generating
+  useEffect(() => {
+    if (!generating) return
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [generating])
 
   const fetchMyIdeas = useCallback(async () => {
     if (!user) return
@@ -165,6 +175,9 @@ export function DashboardPage() {
         )
         await fetchMyIdeas()
         await new Promise(r => setTimeout(r, 1500))
+      } else {
+        // Generation failed — roll back the credit
+        await decrementDailyGeneration()
       }
     } finally {
       setGenerating(false)
