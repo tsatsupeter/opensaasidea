@@ -77,7 +77,7 @@ export function PrivacyPage() {
         <li><strong>Restriction:</strong> Control visibility of your ideas (public or private)</li>
         <li><strong>Objection:</strong> Opt out of personalized idea generation by clearing your profile preferences</li>
       </ul>
-      <p>To exercise any of these rights, contact us at privacy@{siteConfig.domain}.</p>
+      <p>To exercise any of these rights, contact us at support@{siteConfig.domain}.</p>
 
       <h2>8. Children's Privacy</h2>
       <p>The Service is not directed to individuals under the age of 18. We do not knowingly collect personal information from children. If we become aware that a child under 18 has provided us with personal information, we will delete it promptly.</p>
@@ -91,7 +91,7 @@ export function PrivacyPage() {
       <h2>11. Contact Us</h2>
       <p>For privacy-related questions, requests, or concerns, contact us at:</p>
       <ul>
-        <li>Email: privacy@{siteConfig.domain}</li>
+        <li>Email: support@{siteConfig.domain}</li>
         <li>Website: {siteConfig.domain}</li>
       </ul>
     </LegalLayout>
@@ -238,7 +238,7 @@ export function AccessibilityPage() {
       <p>Some AI-generated content may not be optimally structured for screen readers. We are working to improve the formatting of generated idea breakdowns.</p>
 
       <h2>Feedback</h2>
-      <p>If you experience any accessibility issues, please contact us at accessibility@{siteConfig.domain}. We take all feedback seriously and will work to address issues promptly.</p>
+      <p>If you experience any accessibility issues, please contact us at support@{siteConfig.domain}. We take all feedback seriously and will work to address issues promptly.</p>
     </LegalLayout>
   )
 }

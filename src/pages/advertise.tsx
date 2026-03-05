@@ -55,8 +55,8 @@ export function AdvertisePage() {
               </div>
             ))}
           </div>
-          <a href={`mailto:ads@${siteConfig.domain}?subject=Advertising Inquiry`}>
-            <Button className="w-full mt-2"><Mail className="h-4 w-4 mr-1.5" /> Contact Us - ads@{siteConfig.domain}</Button>
+          <a href={`mailto:support@${siteConfig.domain}?subject=Advertising Inquiry`}>
+            <Button className="w-full mt-2"><Mail className="h-4 w-4 mr-1.5" /> Contact Us - support@{siteConfig.domain}</Button>
           </a>
         </CardContent>
       </Card>

@@ -139,6 +139,18 @@ const FAQ_SECTIONS: FaqSection[] = [
       { q: 'What are credits?', a: 'Credits are used for one-time purchases like Deep Dive Reports. You can buy credit packs from the idea detail page. They don\'t expire.' },
     ],
   },
+  {
+    icon: Compass,
+    title: 'Our Two Platforms',
+    color: 'text-brand',
+    bg: 'bg-brand/10',
+    items: [
+      { q: 'What is the difference between OpenSaaSIdea and OpenProjectIdea?', a: 'OpenSaaSIdea (opensaasidea.com) is the focused, SaaS-only edition — it generates exclusively software business ideas like web apps, APIs, mobile apps, and browser extensions. OpenProjectIdea (openprojectidea.com) is the full, broad edition — it generates ideas across every industry including SaaS, local businesses, hardware, science, manufacturing, biotech, e-commerce, and more (e.g. a unique laptop case line, an urban farming kit, a niche repair service).' },
+      { q: 'Do my account and subscription sync across both sites?', a: 'Yes! Both sites share the same backend. Your account, subscription plan, generated ideas, bookmarks, votes, and team data all sync automatically. Log in with the same credentials on either site.' },
+      { q: 'Which one should I use?', a: 'If you\'re a developer or founder focused on building software products, OpenSaaSIdea is streamlined for you. If you want broader inspiration across all industries — physical products, local businesses, hardware, food & beverage, and more — use OpenProjectIdea. You can switch between them anytime.' },
+      { q: 'How do I contact support?', a: `Email us at support@opensaasidea.com or support@openprojectidea.com — both go to the same team. We typically respond within 24 hours.` },
+    ],
+  },
 ]
 
 const QUICK_LINKS = [

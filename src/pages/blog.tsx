@@ -74,7 +74,7 @@ export function BlogPage() {
       <Card>
         <CardContent className="p-6 text-center space-y-2">
           <p className="text-[13px] text-text-muted">More posts coming soon. Stay tuned!</p>
-          <p className="text-[11px] text-text-muted">Want to contribute? Email blog@{siteConfig.domain}</p>
+          <p className="text-[11px] text-text-muted">Want to contribute? Email support@{siteConfig.domain}</p>
         </CardContent>
       </Card>
     </div>
