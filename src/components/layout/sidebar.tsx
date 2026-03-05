@@ -253,6 +253,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
             <NavLink href="/help" icon={HelpCircle} label="Help" />
             <NavLink href="/blog" icon={Newspaper} label="Blog" />
             <NavLink href="/privacy" icon={ShieldCheck} label="Privacy Policy" />
+            <NavLink href="/terms" icon={FileText} label="Terms & Conditions" />
           </div>
         </nav>
 

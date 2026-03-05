@@ -77,7 +77,7 @@ export function RightSidebar() {
       <div className="border-t border-border px-4 py-3 space-y-2">
         <div className="flex flex-wrap gap-x-3 gap-y-1">
           <Link to="/privacy" className="text-[11px] text-text-muted hover:text-text-secondary hover:underline">Privacy Policy</Link>
-          <Link to="/terms" className="text-[11px] text-text-muted hover:text-text-secondary hover:underline">User Agreement</Link>
+          <Link to="/terms" className="text-[11px] text-text-muted hover:text-text-secondary hover:underline">Terms & Conditions</Link>
           <Link to="/accessibility" className="text-[11px] text-text-muted hover:text-text-secondary hover:underline">Accessibility</Link>
         </div>
         <p className="text-[10px] text-text-muted">
