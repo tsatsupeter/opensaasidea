@@ -447,10 +447,11 @@ export async function saveIdeaToSupabase(
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('saas_ideas')
     .insert(row as any)
+    .select('id, slug')
 
   if (error) console.error('Save error:', error)
-  return { error }
+  return { data, error }
 }

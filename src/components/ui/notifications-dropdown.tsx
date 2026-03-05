@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bell, Check, CheckCheck, Trash2, Users, X } from 'lucide-react'
+import { Bell, Check, CheckCheck, Trash2, Users, X, Lightbulb, Sparkles } from 'lucide-react'
 import { useNotifications, type Notification } from '@/hooks/use-notifications'
 import { useTeam } from '@/hooks/use-team'
 import { useToast } from '@/components/ui/toast'
@@ -21,12 +21,16 @@ const typeIcons: Record<string, typeof Users> = {
   team_invite: Users,
   team_joined: Users,
   team_removed: Users,
+  idea_generated: Lightbulb,
+  new_ideas: Sparkles,
 }
 
 const typeColors: Record<string, string> = {
   team_invite: 'bg-accent/10 text-accent',
   team_joined: 'bg-emerald/10 text-emerald',
   team_removed: 'bg-rose/10 text-rose',
+  idea_generated: 'bg-brand/10 text-brand',
+  new_ideas: 'bg-amber/10 text-amber',
 }
 
 export function NotificationsDropdown() {
@@ -114,13 +118,29 @@ export function NotificationsDropdown() {
                 const Icon = typeIcons[notif.type] || Bell
                 const colorClass = typeColors[notif.type] || 'bg-surface-2 text-text-muted'
                 const isInvite = notif.type === 'team_invite' && !notif.read
+                const isIdeaNotif = notif.type === 'idea_generated' || notif.type === 'new_ideas'
+
+                const handleNotifClick = () => {
+                  if (isIdeaNotif) {
+                    const slug = notif.data?.idea_slug
+                    if (slug) {
+                      navigate(`/idea/${slug}`)
+                    } else {
+                      navigate(notif.type === 'idea_generated' ? '/dashboard' : '/explore')
+                    }
+                    markAsRead(notif.id)
+                    setOpen(false)
+                  }
+                }
 
                 return (
                   <div
                     key={notif.id}
+                    onClick={isIdeaNotif ? handleNotifClick : undefined}
                     className={cn(
                       'px-4 py-3 border-b border-border last:border-b-0 transition-colors',
-                      !notif.read ? 'bg-accent/[0.03]' : ''
+                      !notif.read ? 'bg-accent/[0.03]' : '',
+                      isIdeaNotif ? 'cursor-pointer hover:bg-surface-2' : ''
                     )}
                   >
                     <div className="flex gap-3">

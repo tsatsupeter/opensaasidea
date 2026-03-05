@@ -17,6 +17,7 @@ import { useBookmarks } from '@/hooks/use-bookmarks'
 import { Logo } from '@/components/ui/logo'
 import { UpgradePrompt } from '@/components/subscription/upgrade-prompt'
 import { siteConfig } from '@/lib/site-config'
+import { createNotification } from '@/hooks/use-notifications'
 import type { SaasIdea } from '@/types/database'
 
 export function DashboardPage() {
@@ -147,10 +148,21 @@ export function DashboardPage() {
 
       if (idea) {
         setGenStep('done')
-        const { error: saveErr } = await saveIdeaToSupabase(idea, false, user.id)
-        if (saveErr) {
-          console.error('Failed to save idea:', saveErr)
+        const saveResult = await saveIdeaToSupabase(idea, false, user.id)
+        if (saveResult.error) {
+          console.error('Failed to save idea:', saveResult.error)
         }
+        // Notify user their idea is ready
+        const ideaTitle = idea.title || 'New Idea'
+        const saved = (saveResult.data as any)?.[0]
+        const ideaSlug = saved?.slug || saved?.id || ''
+        await createNotification(
+          user.id,
+          'idea_generated',
+          `Your idea "${ideaTitle}" is ready!`,
+          'View the full breakdown including revenue estimates, tech stack, and go-to-market strategy.',
+          { idea_slug: ideaSlug, idea_title: ideaTitle }
+        )
         await fetchMyIdeas()
         await new Promise(r => setTimeout(r, 1500))
       }
