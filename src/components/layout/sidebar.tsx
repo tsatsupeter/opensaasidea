@@ -85,7 +85,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
       )}
       <aside
         className={cn(
-          'fixed left-0 top-14 bottom-0 z-40 flex flex-col border-r border-border transition-all duration-300 bg-[var(--sidebar-bg)] w-[240px]',
+          'fixed left-0 top-[6.5rem] md:top-14 bottom-0 z-40 flex flex-col border-r border-border transition-all duration-300 bg-[var(--sidebar-bg)] w-[240px]',
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >

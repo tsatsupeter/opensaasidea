@@ -15,7 +15,7 @@ const NO_RIGHT_SIDEBAR_ROUTES = ['/login', '/register', '/onboarding', '/dashboa
 
 export function RootLayout() {
   const location = useLocation()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { openAuthModal } = useAuthModal()
   const [mobileOpen, setMobileOpen] = useState(false)
   const noSidebar = NO_SIDEBAR_ROUTES.includes(location.pathname)
@@ -32,48 +32,67 @@ export function RootLayout() {
   return (
     <div className="min-h-screen bg-surface-0">
       {/* Reddit-style top bar */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center gap-3 border-b border-border bg-surface-0/95 backdrop-blur-lg px-4 h-14">
-        {/* Left: hamburger + logo */}
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="lg:hidden h-8 w-8 flex items-center justify-center rounded-lg hover:bg-surface-2 cursor-pointer"
-          >
-            <Menu className="h-4 w-4 text-text-secondary" />
-          </button>
-          <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt={siteConfig.logoAlt} className="h-8 w-8 rounded-lg object-contain" />
-            <span className="text-sm font-bold hidden sm:block">
-              {getBrandParts().prefix}<span className="text-brand">{getBrandParts().brand}</span>{getBrandParts().suffix}
-            </span>
-          </Link>
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-surface-0/95 backdrop-blur-lg">
+        {/* Row 1: hamburger + logo + actions */}
+        <div className="flex items-center gap-3 px-3 sm:px-4 h-12 md:h-14">
+          {/* Left: hamburger + logo */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="lg:hidden h-9 w-9 flex items-center justify-center rounded-full hover:bg-surface-2 cursor-pointer"
+            >
+              <Menu className="h-5 w-5 text-text-secondary" />
+            </button>
+            <Link to="/" className="flex items-center gap-2">
+              <img src="/logo.png" alt={siteConfig.logoAlt} className="h-8 w-8 rounded-lg object-contain" />
+              <span className="text-sm font-bold hidden sm:block">
+                {getBrandParts().prefix}<span className="text-brand">{getBrandParts().brand}</span>{getBrandParts().suffix}
+              </span>
+            </Link>
+          </div>
+
+          {/* Center: search — desktop only */}
+          <div className="hidden md:flex flex-1 justify-center max-w-xl mx-auto">
+            <SearchBar />
+          </div>
+
+          {/* Right: actions */}
+          <div className="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
+            {user ? (
+              <>
+                <Link to="/dashboard" className="hidden sm:flex">
+                  <Button size="sm" className="gap-1.5 text-xs">
+                    <Plus className="h-3.5 w-3.5" />
+                    Generate
+                  </Button>
+                </Link>
+                <Link to="/dashboard" className="sm:hidden">
+                  <div className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-surface-2 cursor-pointer">
+                    <Plus className="h-5 w-5 text-text-secondary" />
+                  </div>
+                </Link>
+                <NotificationsBell />
+                <Link to="/profile">
+                  <div className="h-8 w-8 rounded-full bg-brand/20 flex items-center justify-center border-2 border-transparent hover:border-brand/40 transition-colors cursor-pointer overflow-hidden">
+                    {profile?.avatar_url ? (
+                      <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-[11px] font-bold text-brand">
+                        {(profile?.full_name || user.email || 'U')[0].toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              </>
+            ) : (
+              <Button size="sm" className="text-xs" onClick={() => openAuthModal('login')}>Sign In</Button>
+            )}
+          </div>
         </div>
 
-        {/* Center: search */}
-        <div className="flex-1 flex justify-center max-w-xl mx-auto">
+        {/* Row 2: search — mobile only */}
+        <div className="md:hidden px-3 pb-2.5">
           <SearchBar />
-        </div>
-
-        {/* Right: actions */}
-        <div className="flex items-center gap-2 shrink-0">
-          {user ? (
-            <>
-              <NotificationsBell />
-              <Link to="/dashboard">
-                <Button size="sm" className="hidden sm:flex gap-1.5 text-xs">
-                  <Plus className="h-3.5 w-3.5" />
-                  Generate
-                </Button>
-              </Link>
-              <Link to="/dashboard" className="sm:hidden">
-                <Button size="icon" className="h-8 w-8">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </Link>
-            </>
-          ) : (
-            <Button size="sm" className="text-xs" onClick={() => openAuthModal('login')}>Sign In</Button>
-          )}
         </div>
       </header>
 
@@ -81,7 +100,7 @@ export function RootLayout() {
       <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
 
       {/* Main content area */}
-      <div className={`pt-14 lg:pl-[240px] transition-all duration-300 ${!noRight ? 'xl:pr-[300px]' : ''}`}>
+      <div className={`pt-[6.5rem] md:pt-14 lg:pl-[240px] transition-all duration-300 ${!noRight ? 'xl:pr-[300px]' : ''}`}>
         <main className="px-3 sm:px-4 lg:px-6 py-4 sm:py-5 w-full min-w-0 overflow-x-hidden">
           <Outlet />
         </main>
