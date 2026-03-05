@@ -93,13 +93,20 @@ export function GenerationAnimation({ isGenerating, currentStep: externalStep }:
 
   useEffect(() => {
     if (!externalStep || !isGenerating) return
-    // Avoid queueing duplicates
     const q = stepQueueRef.current
-    if (q.length === 0 || q[q.length - 1] !== externalStep) {
-      q.push(externalStep)
+    const lastQueued = q.length > 0 ? q[q.length - 1] : displayStep
+    const lastIdx = lastQueued ? STEP_ORDER.indexOf(lastQueued) : -1
+    const targetIdx = STEP_ORDER.indexOf(externalStep)
+
+    // Enqueue all intermediate steps that were skipped (due to React batching)
+    for (let i = lastIdx + 1; i <= targetIdx; i++) {
+      const step = STEP_ORDER[i]
+      if (q[q.length - 1] !== step) {
+        q.push(step)
+      }
     }
     processQueue()
-  }, [externalStep, isGenerating, processQueue])
+  }, [externalStep, isGenerating, processQueue, displayStep])
 
   if (!isGenerating) return null
 
