@@ -245,7 +245,7 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="max-w-5xl">
+    <div className="w-full max-w-5xl">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

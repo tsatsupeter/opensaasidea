@@ -258,25 +258,25 @@ export function BlogPage() {
 
   if (selectedPost) {
     return (
-      <div className="max-w-4xl">
+      <div className="w-full max-w-4xl">
         <BlogPostDetail post={selectedPost} onBack={() => setSelectedSlug(null)} />
       </div>
     )
   }
 
   return (
-    <div className="max-w-5xl">
+    <div className="w-full max-w-5xl">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
         {/* Header */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8 sm:mb-10">
           <div className="h-14 w-14 rounded-2xl bg-brand/10 flex items-center justify-center mx-auto mb-4">
             <Newspaper className="h-7 w-7 text-brand" />
           </div>
-          <h1 className="text-3xl font-extrabold">Blog</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold">Blog</h1>
           <p className="text-text-secondary mt-2 max-w-lg mx-auto">
             Guides, product updates, and tips from the {siteConfig.name} team to help you find and validate your next big idea.
           </p>

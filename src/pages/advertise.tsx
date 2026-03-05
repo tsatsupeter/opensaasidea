@@ -6,7 +6,7 @@ import { siteConfig } from '@/lib/site-config'
 
 export function AdvertisePage() {
   return (
-    <div className="max-w-3xl space-y-8">
+    <div className="w-full max-w-3xl space-y-6 sm:space-y-8">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 rounded-xl bg-brand/10 flex items-center justify-center">
@@ -45,9 +45,9 @@ export function AdvertisePage() {
               { title: 'Newsletter Sponsorship', desc: 'Reach our email subscribers with a dedicated sponsor slot.', price: 'From $199/issue' },
               { title: 'Custom Partnership', desc: 'Co-branded content, API integrations, and more.', price: 'Contact us' },
             ].map(opt => (
-              <div key={opt.title} className="flex items-start gap-3 p-3 bg-surface-2 rounded-lg">
-                <Zap className="h-4 w-4 text-brand mt-0.5 shrink-0" />
-                <div className="flex-1">
+              <div key={opt.title} className="flex flex-col sm:flex-row items-start gap-2 sm:gap-3 p-3 bg-surface-2 rounded-lg">
+                <Zap className="h-4 w-4 text-brand mt-0.5 shrink-0 hidden sm:block" />
+                <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-semibold">{opt.title}</p>
                   <p className="text-[11px] text-text-muted">{opt.desc}</p>
                 </div>

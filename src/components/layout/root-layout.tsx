@@ -82,7 +82,7 @@ export function RootLayout() {
 
       {/* Main content area */}
       <div className={`pt-14 lg:pl-[240px] transition-all duration-300 ${!noRight ? 'xl:pr-[300px]' : ''}`}>
-        <main className="px-4 lg:px-6 py-5">
+        <main className="px-3 sm:px-4 lg:px-6 py-4 sm:py-5 w-full min-w-0 overflow-x-hidden">
           <Outlet />
         </main>
       </div>

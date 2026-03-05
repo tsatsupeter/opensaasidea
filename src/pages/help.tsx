@@ -223,25 +223,25 @@ function AccordionFaq({ section, index }: { section: FaqSection; index: number }
 
 export function HelpPage() {
   return (
-    <div className="max-w-5xl">
+    <div className="w-full max-w-3xl mx-auto">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
         {/* Header */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8 sm:mb-10">
           <div className="h-14 w-14 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-4">
             <HelpCircle className="h-7 w-7 text-accent" />
           </div>
-          <h1 className="text-3xl font-extrabold">Help Center</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold">Help Center</h1>
           <p className="text-text-secondary mt-2 max-w-lg mx-auto">
             Everything you need to know about using {siteConfig.name}. Browse topics below or reach out to support.
           </p>
         </div>
 
         {/* Quick Links */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-10">
           {QUICK_LINKS.map((link, i) => {
             const Icon = link.icon
             const content = (
@@ -286,7 +286,7 @@ export function HelpPage() {
           className="mb-10"
         >
           <h2 className="text-lg font-bold mb-4">Quick Start Guide</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {[
               { step: '1', icon: UserPlus, title: 'Sign Up', desc: 'Create a free account and complete onboarding with your skills and interests.' },
               { step: '2', icon: Sparkles, title: 'Generate', desc: 'Hit "Generate My Idea" on the Dashboard. AI crafts a unique idea just for you.' },

@@ -123,7 +123,7 @@ export function StatsPage() {
   const topIdea = [...ideas].sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0))[0]
 
   return (
-    <div className="max-w-5xl">
+    <div className="w-full max-w-5xl">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -332,7 +332,7 @@ export function StatsPage() {
                         transition={{ delay: 0.4 + i * 0.04 }}
                         className="flex items-center gap-3"
                       >
-                        <span className="text-xs font-medium text-text-secondary w-32 truncate shrink-0">{cat.category}</span>
+                        <span className="text-xs font-medium text-text-secondary w-20 sm:w-32 truncate shrink-0">{cat.category}</span>
                         <div className="flex-1 h-6 bg-surface-2 rounded-lg overflow-hidden relative">
                           <motion.div
                             initial={{ width: 0 }}

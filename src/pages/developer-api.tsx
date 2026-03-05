@@ -171,16 +171,16 @@ export function DeveloperApiPage() {
   )
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="w-full max-w-4xl space-y-6">
       {/* Hero */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-xl bg-accent/10 flex items-center justify-center">
+            <div className="h-12 w-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
               <Code2 className="h-6 w-6 text-accent" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Developer Dashboard</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">Developer Dashboard</h1>
               <p className="text-sm text-text-muted">Manage your API keys and credits.</p>
             </div>
           </div>
@@ -325,14 +325,15 @@ export function DeveloperApiPage() {
                 </div>
               )}
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   placeholder="Key name (e.g. My App)"
                   value={newKeyName}
                   onChange={e => setNewKeyName(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && generateApiKey()}
+                  className="flex-1"
                 />
-                <Button onClick={generateApiKey} disabled={generatingKey || !newKeyName.trim()}>
+                <Button onClick={generateApiKey} disabled={generatingKey || !newKeyName.trim()} className="shrink-0">
                   {generatingKey ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5 mr-1" />}
                   Generate
                 </Button>
@@ -341,7 +342,7 @@ export function DeveloperApiPage() {
               {apiKeys.length > 0 && (
                 <div className="space-y-2">
                   {apiKeys.map(k => (
-                    <div key={k.id} className="flex items-center gap-3 bg-surface-2 rounded-lg px-3 py-2">
+                    <div key={k.id} className="flex items-center gap-3 bg-surface-2 rounded-lg px-3 py-2 flex-wrap">
                       <Key className={`h-3.5 w-3.5 ${k.is_active ? 'text-accent' : 'text-text-muted'}`} />
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-medium">{k.name}</p>

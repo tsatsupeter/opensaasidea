@@ -271,7 +271,7 @@ function CommentThread({ comment, depth, onVote, onReply, onEdit, onDelete, subm
 
               {/* Action bar */}
               {!editing && (
-                <div className="flex items-center gap-0.5 -ml-1.5 mb-1">
+                <div className="flex items-center gap-0.5 -ml-1.5 mb-1 flex-wrap">
                   {/* Vote buttons */}
                   <button
                     onClick={() => onVote(comment.id, 'up')}

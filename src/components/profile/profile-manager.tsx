@@ -252,7 +252,7 @@ export function ProfileManager() {
   return (
     <div className="space-y-4">
       {/* Section tabs */}
-      <div className="flex gap-1 p-1 bg-surface-1 rounded-xl border border-border w-fit">
+      <div className="flex gap-1 p-1 bg-surface-1 rounded-xl border border-border w-full sm:w-fit overflow-x-auto">
         {[
           { id: 'profile' as const, icon: User, label: 'Profile' },
           { id: 'cv' as const, icon: FileText, label: 'CV / Resume' },
@@ -540,7 +540,7 @@ export function ProfileManager() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Add skill */}
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Input
                     value={newSkill}
                     onChange={e => setNewSkill(e.target.value)}
@@ -548,18 +548,20 @@ export function ProfileManager() {
                     onKeyDown={e => e.key === 'Enter' && addSkill()}
                     className="flex-1"
                   />
-                  <select
-                    value={newSkillCategory}
-                    onChange={e => setNewSkillCategory(e.target.value)}
-                    className="h-10 rounded-xl border border-border bg-surface-2 px-2 text-sm text-text-primary"
-                  >
-                    {SKILL_CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>{cat.replace(/_/g, ' ')}</option>
-                    ))}
-                  </select>
-                  <Button onClick={addSkill} disabled={!newSkill.trim()} size="sm" className="h-10 px-4">
-                    Add
-                  </Button>
+                  <div className="flex gap-2">
+                    <select
+                      value={newSkillCategory}
+                      onChange={e => setNewSkillCategory(e.target.value)}
+                      className="h-10 rounded-xl border border-border bg-surface-2 px-2 text-sm text-text-primary flex-1 sm:flex-none"
+                    >
+                      {SKILL_CATEGORIES.map(cat => (
+                        <option key={cat} value={cat}>{cat.replace(/_/g, ' ')}</option>
+                      ))}
+                    </select>
+                    <Button onClick={addSkill} disabled={!newSkill.trim()} size="sm" className="h-10 px-4 shrink-0">
+                      Add
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Skills list */}

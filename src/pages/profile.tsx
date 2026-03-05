@@ -146,7 +146,7 @@ export function ProfilePage() {
   const historyIdeas = recentItems
 
   return (
-    <div className="max-w-5xl">
+    <div className="w-full max-w-5xl">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -225,12 +225,12 @@ export function ProfilePage() {
         </Card>
 
         {/* Tabs */}
-        <div className="flex gap-1 p-1 bg-surface-1 rounded-xl border border-border mb-6 overflow-x-auto">
+        <div className="flex gap-1 p-1 bg-surface-1 rounded-xl border border-border mb-6 overflow-x-auto scrollbar-hide">
           {TABS.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-brand text-white shadow-sm'
                   : 'text-text-secondary hover:text-text-primary hover:bg-surface-2'
@@ -337,9 +337,9 @@ export function ProfilePage() {
                           <MessageSquare className="h-4 w-4 text-amber shrink-0 mt-0.5" />
                           <div className="min-w-0 flex-1">
                             <p className="text-sm text-text-primary line-clamp-2">{comment.content}</p>
-                            <div className="flex items-center gap-2 mt-1.5">
+                            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                               <span className="text-[11px] text-text-muted">on</span>
-                              <span className="text-[11px] font-medium text-brand truncate">{comment.idea_title}</span>
+                              <span className="text-[11px] font-medium text-brand truncate max-w-[200px] sm:max-w-none">{comment.idea_title}</span>
                               <span className="text-[11px] text-text-muted">·</span>
                               <span className="text-[11px] text-text-muted flex items-center gap-1">
                                 <ThumbsUp className="h-3 w-3" /> {comment.upvotes}

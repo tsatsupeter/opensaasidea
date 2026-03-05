@@ -50,7 +50,7 @@ export function TeamInvitePage() {
   }, [status, user, token])
 
   return (
-    <div className="max-w-md mx-auto py-20 space-y-6">
+    <div className="w-full max-w-md mx-auto py-20 space-y-6">
       <div className="text-center space-y-2">
         <div className="mx-auto h-16 w-16 rounded-full bg-accent/10 flex items-center justify-center">
           <Users className="h-8 w-8 text-accent" />

@@ -29,7 +29,7 @@ export function CheckoutSuccessPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto">
+    <div className="w-full max-w-lg mx-auto">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}

@@ -69,7 +69,7 @@ export function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicT
       >
         <div className="px-4 py-3">
           {/* Top: category + time (like subreddit header) */}
-          <div className="flex items-center gap-1.5 mb-1.5">
+          <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
             <div className={`h-5 w-5 rounded-full ${colors.bgColor} flex items-center justify-center shrink-0`}>
               <span className={`text-[10px] font-bold ${colors.color}`}>{catLabel[0]}</span>
             </div>
@@ -113,7 +113,7 @@ export function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicT
           )}
 
           {/* Bottom actions bar - Reddit style */}
-          <div className="flex items-center gap-1 -ml-1.5" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-0.5 sm:gap-1 -ml-1.5 flex-wrap" onClick={(e) => e.stopPropagation()}>
             <VoteButton
               ideaId={idea.id}
               upvotes={idea.upvotes}

@@ -125,7 +125,7 @@ export function TeamPage() {
   ]
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="w-full max-w-4xl space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3">
@@ -460,14 +460,15 @@ function MembersTab({ members, isOwner, isAdmin, userId, inviteEmail, setInviteE
       {isAdmin && (
         <Card>
           <CardContent className="p-4">
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 placeholder="Email address to invite"
                 value={inviteEmail}
                 onChange={e => setInviteEmail(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && onInvite()}
+                className="flex-1"
               />
-              <Button onClick={onInvite} disabled={inviting || !inviteEmail.trim()}>
+              <Button onClick={onInvite} disabled={inviting || !inviteEmail.trim()} className="shrink-0">
                 {inviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4 mr-1" />}
                 Invite
               </Button>
@@ -483,7 +484,7 @@ function MembersTab({ members, isOwner, isAdmin, userId, inviteEmail, setInviteE
           const RoleIcon = roleIcons[m.role] || Users
           return (
             <Card key={m.id}>
-              <CardContent className="p-3 flex items-center gap-3">
+              <CardContent className="p-3 flex flex-wrap sm:flex-nowrap items-center gap-3">
                 <div className="h-8 w-8 rounded-full bg-surface-2 flex items-center justify-center text-[12px] font-bold shrink-0 overflow-hidden">
                   {m.profile?.avatar_url ? (
                     <img src={m.profile.avatar_url} alt="" className="h-full w-full object-cover" />
@@ -591,7 +592,7 @@ function SettingsTab({ categories, isAdmin, newCatName, setNewCatName, newCatDes
         {isAdmin && (
           <Card>
             <CardContent className="p-4">
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Input placeholder="Category name" value={newCatName} onChange={e => setNewCatName(e.target.value)} className="flex-1" />
                 <Input placeholder="Description (optional)" value={newCatDesc} onChange={e => setNewCatDesc(e.target.value)} className="flex-1" />
                 <Button onClick={onAddCategory} disabled={!newCatName.trim()} className="shrink-0">
@@ -631,7 +632,7 @@ function SettingsTab({ categories, isAdmin, newCatName, setNewCatName, newCatDes
 
       {/* Support */}
       <Card className="border-accent/20 bg-accent/5">
-        <CardContent className="p-4 flex items-center gap-4">
+        <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
           <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
             <Headphones className="h-5 w-5 text-accent" />
           </div>

@@ -39,22 +39,22 @@ export function AboutPage() {
   const tiers = (['free', 'pro', 'team'] as SubscriptionTier[]).map(t => TIERS[t])
 
   return (
-    <div className="max-w-5xl">
+    <div className="w-full max-w-5xl">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
         {/* Header */}
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-extrabold">About {siteConfig.name}</h1>
+        <div className="text-center mb-8 sm:mb-10">
+          <h1 className="text-2xl sm:text-3xl font-extrabold">About {siteConfig.name}</h1>
           <p className="text-text-secondary mt-2 max-w-lg mx-auto">
             {siteConfig.tagline}. Discover validated ideas backed by real market data so you can focus on building.
           </p>
         </div>
 
         {/* Features */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-10">
           {FEATURES.map((f, i) => {
             const Icon = f.icon
             return (
@@ -88,7 +88,7 @@ export function AboutPage() {
           className="mb-10"
         >
           <h2 className="text-lg font-bold mb-4">How It Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {HOW_IT_WORKS.map(s => (
               <Card key={s.step}>
                 <CardContent className="p-4 text-center">

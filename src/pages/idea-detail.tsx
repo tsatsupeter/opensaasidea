@@ -157,7 +157,7 @@ export function IdeaDetailPage() {
   const catData = categories.find(c => c.slug === catSlug)
 
   return (
-    <div className="flex gap-6 w-full">
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 w-full">
       {/* Main post column */}
       <div className="flex-1 min-w-0">
         <motion.div
@@ -188,7 +188,7 @@ export function IdeaDetailPage() {
             </div>
 
             {/* Flair tags */}
-            <div className="flex items-center gap-2 px-4 pb-3">
+            <div className="flex items-center gap-2 px-4 pb-3 flex-wrap">
               {idea.category && (
                 <span className={`text-[11px] font-semibold ${colors.color} ${colors.bgColor} rounded-full px-2.5 py-0.5`}>
                   {idea.category}
@@ -245,10 +245,12 @@ export function IdeaDetailPage() {
                     )}
                   </>
                 ) : (
-                  <div className="mt-3 rounded-lg border border-brand/20 bg-surface-1/50 px-4 py-3 flex flex-wrap items-center gap-2">
-                    <Crown className="h-4 w-4 text-brand shrink-0" />
-                    <p className="text-[13px] font-semibold text-brand">Pro feature: Detailed revenue breakdown</p>
-                    <div className="flex items-center gap-2 ml-auto">
+                  <div className="mt-3 rounded-lg border border-brand/20 bg-surface-1/50 px-3 sm:px-4 py-3 flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <Crown className="h-4 w-4 text-brand shrink-0" />
+                      <p className="text-[13px] font-semibold text-brand">Pro feature: Detailed revenue breakdown</p>
+                    </div>
+                    <div className="flex items-center gap-2 sm:ml-auto">
                       <button onClick={handleBuyReport} disabled={buyingReport} className="text-[11px] font-semibold text-white bg-brand rounded-full px-3 py-1 hover:bg-brand/90 transition-colors disabled:opacity-50">
                         {buyingReport ? 'Loading...' : 'Buy Report $9.99'}
                       </button>
@@ -280,10 +282,12 @@ export function IdeaDetailPage() {
                 </div>
               )}
               {!canViewPro && pricingTiers.length > 0 && (
-                <div className="rounded-lg border border-brand/20 bg-surface-1/50 px-4 py-3 flex flex-wrap items-center gap-2">
-                  <Crown className="h-4 w-4 text-brand shrink-0" />
-                  <p className="text-[13px] font-semibold text-brand">Pro feature: Pricing tier details</p>
-                  <div className="flex items-center gap-2 ml-auto">
+                <div className="rounded-lg border border-brand/20 bg-surface-1/50 px-3 sm:px-4 py-3 flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <Crown className="h-4 w-4 text-brand shrink-0" />
+                    <p className="text-[13px] font-semibold text-brand">Pro feature: Pricing tier details</p>
+                  </div>
+                  <div className="flex items-center gap-2 sm:ml-auto">
                     <button onClick={handleBuyReport} disabled={buyingReport} className="text-[11px] font-semibold text-white bg-brand rounded-full px-3 py-1 hover:bg-brand/90 transition-colors disabled:opacity-50">
                       {buyingReport ? 'Loading...' : 'Buy Report $9.99'}
                     </button>
@@ -501,7 +505,7 @@ export function IdeaDetailPage() {
             </div>
 
             {/* Bottom action bar */}
-            <div className="flex items-center gap-1 px-2 py-2 border-t border-border">
+            <div className="flex items-center gap-1 px-2 py-2 border-t border-border flex-wrap">
               <VoteButton ideaId={idea.id} upvotes={idea.upvotes} downvotes={idea.downvotes} currentVote={userVote} />
               <a
                 href="#comments"

@@ -70,15 +70,15 @@ export function PricingPage() {
   const tiers = (['free', 'pro', 'team'] as SubscriptionTier[]).map(t => TIERS[t])
 
   return (
-    <div className="max-w-5xl">
+    <div className="w-full max-w-5xl">
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
         {/* Header */}
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-extrabold">Choose Your Plan</h1>
+        <div className="text-center mb-8 sm:mb-10">
+          <h1 className="text-2xl sm:text-3xl font-extrabold">Choose Your Plan</h1>
           <p className="text-text-secondary mt-2 max-w-lg mx-auto">
             Unlock unlimited ideas, detailed market reports, PDF exports, and more.
           </p>
