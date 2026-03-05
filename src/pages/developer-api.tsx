@@ -16,8 +16,8 @@ import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
 import { siteConfig } from '@/lib/site-config'
 
-const API_BASE = `https://openprojectidea.com/v1/api`
-const DOCS_URL = `https://docs.openprojectidea.com`
+const API_BASE = `https://${siteConfig.domain}/v1/api`
+const DOCS_URL = `https://docs.${siteConfig.domain}`
 
 export function DeveloperApiPage() {
   const { user } = useAuth()

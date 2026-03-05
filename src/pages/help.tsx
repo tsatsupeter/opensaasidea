@@ -7,7 +7,7 @@ import { siteConfig } from '@/lib/site-config'
 
 export function HelpPage() {
   const faqs = [
-    { q: 'How do I generate ideas?', a: 'Go to your Dashboard and click "Generate Ideas". Free users get 3/day, Pro gets 20/day, and Team gets 50/day.' },
+    { q: 'How do I generate ideas?', a: 'Go to your Dashboard and click "Generate My Idea". Free users get 1/day, Pro gets 10/day, and Team gets 30/day.' },
     { q: 'What are Deep Dive Reports?', a: 'One-time purchasable detailed reports for any idea with full competitor analysis, marketing strategy, and SEO plan. Available from the idea detail page.' },
     { q: 'How does the API work?', a: 'Generate an API key from the Developer API page. You get $5 free credit. Each API call costs $0.01-$0.02 depending on the endpoint.' },
     { q: 'How do I invite team members?', a: 'On the Team page, go to the Members tab and enter their email. They\'ll need to sign up and their account will be linked to your team.' },

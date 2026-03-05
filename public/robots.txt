@@ -31,4 +31,5 @@ Disallow: /
 User-agent: ClaudeBot
 Disallow: /
 
+Sitemap: https://openprojectidea.com/sitemap.xml
 Sitemap: https://opensaasidea.com/sitemap.xml

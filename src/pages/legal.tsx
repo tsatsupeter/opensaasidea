@@ -26,7 +26,7 @@ export function PrivacyPage() {
 
       <h2>2. How We Use Your Information</h2>
       <ul>
-        <li>To generate personalized SaaS ideas based on your skills and interests</li>
+        <li>To generate personalized {siteConfig.mode === 'full' ? 'project ideas' : 'SaaS ideas'} based on your skills and interests</li>
         <li>To maintain your account and provide our services</li>
         <li>To improve the quality of AI-generated ideas using aggregated feedback</li>
         <li>To display public content such as shared ideas and vote counts</li>
@@ -36,7 +36,7 @@ export function PrivacyPage() {
       <p>Your data is stored securely on Supabase infrastructure with row-level security policies. Private ideas are only accessible to you unless you explicitly choose to share them publicly.</p>
 
       <h2>4. Third-Party Services</h2>
-      <p>We use OpenRouter API to generate SaaS ideas. When generating ideas, your skills and interests may be sent to the AI model to personalize results. No personally identifiable information is shared.</p>
+      <p>We use OpenRouter API to generate {siteConfig.mode === 'full' ? 'project ideas' : 'SaaS ideas'}. When generating ideas, your skills and interests may be sent to the AI model to personalize results. No personally identifiable information is shared.</p>
 
       <h2>5. Your Rights</h2>
       <ul>

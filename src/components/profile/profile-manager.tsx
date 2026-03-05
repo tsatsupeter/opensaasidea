@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase'
+import { siteConfig } from '@/lib/site-config'
 import type { UserSkill } from '@/types/database'
 
 const EXPERIENCE_LEVELS = ['beginner', 'intermediate', 'senior', 'expert'] as const
@@ -477,7 +478,7 @@ export function ProfileManager() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <p className="text-xs text-text-muted">Paste your CV content directly. We'll use this to personalize your SaaS ideas.</p>
+                    <p className="text-xs text-text-muted">Paste your CV content directly. We'll use this to personalize your idea generation.</p>
                     <Textarea
                       value={cvText}
                       onChange={e => setCvText(e.target.value)}
@@ -512,7 +513,7 @@ export function ProfileManager() {
                     </pre>
                   </div>
                   <p className="text-xs text-text-muted mt-3">
-                    This content is used to personalize your SaaS idea generation based on your experience, skills, and background.
+                    This content is used to personalize your idea generation based on your experience, skills, and background.
                   </p>
                 </CardContent>
               </Card>

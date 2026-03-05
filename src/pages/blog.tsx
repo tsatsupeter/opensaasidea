@@ -6,8 +6,8 @@ import { siteConfig } from '@/lib/site-config'
 
 const posts = [
   {
-    title: 'How We Generate 50+ SaaS Ideas Daily with AI',
-    excerpt: 'A deep dive into our AI pipeline that analyzes market trends, Reddit discussions, and competitor data to surface validated SaaS opportunities.',
+    title: `How We Generate 50+ ${siteConfig.brandWord} Ideas Daily with AI`,
+    excerpt: `A deep dive into our AI pipeline that analyzes market trends, Reddit discussions, and competitor data to surface validated ${siteConfig.mode === 'full' ? 'project' : 'SaaS'} opportunities.`,
     date: '2025-02-28',
     readTime: '5 min',
     category: 'Engineering',
@@ -28,7 +28,7 @@ const posts = [
   },
   {
     title: 'From Idea to $10K MRR: A Case Study',
-    excerpt: 'How one of our users took an AI-generated SaaS idea from concept to $10K monthly recurring revenue in just 4 months.',
+    excerpt: `How one of our users took an AI-generated ${siteConfig.mode === 'full' ? 'project idea' : 'SaaS idea'} from concept to $10K monthly recurring revenue in just 4 months.`,
     date: '2025-02-15',
     readTime: '7 min',
     category: 'Case Study',
