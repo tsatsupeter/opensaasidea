@@ -4,9 +4,11 @@ import {
   HelpCircle, Mail, Book, Zap, ChevronDown, ChevronUp,
   Sparkles, Compass, CreditCard, Users, FileText, Bell,
   Shield, Settings, Rocket, UserPlus, BarChart3, Search,
+  Globe, ExternalLink, Code2,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { siteConfig } from '@/lib/site-config'
 import { cn } from '@/lib/utils'
 
@@ -312,6 +314,65 @@ export function HelpPage() {
                 </motion.div>
               )
             })}
+          </div>
+        </motion.div>
+
+        {/* Our Platforms */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mb-10"
+        >
+          <h2 className="text-lg font-bold mb-4">Our Platforms</h2>
+          <p className="text-sm text-text-secondary mb-4">
+            We run two versions of our platform. Your account, subscription, and data sync across both — pick the one that fits your needs.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className={siteConfig.mode === 'saas' ? 'border-brand ring-2 ring-brand/20' : ''}>
+              <CardContent className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-10 w-10 rounded-xl bg-brand/10 flex items-center justify-center">
+                    <Code2 className="h-5 w-5 text-brand" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-bold">OpenSaaSIdea</h4>
+                      {siteConfig.mode === 'saas' && <Badge variant="default" className="bg-brand text-white text-[10px] px-1.5 py-0">You are here</Badge>}
+                    </div>
+                    <p className="text-xs text-text-muted">opensaasidea.com</p>
+                  </div>
+                </div>
+                <p className="text-xs text-text-secondary mb-3">
+                  The focused, SaaS-only edition. Generates exclusively software-as-a-service business ideas — web apps, APIs, mobile apps, browser extensions, and desktop tools. Ideal if you're a developer or founder looking for your next SaaS product.
+                </p>
+                <a href="https://opensaasidea.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-brand hover:underline">
+                  Visit opensaasidea.com <ExternalLink className="h-3 w-3" />
+                </a>
+              </CardContent>
+            </Card>
+            <Card className={siteConfig.mode === 'full' ? 'border-accent ring-2 ring-accent/20' : ''}>
+              <CardContent className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="h-10 w-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                    <Globe className="h-5 w-5 text-accent" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-bold">OpenProjectIdea</h4>
+                      {siteConfig.mode === 'full' && <Badge variant="default" className="bg-accent text-white text-[10px] px-1.5 py-0">You are here</Badge>}
+                    </div>
+                    <p className="text-xs text-text-muted">openprojectidea.com</p>
+                  </div>
+                </div>
+                <p className="text-xs text-text-secondary mb-3">
+                  The full, broad edition. Generates ideas across every industry — SaaS, local businesses, hardware, science, manufacturing, biotech, e-commerce, real estate, food & beverage, and more. For example: a unique laptop case line, an urban farming kit, or a niche repair service. Same plans, same account, more variety.
+                </p>
+                <a href="https://openprojectidea.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline">
+                  Visit openprojectidea.com <ExternalLink className="h-3 w-3" />
+                </a>
+              </CardContent>
+            </Card>
           </div>
         </motion.div>
 
