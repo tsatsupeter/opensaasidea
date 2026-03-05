@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Share2, Link2, FileText, Eye, ExternalLink, Check,
-  MessageSquareText, Wind, MousePointerClick, Heart, Terminal
+  MessageSquareText, Wind, MousePointerClick, Heart, Terminal, FileDown, Loader2
 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
@@ -11,6 +11,9 @@ import type { SaasIdea } from '@/types/database'
 interface ShareMenuProps {
   idea: SaasIdea
   className?: string
+  onExportPDF?: () => Promise<void>
+  exportingPDF?: boolean
+  canExportPDF?: boolean
 }
 
 function ideaToMarkdown(idea: SaasIdea, url: string): string {
@@ -41,7 +44,7 @@ function buildPrompt(idea: SaasIdea): string {
   return `I want to build this SaaS idea. Help me plan and implement it:\n\nTitle: ${idea.title}\nTagline: ${idea.tagline || ''}\nCategory: ${idea.category || ''}\nDescription: ${idea.description || ''}\nProblem: ${d.problem_statement || ''}\nTarget Audience: ${d.target_audience || ''}\nMonetization: ${idea.monetization_model || ''}\nEstimated MRR: ${idea.estimated_mrr_low ? `$${idea.estimated_mrr_low} - $${idea.estimated_mrr_high}` : 'N/A'}\nTech Stack Suggestion: ${d.tech_stack_suggestion || ''}\nMVP Features: ${d.mvp_features?.join(', ') || ''}\n\nPlease help me create a detailed implementation plan with architecture, tech stack choices, and step-by-step build guide.`
 }
 
-export function ShareMenu({ idea, className }: ShareMenuProps) {
+export function ShareMenu({ idea, className, onExportPDF, exportingPDF, canExportPDF }: ShareMenuProps) {
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
@@ -75,6 +78,7 @@ export function ShareMenu({ idea, className }: ShareMenuProps) {
     { id: 'link', label: 'Copy Link', icon: Link2, action: () => copyText(ideaUrl, 'Link') },
     { id: 'markdown', label: 'Copy Markdown', icon: FileText, action: () => copyText(markdown, 'Markdown') },
     { id: 'view-md', label: 'View in Markdown', icon: Eye, action: () => setShowMarkdown(!showMarkdown) },
+    ...(onExportPDF ? [{ id: 'pdf', label: canExportPDF === false ? 'Export PDF (Pro)' : 'Export PDF', icon: FileDown, action: onExportPDF, disabled: exportingPDF || canExportPDF === false, loading: exportingPDF }] : []),
     { divider: true },
     { id: 'chatgpt', label: 'Open in ChatGPT', icon: MessageSquareText, href: `https://chatgpt.com/?q=${encodedPrompt}` },
     { id: 'claude', label: 'Open in Claude', icon: ExternalLink, href: `https://claude.ai/new?q=${encodedPrompt}` },
@@ -132,13 +136,22 @@ export function ShareMenu({ idea, className }: ShareMenuProps) {
                   )
                 }
 
+                const isDisabled = 'disabled' in item && item.disabled
+                const isLoading = 'loading' in item && item.loading
+
                 return (
                   <button
                     key={item.id}
                     onClick={item.action}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-text-secondary hover:bg-surface-2 hover:text-text-primary transition-colors cursor-pointer"
+                    disabled={!!isDisabled}
+                    className={cn(
+                      "w-full flex items-center gap-2.5 px-3 py-2 text-[13px] transition-colors cursor-pointer",
+                      isDisabled
+                        ? 'text-text-muted/50 cursor-not-allowed'
+                        : 'text-text-secondary hover:bg-surface-2 hover:text-text-primary'
+                    )}
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
+                    {isLoading ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <Icon className="h-4 w-4 shrink-0" />}
                     <span className="flex-1 text-left">{item.label}</span>
                     {isCopied && <Check className="h-3.5 w-3.5 text-emerald" />}
                   </button>

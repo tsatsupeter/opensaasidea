@@ -3,7 +3,7 @@ import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, Loader2, Globe, Smartphone, Monitor,
-  Puzzle, Code2, Layers, Bookmark, BookmarkCheck, Calendar, Eye, Users, TrendingUp, DollarSign, Zap, Lock, MessageSquare, FileDown, Crown
+  Puzzle, Code2, Layers, Bookmark, BookmarkCheck, Calendar, Eye, Users, TrendingUp, DollarSign, Zap, Lock, MessageSquare, Crown
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
@@ -519,7 +519,25 @@ export function IdeaDetailPage() {
                 <MessageSquare className="h-3.5 w-3.5" />
                 {idea.comment_count || 0}
               </a>
-              <ShareMenu idea={idea} />
+              <ShareMenu
+                idea={idea}
+                onExportPDF={async () => {
+                  if (!canViewPro) {
+                    toast('Upgrade to Pro or buy this report to export PDF')
+                    return
+                  }
+                  setExporting(true)
+                  try {
+                    await exportIdeaToPDF(idea)
+                    toast('PDF downloaded!')
+                  } catch {
+                    toast('Failed to export PDF')
+                  }
+                  setExporting(false)
+                }}
+                exportingPDF={exporting}
+                canExportPDF={canViewPro}
+              />
               {isTeam && team && (
                 <button
                   onClick={async () => {
@@ -550,28 +568,6 @@ export function IdeaDetailPage() {
               >
                 {isBookmarked(idea.id) ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
                 {isBookmarked(idea.id) ? 'Saved' : 'Save'}
-              </button>
-              <button
-                onClick={async () => {
-                  if (!canViewPro) {
-                    toast('Upgrade to Pro or buy this report to export PDF')
-                    return
-                  }
-                  setExporting(true)
-                  try {
-                    await exportIdeaToPDF(idea)
-                    toast('PDF downloaded!')
-                  } catch {
-                    toast('Failed to export PDF')
-                  }
-                  setExporting(false)
-                }}
-                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition-colors cursor-pointer ${
-                  canViewPro ? 'text-text-muted hover:bg-surface-2' : 'text-text-muted/50'
-                }`}
-              >
-                {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
-                {canViewPro ? 'Export PDF' : <><Crown className="h-3 w-3 text-brand" /> PDF</>}
               </button>
               {idea.generated_for === user?.id && (
                 <button
