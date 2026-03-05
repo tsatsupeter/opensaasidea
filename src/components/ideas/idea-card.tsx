@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Share2, DollarSign, ArrowRight, Globe, Lock, Bookmark, BookmarkCheck, MessageSquare } from 'lucide-react'
+import { DollarSign, ArrowRight, Globe, Lock, Bookmark, BookmarkCheck, MessageSquare } from 'lucide-react'
 import { VoteButton } from './vote-button'
+import { ShareMenu } from './share-menu'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import { categoryColor, toSlug } from '@/lib/categories'
 import { supabase } from '@/lib/supabase'
@@ -158,16 +159,7 @@ export function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicT
                 </button>
               )
             )}
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(`${window.location.origin}/idea/${idea.slug || idea.id}`)
-                toast('Link copied to clipboard')
-              }}
-              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-text-muted hover:bg-surface-2 transition-colors cursor-pointer"
-            >
-              <Share2 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Share</span>
-            </button>
+            <ShareMenu idea={idea} />
             <button
               onClick={async () => {
                 if (!user) { openAuthModal('login'); return }

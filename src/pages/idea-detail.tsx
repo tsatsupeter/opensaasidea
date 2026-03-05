@@ -3,7 +3,7 @@ import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, Loader2, Globe, Smartphone, Monitor,
-  Puzzle, Code2, Layers, Share2, Bookmark, BookmarkCheck, Calendar, Eye, Users, TrendingUp, DollarSign, Zap, Lock, MessageSquare, FileDown, Crown
+  Puzzle, Code2, Layers, Bookmark, BookmarkCheck, Calendar, Eye, Users, TrendingUp, DollarSign, Zap, Lock, MessageSquare, FileDown, Crown
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
@@ -17,6 +17,7 @@ import { exportIdeaToPDF } from '@/lib/pdf-export'
 import { DODO_PRODUCTS } from '@/lib/subscription'
 import { IdeaDetailSkeleton } from '@/components/ui/skeleton'
 import { VoteButton } from '@/components/ideas/vote-button'
+import { ShareMenu } from '@/components/ideas/share-menu'
 import { CommentSection } from '@/components/comments/comment-section'
 import { UpgradePrompt } from '@/components/subscription/upgrade-prompt'
 import { formatCurrency, formatNumber, timeAgo } from '@/lib/utils'
@@ -518,15 +519,7 @@ export function IdeaDetailPage() {
                 <MessageSquare className="h-3.5 w-3.5" />
                 {idea.comment_count || 0}
               </a>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href)
-                  toast('Link copied to clipboard')
-                }}
-                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-text-muted hover:bg-surface-2 transition-colors cursor-pointer"
-              >
-                <Share2 className="h-3.5 w-3.5" /> Share
-              </button>
+              <ShareMenu idea={idea} />
               {isTeam && team && (
                 <button
                   onClick={async () => {
