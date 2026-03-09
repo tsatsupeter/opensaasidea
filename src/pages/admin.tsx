@@ -114,10 +114,14 @@ export function AdminPage() {
 
   const isAdmin = profile?.role === 'admin'
 
+  // Only redirect when we're sure: auth is done AND profile is loaded (or user is null)
   useEffect(() => {
-    if (!authLoading && (!user || !isAdmin)) {
-      navigate('/')
-    }
+    if (authLoading) return
+    if (!user) { navigate('/'); return }
+    // User exists but profile not loaded yet — wait
+    if (!profile) return
+    // Profile loaded but not admin — redirect
+    if (!isAdmin) navigate('/')
   }, [user, profile, authLoading, navigate, isAdmin])
 
   const fetchOverview = useCallback(async () => {
@@ -282,7 +286,7 @@ export function AdminPage() {
     return <Badge variant="secondary">Free</Badge>
   }
 
-  if (authLoading) {
+  if (authLoading || (user && !profile)) {
     return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="h-8 w-8 animate-spin text-brand" /></div>
   }
 

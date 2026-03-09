@@ -77,8 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try { await fetchProfile(s.user.id) } catch (e) { console.error('Profile fetch failed:', e) }
       } else {
         setProfile(null)
+        setLoading(false)
       }
-      setLoading(false)
     })
 
     return () => {
