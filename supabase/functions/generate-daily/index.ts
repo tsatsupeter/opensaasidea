@@ -294,10 +294,19 @@ Deno.serve(async (req: Request) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
-    const CRON_SECRET = Deno.env.get("CRON_SECRET");
+    let CRON_SECRET = Deno.env.get("CRON_SECRET") || "";
     const apiKeys = getApiKeys();
     if (!OPENROUTER_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       return new Response(JSON.stringify({ error: "Missing env vars" }), { status: 500 });
+    }
+
+    // Resolve CRON_SECRET from admin_secrets if not in env
+    if (!CRON_SECRET) {
+      try {
+        const svcTmp = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        const { data: secretRow } = await svcTmp.from("admin_secrets").select("value").eq("key", "CRON_SECRET").single();
+        if (secretRow?.value) CRON_SECRET = secretRow.value;
+      } catch {}
     }
 
     // Auth guard: require admin JWT or CRON_SECRET
@@ -305,7 +314,6 @@ Deno.serve(async (req: Request) => {
     const cronHeader = req.headers.get("x-cron-secret") || "";
     let authorized = false;
 
-    // Check CRON_SECRET (for scheduled invocations)
     if (CRON_SECRET && cronHeader === CRON_SECRET) {
       authorized = true;
     }

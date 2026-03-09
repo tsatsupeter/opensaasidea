@@ -52,6 +52,7 @@ const SETTING_CATEGORIES = [
   { id: 'social', label: 'Social Links', icon: ExternalLink },
   { id: 'payments', label: 'Payments', icon: CreditCard },
   { id: 'advanced', label: 'Advanced', icon: Cpu },
+  { id: 'security', label: 'Security', icon: Lock },
 ]
 
 interface AffiliateRow {
@@ -175,6 +176,12 @@ export function AdminPage() {
   const [imageInputMode, setImageInputMode] = useState<Record<string, 'upload' | 'url'>>({})
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
+  // Secrets state (admin_secrets table)
+  const [secretsRows, setSecretsRows] = useState<{ key: string; value: string; description: string | null }[]>([])
+  const [secretsEdits, setSecretsEdits] = useState<Record<string, string>>({})
+  const [savingSecrets, setSavingSecrets] = useState(false)
+  const [showSecretValues, setShowSecretValues] = useState<Record<string, boolean>>({})
+
   // Affiliates state
   const [affiliates, setAffiliates] = useState<AffiliateRow[]>([])
   const [affSearch, setAffSearch] = useState('')
@@ -296,6 +303,43 @@ export function AdminPage() {
     setSettingsRows((data || []) as unknown as SettingRow[])
     setSettingsEdits({})
   }, [])
+
+  const fetchSecrets = useCallback(async () => {
+    const { data } = await supabase
+      .from('admin_secrets')
+      .select('key, value, description')
+      .order('key')
+    setSecretsRows((data || []) as { key: string; value: string; description: string | null }[])
+    setSecretsEdits({})
+  }, [])
+
+  const saveSecrets = async () => {
+    const changedKeys = Object.keys(secretsEdits)
+    if (changedKeys.length === 0) return
+    setSavingSecrets(true)
+    try {
+      for (const key of changedKeys) {
+        await (supabase.from('admin_secrets') as any)
+          .update({ value: secretsEdits[key], updated_at: new Date().toISOString(), updated_by: user?.id })
+          .eq('key', key)
+      }
+      setSecretsRows(prev => prev.map(r =>
+        changedKeys.includes(r.key) ? { ...r, value: secretsEdits[r.key] } : r
+      ))
+      setSecretsEdits({})
+      toast('Secrets saved successfully')
+    } catch {
+      toast('Failed to save secrets', 'error')
+    } finally {
+      setSavingSecrets(false)
+    }
+  }
+
+  const generateRandomSecret = () => {
+    const array = new Uint8Array(32)
+    crypto.getRandomValues(array)
+    return Array.from(array, b => b.toString(16).padStart(2, '0')).join('')
+  }
 
   const saveSettings = async () => {
     const changedKeys = Object.keys(settingsEdits)
@@ -434,12 +478,12 @@ export function AdminPage() {
         case 'comments': await fetchComments(); break
         case 'revenue': await Promise.all([fetchRevenue(), fetchPayments()]); break
         case 'affiliates': await fetchAffiliatesAdmin(); break
-        case 'settings': await fetchSettingsRows(); break
+        case 'settings': await Promise.all([fetchSettingsRows(), fetchSecrets()]); break
       }
       setLoading(false)
     }
     load()
-  }, [tab, isAdmin, fetchOverview, fetchUsers, fetchIdeas, fetchComments, fetchRevenue, fetchPayments, fetchAffiliatesAdmin, fetchSettingsRows])
+  }, [tab, isAdmin, fetchOverview, fetchUsers, fetchIdeas, fetchComments, fetchRevenue, fetchPayments, fetchAffiliatesAdmin, fetchSettingsRows, fetchSecrets])
 
   // Re-fetch ideas when sort changes
   useEffect(() => { if (tab === 'ideas') fetchIdeas() }, [ideaSort, fetchIdeas, tab])
@@ -1362,6 +1406,98 @@ export function AdminPage() {
                   </div>
 
                   {/* Settings Form */}
+                  {settingsCat === 'security' ? (
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <Shield className="h-4 w-4 text-brand" />
+                            Security Secrets
+                          </CardTitle>
+                          <Button
+                            size="sm"
+                            onClick={saveSecrets}
+                            disabled={Object.keys(secretsEdits).length === 0 || savingSecrets}
+                          >
+                            {savingSecrets ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                            {savingSecrets ? 'Saving...' : 'Save Secrets'}
+                          </Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-xs text-text-muted mb-4">
+                          These secrets are used by Edge Functions to verify webhook signatures and authenticate cron jobs. Only admins can view or edit them.
+                        </p>
+                        <div className="space-y-5">
+                          {secretsRows.map(row => {
+                            const currentValue = secretsEdits[row.key] ?? row.value
+                            const isEdited = row.key in secretsEdits && secretsEdits[row.key] !== row.value
+                            const isVisible = showSecretValues[row.key] || false
+                            const isCronSecret = row.key === 'CRON_SECRET'
+
+                            return (
+                              <div key={row.key} className="space-y-1.5">
+                                <label className="flex items-center gap-2 text-sm font-medium text-text-primary">
+                                  <Lock className="h-3.5 w-3.5 text-text-muted" />
+                                  {row.key.replace(/_/g, ' ')}
+                                  {isEdited && (
+                                    <span className="text-[10px] font-normal text-amber px-1.5 py-0.5 rounded bg-amber/10">modified</span>
+                                  )}
+                                  {currentValue && !isEdited && (
+                                    <span className="text-[10px] font-normal text-emerald px-1.5 py-0.5 rounded bg-emerald/10">configured</span>
+                                  )}
+                                  {!currentValue && !isEdited && (
+                                    <span className="text-[10px] font-normal text-rose px-1.5 py-0.5 rounded bg-rose/10">not set</span>
+                                  )}
+                                </label>
+                                {row.description && (
+                                  <p className="text-[11px] text-text-muted">{row.description}</p>
+                                )}
+                                <div className="flex gap-2">
+                                  <div className="relative flex-1">
+                                    <input
+                                      type={isVisible ? 'text' : 'password'}
+                                      value={currentValue}
+                                      onChange={e => setSecretsEdits(prev => ({ ...prev, [row.key]: e.target.value }))}
+                                      placeholder={`Enter ${row.key.toLowerCase().replace(/_/g, ' ')}...`}
+                                      className="w-full px-3 py-2 pr-10 text-sm rounded-lg border border-border bg-surface-0 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand/30 font-mono"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowSecretValues(prev => ({ ...prev, [row.key]: !prev[row.key] }))}
+                                      className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary cursor-pointer"
+                                    >
+                                      {isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                  </div>
+                                  {isCronSecret && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => {
+                                        const secret = generateRandomSecret()
+                                        setSecretsEdits(prev => ({ ...prev, [row.key]: secret }))
+                                        setShowSecretValues(prev => ({ ...prev, [row.key]: true }))
+                                        toast('Random secret generated — click Save to apply')
+                                      }}
+                                      title="Generate a random 64-character hex secret"
+                                    >
+                                      <RefreshCw className="h-3.5 w-3.5" />
+                                      Generate
+                                    </Button>
+                                  )}
+                                </div>
+                                <p className="text-[11px] text-text-muted font-mono">{row.key}</p>
+                              </div>
+                            )
+                          })}
+                          {secretsRows.length === 0 && (
+                            <p className="text-sm text-text-muted py-4 text-center">No secrets configured</p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
                   <Card>
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
@@ -1521,23 +1657,27 @@ export function AdminPage() {
                       </div>
                     </CardContent>
                   </Card>
+                  )}
 
                   {/* Unsaved changes indicator */}
-                  {Object.keys(settingsEdits).length > 0 && (
+                  {(settingsCat === 'security' ? Object.keys(secretsEdits).length > 0 : Object.keys(settingsEdits).length > 0) && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="sticky bottom-4 p-3 rounded-xl bg-amber/10 border border-amber/20 text-sm flex items-center justify-between"
                     >
                       <span className="text-amber font-medium">
-                        {Object.keys(settingsEdits).length} unsaved change{Object.keys(settingsEdits).length > 1 ? 's' : ''}
+                        {settingsCat === 'security'
+                          ? `${Object.keys(secretsEdits).length} unsaved secret${Object.keys(secretsEdits).length > 1 ? 's' : ''}`
+                          : `${Object.keys(settingsEdits).length} unsaved change${Object.keys(settingsEdits).length > 1 ? 's' : ''}`
+                        }
                       </span>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="ghost" onClick={() => setSettingsEdits({})}>
+                        <Button size="sm" variant="ghost" onClick={() => settingsCat === 'security' ? setSecretsEdits({}) : setSettingsEdits({})}>
                           Discard
                         </Button>
-                        <Button size="sm" onClick={saveSettings} disabled={savingSettings}>
-                          {savingSettings ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                        <Button size="sm" onClick={settingsCat === 'security' ? saveSecrets : saveSettings} disabled={settingsCat === 'security' ? savingSecrets : savingSettings}>
+                          {(settingsCat === 'security' ? savingSecrets : savingSettings) ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                           Save
                         </Button>
                       </div>
