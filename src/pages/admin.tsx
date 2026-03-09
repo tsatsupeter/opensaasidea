@@ -18,9 +18,11 @@ import { supabase } from '@/lib/supabase'
 import { generateSaasIdea, saveIdeaToSupabase } from '@/lib/ai'
 import { siteConfig } from '@/lib/site-config'
 import { useSiteSettings } from '@/hooks/use-site-settings'
+import { loadAffiliates } from '@/lib/affiliates'
+import { loadDodoConfig } from '@/lib/subscription'
 import { cn } from '@/lib/utils'
 
-type Tab = 'overview' | 'users' | 'ideas' | 'comments' | 'revenue' | 'generation' | 'settings'
+type Tab = 'overview' | 'users' | 'ideas' | 'comments' | 'revenue' | 'generation' | 'affiliates' | 'settings'
 
 const TABS: { id: Tab; label: string; icon: typeof Shield }[] = [
   { id: 'overview', label: 'Overview', icon: BarChart3 },
@@ -29,6 +31,7 @@ const TABS: { id: Tab; label: string; icon: typeof Shield }[] = [
   { id: 'comments', label: 'Comments', icon: MessageSquare },
   { id: 'revenue', label: 'Revenue', icon: CreditCard },
   { id: 'generation', label: 'Generation', icon: Cpu },
+  { id: 'affiliates', label: 'Affiliates', icon: Link2 },
   { id: 'settings', label: 'Settings', icon: Settings },
 ]
 
@@ -47,8 +50,23 @@ const SETTING_CATEGORIES = [
   { id: 'seo', label: 'SEO & Meta', icon: Search },
   { id: 'branding', label: 'Branding', icon: Zap },
   { id: 'social', label: 'Social Links', icon: ExternalLink },
+  { id: 'payments', label: 'Payments', icon: CreditCard },
   { id: 'advanced', label: 'Advanced', icon: Cpu },
 ]
+
+interface AffiliateRow {
+  id: string
+  name: string
+  display_name: string
+  url: string
+  tag: string
+  logo_url: string
+  category: string
+  is_active: boolean
+  sort_order: number
+}
+
+const AFFILIATE_CATEGORIES = ['hosting', 'database', 'payment', 'framework', 'ai', 'auth', 'analytics', 'email', 'domain', 'other']
 
 interface UserRow {
   id: string
@@ -141,6 +159,15 @@ export function AdminPage() {
   const [uploadingKey, setUploadingKey] = useState<string | null>(null)
   const [imageInputMode, setImageInputMode] = useState<Record<string, 'upload' | 'url'>>({})
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+
+  // Affiliates state
+  const [affiliates, setAffiliates] = useState<AffiliateRow[]>([])
+  const [affSearch, setAffSearch] = useState('')
+  const [affCat, setAffCat] = useState('all')
+  const [editingAff, setEditingAff] = useState<AffiliateRow | null>(null)
+  const [showAddAff, setShowAddAff] = useState(false)
+  const [savingAff, setSavingAff] = useState(false)
+  const [newAff, setNewAff] = useState<Partial<AffiliateRow>>({ name: '', display_name: '', url: '', tag: '', logo_url: '', category: 'other', is_active: true })
 
   const uploadImage = async (file: File, settingKey: string) => {
     setUploadingKey(settingKey)
@@ -256,17 +283,118 @@ export function AdminPage() {
           .update({ value: settingsEdits[key], updated_at: new Date().toISOString() })
           .eq('key', key)
       }
-      // Update local state
       setSettingsRows(prev => prev.map(r =>
         changedKeys.includes(r.key) ? { ...r, value: settingsEdits[r.key] } : r
       ))
       setSettingsEdits({})
       await refreshSettings()
+      // Reload payment config if payment settings changed
+      if (changedKeys.some(k => k.startsWith('dodo_') || k === 'payment_mode')) {
+        await loadDodoConfig()
+      }
       toast('Settings saved successfully')
     } catch (err) {
       toast('Failed to save settings', 'error')
     } finally {
       setSavingSettings(false)
+    }
+  }
+
+  // --- Affiliate CRUD ---
+  const fetchAffiliatesAdmin = useCallback(async () => {
+    const { data } = await supabase
+      .from('affiliates')
+      .select('*')
+      .order('sort_order', { ascending: true })
+    setAffiliates((data || []) as unknown as AffiliateRow[])
+  }, [])
+
+  const addAffiliate = async () => {
+    if (!newAff.name || !newAff.display_name) { toast('Name and display name are required', 'error'); return }
+    setSavingAff(true)
+    try {
+      const { error } = await (supabase.from('affiliates') as any).insert({
+        name: newAff.name?.toLowerCase().trim(),
+        display_name: newAff.display_name,
+        url: newAff.url || '',
+        tag: newAff.tag || '',
+        logo_url: newAff.logo_url || '',
+        category: newAff.category || 'other',
+        is_active: newAff.is_active ?? true,
+        sort_order: affiliates.length + 1,
+      })
+      if (error) throw error
+      setShowAddAff(false)
+      setNewAff({ name: '', display_name: '', url: '', tag: '', logo_url: '', category: 'other', is_active: true })
+      await fetchAffiliatesAdmin()
+      await loadAffiliates()
+      toast('Affiliate added')
+    } catch (err: any) {
+      toast(err.message || 'Failed to add affiliate', 'error')
+    } finally {
+      setSavingAff(false)
+    }
+  }
+
+  const updateAffiliate = async () => {
+    if (!editingAff) return
+    setSavingAff(true)
+    try {
+      await (supabase.from('affiliates') as any)
+        .update({
+          name: editingAff.name.toLowerCase().trim(),
+          display_name: editingAff.display_name,
+          url: editingAff.url,
+          tag: editingAff.tag,
+          logo_url: editingAff.logo_url,
+          category: editingAff.category,
+          is_active: editingAff.is_active,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', editingAff.id)
+      setEditingAff(null)
+      await fetchAffiliatesAdmin()
+      await loadAffiliates()
+      toast('Affiliate updated')
+    } catch (err: any) {
+      toast(err.message || 'Failed to update', 'error')
+    } finally {
+      setSavingAff(false)
+    }
+  }
+
+  const deleteAffiliate = async (id: string) => {
+    if (!confirm('Delete this affiliate?')) return
+    await supabase.from('affiliates').delete().eq('id', id)
+    setAffiliates(prev => prev.filter(a => a.id !== id))
+    await loadAffiliates()
+    toast('Affiliate deleted')
+  }
+
+  const toggleAffActive = async (id: string, current: boolean) => {
+    await (supabase.from('affiliates') as any).update({ is_active: !current }).eq('id', id)
+    setAffiliates(prev => prev.map(a => a.id === id ? { ...a, is_active: !current } : a))
+    await loadAffiliates()
+    toast(`Affiliate ${!current ? 'enabled' : 'disabled'}`)
+  }
+
+  const uploadAffiliateLogo = async (file: File, affId: string) => {
+    setUploadingKey(affId)
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'png'
+      const fileName = `affiliate-${affId}-${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('site-assets').upload(fileName, file, { upsert: true })
+      if (error) throw error
+      const { data: urlData } = supabase.storage.from('site-assets').getPublicUrl(fileName)
+      await (supabase.from('affiliates') as any).update({ logo_url: urlData.publicUrl }).eq('id', affId)
+      setAffiliates(prev => prev.map(a => a.id === affId ? { ...a, logo_url: urlData.publicUrl } : a))
+      if (editingAff?.id === affId) setEditingAff(prev => prev ? { ...prev, logo_url: urlData.publicUrl } : null)
+      await loadAffiliates()
+      toast('Logo uploaded')
+    } catch (err: any) {
+      toast(err.message || 'Upload failed', 'error')
+    } finally {
+      setUploadingKey(null)
     }
   }
 
@@ -281,12 +409,13 @@ export function AdminPage() {
         case 'ideas': await fetchIdeas(); break
         case 'comments': await fetchComments(); break
         case 'revenue': await fetchRevenue(); break
+        case 'affiliates': await fetchAffiliatesAdmin(); break
         case 'settings': await fetchSettingsRows(); break
       }
       setLoading(false)
     }
     load()
-  }, [tab, isAdmin, fetchOverview, fetchUsers, fetchIdeas, fetchComments, fetchRevenue, fetchSettingsRows])
+  }, [tab, isAdmin, fetchOverview, fetchUsers, fetchIdeas, fetchComments, fetchRevenue, fetchAffiliatesAdmin, fetchSettingsRows])
 
   // Re-fetch ideas when sort changes
   useEffect(() => { if (tab === 'ideas') fetchIdeas() }, [ideaSort, fetchIdeas, tab])
@@ -923,6 +1052,205 @@ export function AdminPage() {
                       </div>
                     </CardContent>
                   </Card>
+                </div>
+              )}
+
+              {/* ========== AFFILIATES ========== */}
+              {tab === 'affiliates' && (
+                <div className="space-y-4">
+                  {/* Header + Add button */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1 sm:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+                        <input
+                          type="text" placeholder="Search affiliates..."
+                          value={affSearch} onChange={e => setAffSearch(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary"
+                        />
+                      </div>
+                      <select
+                        value={affCat} onChange={e => setAffCat(e.target.value)}
+                        className="text-xs px-2 py-2 rounded-lg border border-border bg-surface-0 text-text-primary cursor-pointer"
+                      >
+                        <option value="all">All Categories</option>
+                        {AFFILIATE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <Button size="sm" onClick={() => setShowAddAff(true)}>
+                      <Zap className="h-3.5 w-3.5" /> Add Affiliate
+                    </Button>
+                  </div>
+
+                  {/* Add affiliate form */}
+                  {showAddAff && (
+                    <Card>
+                      <CardHeader className="pb-2"><CardTitle className="text-sm">New Affiliate</CardTitle></CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <input placeholder="Key name (e.g. vercel)" value={newAff.name || ''} onChange={e => setNewAff(p => ({ ...p, name: e.target.value }))}
+                            className="px-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary" />
+                          <input placeholder="Display Name (e.g. Vercel)" value={newAff.display_name || ''} onChange={e => setNewAff(p => ({ ...p, display_name: e.target.value }))}
+                            className="px-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary" />
+                          <input placeholder="Affiliate URL" value={newAff.url || ''} onChange={e => setNewAff(p => ({ ...p, url: e.target.value }))}
+                            className="px-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary" />
+                          <input placeholder="CTA Tag (e.g. Deploy on Vercel)" value={newAff.tag || ''} onChange={e => setNewAff(p => ({ ...p, tag: e.target.value }))}
+                            className="px-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary" />
+                          <input placeholder="Logo URL (optional)" value={newAff.logo_url || ''} onChange={e => setNewAff(p => ({ ...p, logo_url: e.target.value }))}
+                            className="px-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary" />
+                          <select value={newAff.category || 'other'} onChange={e => setNewAff(p => ({ ...p, category: e.target.value }))}
+                            className="px-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary cursor-pointer">
+                            {AFFILIATE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </div>
+                        <div className="flex gap-2 mt-3">
+                          <Button size="sm" onClick={addAffiliate} disabled={savingAff}>
+                            {savingAff ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Save
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setShowAddAff(false)}>Cancel</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Edit affiliate modal */}
+                  {editingAff && (
+                    <Card className="border-brand/30">
+                      <CardHeader className="pb-2"><CardTitle className="text-sm">Edit: {editingAff.display_name}</CardTitle></CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <input placeholder="Key name" value={editingAff.name} onChange={e => setEditingAff(p => p ? { ...p, name: e.target.value } : null)}
+                            className="px-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary" />
+                          <input placeholder="Display Name" value={editingAff.display_name} onChange={e => setEditingAff(p => p ? { ...p, display_name: e.target.value } : null)}
+                            className="px-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary" />
+                          <input placeholder="Affiliate URL" value={editingAff.url} onChange={e => setEditingAff(p => p ? { ...p, url: e.target.value } : null)}
+                            className="px-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary" />
+                          <input placeholder="CTA Tag" value={editingAff.tag} onChange={e => setEditingAff(p => p ? { ...p, tag: e.target.value } : null)}
+                            className="px-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary" />
+                          <div className="col-span-full flex items-center gap-3">
+                            <div className="flex-1">
+                              <input placeholder="Logo URL" value={editingAff.logo_url || ''} onChange={e => setEditingAff(p => p ? { ...p, logo_url: e.target.value } : null)}
+                                className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary" />
+                            </div>
+                            <label className="flex items-center gap-1.5 px-3 py-2 text-xs rounded-lg bg-surface-2 hover:bg-surface-3 cursor-pointer transition-colors">
+                              <Upload className="h-3 w-3" />
+                              {uploadingKey === editingAff.id ? 'Uploading...' : 'Upload'}
+                              <input type="file" accept="image/*" className="hidden" onChange={e => {
+                                const file = e.target.files?.[0]
+                                if (file) uploadAffiliateLogo(file, editingAff.id)
+                                e.target.value = ''
+                              }} />
+                            </label>
+                            {editingAff.logo_url && (
+                              <img src={editingAff.logo_url} alt="" className="w-8 h-8 rounded object-contain border border-border" />
+                            )}
+                          </div>
+                          <select value={editingAff.category} onChange={e => setEditingAff(p => p ? { ...p, category: e.target.value } : null)}
+                            className="px-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary cursor-pointer">
+                            {AFFILIATE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </div>
+                        <div className="flex gap-2 mt-3">
+                          <Button size="sm" onClick={updateAffiliate} disabled={savingAff}>
+                            {savingAff ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} Save
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setEditingAff(null)}>Cancel</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Affiliates table */}
+                  <Card>
+                    <CardContent className="p-0">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-border bg-surface-2/50">
+                              <th className="px-4 py-3 text-left text-xs font-medium text-text-muted">Logo</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-text-muted">Name</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-text-muted">URL</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-text-muted">Category</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-text-muted">Status</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-text-muted">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {affiliates
+                              .filter(a => {
+                                const matchSearch = !affSearch || a.display_name.toLowerCase().includes(affSearch.toLowerCase()) || a.name.toLowerCase().includes(affSearch.toLowerCase())
+                                const matchCat = affCat === 'all' || a.category === affCat
+                                return matchSearch && matchCat
+                              })
+                              .map(a => (
+                                <tr key={a.id} className="border-b border-border/50 hover:bg-surface-2/50 transition-colors">
+                                  <td className="px-4 py-2">
+                                    {a.logo_url ? (
+                                      <img src={a.logo_url} alt={a.display_name} className="w-8 h-8 rounded object-contain" />
+                                    ) : (
+                                      <div className="w-8 h-8 rounded bg-surface-2 flex items-center justify-center">
+                                        <ImageIcon className="h-4 w-4 text-text-muted" />
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    <p className="font-medium text-text-primary">{a.display_name}</p>
+                                    <p className="text-[11px] text-text-muted font-mono">{a.name}</p>
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand hover:underline truncate max-w-[200px] block">
+                                      {a.url}
+                                    </a>
+                                    <p className="text-[11px] text-text-muted">{a.tag}</p>
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    <Badge variant="secondary">{a.category}</Badge>
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    <button onClick={() => toggleAffActive(a.id, a.is_active)} className="cursor-pointer">
+                                      {a.is_active ? (
+                                        <Badge variant="success">Active</Badge>
+                                      ) : (
+                                        <Badge variant="secondary">Inactive</Badge>
+                                      )}
+                                    </button>
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    <div className="flex items-center gap-1">
+                                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setEditingAff(a)}>
+                                        <Settings className="h-3 w-3" />
+                                      </Button>
+                                      <label className="inline-flex items-center gap-1 h-7 px-2 text-xs rounded-md bg-surface-2 hover:bg-surface-3 cursor-pointer transition-colors">
+                                        <Upload className="h-3 w-3" />
+                                        <input type="file" accept="image/*" className="hidden" onChange={e => {
+                                          const file = e.target.files?.[0]
+                                          if (file) uploadAffiliateLogo(file, a.id)
+                                          e.target.value = ''
+                                        }} />
+                                      </label>
+                                      <Button size="sm" variant="ghost" className="h-7 px-2 text-rose hover:text-rose" onClick={() => deleteAffiliate(a.id)}>
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            {affiliates.filter(a => {
+                              const matchSearch = !affSearch || a.display_name.toLowerCase().includes(affSearch.toLowerCase())
+                              const matchCat = affCat === 'all' || a.category === affCat
+                              return matchSearch && matchCat
+                            }).length === 0 && (
+                              <tr><td colSpan={6} className="px-4 py-8 text-center text-text-muted">No affiliates found</td></tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <p className="text-xs text-text-muted text-center">
+                    {affiliates.length} total affiliates · {affiliates.filter(a => a.is_active).length} active
+                  </p>
                 </div>
               )}
 

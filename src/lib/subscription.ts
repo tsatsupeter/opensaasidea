@@ -1,21 +1,54 @@
 import type { SubscriptionTier } from '@/types/database'
+import { supabase } from '@/lib/supabase'
 
 // ============================================================
-// DODO PAYMENTS PRODUCT IDS
-// Replace these with your actual product IDs from the Dodo dashboard
-// https://app.dodopayments.com/
+// DODO PAYMENTS CONFIG (dynamic — managed from Admin → Settings → Payments)
+// Hardcoded defaults used as fallback before settings load
 // ============================================================
-export const DODO_PRODUCTS = {
-  pro_monthly: 'pdt_0NZeflk6sMciMDCDaISyM',
-  pro_yearly: 'pdt_0NZeg9SRFVl8jmcddwvYr',
-  team_monthly: 'pdt_0NZegK9n5gtXuS0DMCxg0',
-  team_yearly: 'pdt_0NZegQobfQot4otEu6uUi',
-  deep_dive_report: 'pdt_0NZegZxNdvYC509J4arcj',
-} as const
+const DODO_DEFAULTS = {
+  api_url: 'https://test.dodopayments.com',
+  checkout_url: 'https://test.checkout.dodopayments.com',
+  products: {
+    pro_monthly: 'pdt_0NZeflk6sMciMDCDaISyM',
+    pro_yearly: 'pdt_0NZeg9SRFVl8jmcddwvYr',
+    team_monthly: 'pdt_0NZegK9n5gtXuS0DMCxg0',
+    team_yearly: 'pdt_0NZegQobfQot4otEu6uUi',
+    deep_dive_report: 'pdt_0NZegZxNdvYC509J4arcj',
+  },
+}
 
-// Dodo API base URL (switch to live when ready)
-export const DODO_API_URL = 'https://test.dodopayments.com'
-export const DODO_CHECKOUT_URL = 'https://test.checkout.dodopayments.com'
+// In-memory cache for payment settings
+let _dodoCache: Record<string, string> = {}
+let _dodoCacheLoaded = false
+
+export async function loadDodoConfig(): Promise<void> {
+  try {
+    const { data } = await supabase
+      .from('site_settings')
+      .select('key, value')
+      .eq('category', 'payments')
+    if (data) {
+      for (const row of data as { key: string; value: string }[]) {
+        _dodoCache[row.key] = row.value
+      }
+      _dodoCacheLoaded = true
+    }
+  } catch (err) {
+    console.error('Failed to load dodo config:', err)
+  }
+}
+
+export function getDodoApiUrl(): string {
+  return _dodoCache.dodo_api_url || DODO_DEFAULTS.api_url
+}
+
+export function getDodoCheckoutUrl(): string {
+  return _dodoCache.dodo_checkout_url || DODO_DEFAULTS.checkout_url
+}
+
+export const DODO_PRODUCTS = DODO_DEFAULTS.products
+export const DODO_API_URL = DODO_DEFAULTS.api_url
+export const DODO_CHECKOUT_URL = DODO_DEFAULTS.checkout_url
 
 // ============================================================
 // TIER CONFIGURATION
@@ -151,6 +184,8 @@ export function canViewDetailedReports(tier: SubscriptionTier): boolean {
 }
 
 export function getProductId(tier: 'pro' | 'team', billing: 'monthly' | 'yearly'): string {
+  const settingKey = `dodo_product_${tier}_${billing}`
+  if (_dodoCacheLoaded && _dodoCache[settingKey]) return _dodoCache[settingKey]
   const key = `${tier}_${billing}` as keyof typeof DODO_PRODUCTS
   return DODO_PRODUCTS[key]
 }
