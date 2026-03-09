@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Shield, Loader2, Zap, BarChart3, Clock, Users, MessageSquare,
-  CreditCard, Cpu, Trash2, Eye, EyeOff,
+  CreditCard, Cpu, Trash2, Eye, EyeOff, Settings, Save,
   RefreshCw, Globe, Lock, Crown, CheckCircle2,
   ArrowUpRight, Search, ExternalLink, TrendingUp, DollarSign,
 } from 'lucide-react'
@@ -17,9 +17,10 @@ import { useToast } from '@/components/ui/toast'
 import { supabase } from '@/lib/supabase'
 import { generateSaasIdea, saveIdeaToSupabase } from '@/lib/ai'
 import { siteConfig } from '@/lib/site-config'
+import { useSiteSettings } from '@/hooks/use-site-settings'
 import { cn } from '@/lib/utils'
 
-type Tab = 'overview' | 'users' | 'ideas' | 'comments' | 'revenue' | 'generation'
+type Tab = 'overview' | 'users' | 'ideas' | 'comments' | 'revenue' | 'generation' | 'settings'
 
 const TABS: { id: Tab; label: string; icon: typeof Shield }[] = [
   { id: 'overview', label: 'Overview', icon: BarChart3 },
@@ -28,6 +29,25 @@ const TABS: { id: Tab; label: string; icon: typeof Shield }[] = [
   { id: 'comments', label: 'Comments', icon: MessageSquare },
   { id: 'revenue', label: 'Revenue', icon: CreditCard },
   { id: 'generation', label: 'Generation', icon: Cpu },
+  { id: 'settings', label: 'Settings', icon: Settings },
+]
+
+interface SettingRow {
+  id: string
+  key: string
+  value: string
+  type: string
+  label: string
+  category: string
+  sort_order: number
+}
+
+const SETTING_CATEGORIES = [
+  { id: 'general', label: 'General', icon: Globe },
+  { id: 'seo', label: 'SEO & Meta', icon: Search },
+  { id: 'branding', label: 'Branding', icon: Zap },
+  { id: 'social', label: 'Social Links', icon: ExternalLink },
+  { id: 'advanced', label: 'Advanced', icon: Cpu },
 ]
 
 interface UserRow {
@@ -112,6 +132,13 @@ export function AdminPage() {
   const [triggeringCron, setTriggeringCron] = useState(false)
   const [cronResult, setCronResult] = useState<string | null>(null)
 
+  // Settings state
+  const { refreshSettings } = useSiteSettings()
+  const [settingsRows, setSettingsRows] = useState<SettingRow[]>([])
+  const [settingsEdits, setSettingsEdits] = useState<Record<string, string>>({})
+  const [savingSettings, setSavingSettings] = useState(false)
+  const [settingsCat, setSettingsCat] = useState('general')
+
   const isAdmin = profile?.role === 'admin'
 
   // Only redirect when we're sure: auth is done AND profile is loaded (or user is null)
@@ -185,6 +212,39 @@ export function AdminPage() {
     setSubs((data || []) as unknown as SubRow[])
   }, [])
 
+  const fetchSettingsRows = useCallback(async () => {
+    const { data } = await supabase
+      .from('site_settings')
+      .select('id, key, value, type, label, category, sort_order')
+      .order('sort_order', { ascending: true })
+    setSettingsRows((data || []) as unknown as SettingRow[])
+    setSettingsEdits({})
+  }, [])
+
+  const saveSettings = async () => {
+    const changedKeys = Object.keys(settingsEdits)
+    if (changedKeys.length === 0) return
+    setSavingSettings(true)
+    try {
+      for (const key of changedKeys) {
+        await (supabase.from('site_settings') as any)
+          .update({ value: settingsEdits[key], updated_at: new Date().toISOString() })
+          .eq('key', key)
+      }
+      // Update local state
+      setSettingsRows(prev => prev.map(r =>
+        changedKeys.includes(r.key) ? { ...r, value: settingsEdits[r.key] } : r
+      ))
+      setSettingsEdits({})
+      await refreshSettings()
+      toast('Settings saved successfully')
+    } catch (err) {
+      toast('Failed to save settings', 'error')
+    } finally {
+      setSavingSettings(false)
+    }
+  }
+
   // Load data per tab
   useEffect(() => {
     if (!isAdmin) return
@@ -196,11 +256,12 @@ export function AdminPage() {
         case 'ideas': await fetchIdeas(); break
         case 'comments': await fetchComments(); break
         case 'revenue': await fetchRevenue(); break
+        case 'settings': await fetchSettingsRows(); break
       }
       setLoading(false)
     }
     load()
-  }, [tab, isAdmin, fetchOverview, fetchUsers, fetchIdeas, fetchComments, fetchRevenue])
+  }, [tab, isAdmin, fetchOverview, fetchUsers, fetchIdeas, fetchComments, fetchRevenue, fetchSettingsRows])
 
   // Re-fetch ideas when sort changes
   useEffect(() => { if (tab === 'ideas') fetchIdeas() }, [ideaSort, fetchIdeas, tab])
@@ -837,6 +898,113 @@ export function AdminPage() {
                       </div>
                     </CardContent>
                   </Card>
+                </div>
+              )}
+
+              {/* ========== SETTINGS ========== */}
+              {tab === 'settings' && (
+                <div className="space-y-6">
+                  {/* Category tabs */}
+                  <div className="flex gap-1 overflow-x-auto pb-1">
+                    {SETTING_CATEGORIES.map(cat => {
+                      const CatIcon = cat.icon
+                      return (
+                        <button
+                          key={cat.id}
+                          onClick={() => setSettingsCat(cat.id)}
+                          className={cn(
+                            'flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg transition-colors whitespace-nowrap cursor-pointer',
+                            settingsCat === cat.id
+                              ? 'bg-brand/10 text-brand border border-brand/20'
+                              : 'text-text-muted hover:text-text-primary bg-surface-2 hover:bg-surface-3'
+                          )}
+                        >
+                          <CatIcon className="h-3.5 w-3.5" />
+                          {cat.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Settings Form */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">
+                          {SETTING_CATEGORIES.find(c => c.id === settingsCat)?.label || 'Settings'}
+                        </CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={saveSettings}
+                          disabled={Object.keys(settingsEdits).length === 0 || savingSettings}
+                        >
+                          {savingSettings ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                          {savingSettings ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {settingsRows
+                          .filter(r => r.category === settingsCat)
+                          .map(row => {
+                            const currentValue = settingsEdits[row.key] ?? row.value
+                            const isEdited = row.key in settingsEdits && settingsEdits[row.key] !== row.value
+                            return (
+                              <div key={row.key} className="space-y-1.5">
+                                <label className="flex items-center gap-2 text-sm font-medium text-text-primary">
+                                  {row.label}
+                                  {isEdited && (
+                                    <span className="text-[10px] font-normal text-amber px-1.5 py-0.5 rounded bg-amber/10">modified</span>
+                                  )}
+                                </label>
+                                {row.type === 'textarea' ? (
+                                  <textarea
+                                    value={currentValue}
+                                    onChange={e => setSettingsEdits(prev => ({ ...prev, [row.key]: e.target.value }))}
+                                    rows={3}
+                                    className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand/30 resize-y"
+                                  />
+                                ) : (
+                                  <input
+                                    type={row.type === 'url' ? 'url' : 'text'}
+                                    value={currentValue}
+                                    onChange={e => setSettingsEdits(prev => ({ ...prev, [row.key]: e.target.value }))}
+                                    className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                  />
+                                )}
+                                <p className="text-[11px] text-text-muted font-mono">{row.key}</p>
+                              </div>
+                            )
+                          })}
+                        {settingsRows.filter(r => r.category === settingsCat).length === 0 && (
+                          <p className="text-sm text-text-muted py-4 text-center">No settings in this category</p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Unsaved changes indicator */}
+                  {Object.keys(settingsEdits).length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="sticky bottom-4 p-3 rounded-xl bg-amber/10 border border-amber/20 text-sm flex items-center justify-between"
+                    >
+                      <span className="text-amber font-medium">
+                        {Object.keys(settingsEdits).length} unsaved change{Object.keys(settingsEdits).length > 1 ? 's' : ''}
+                      </span>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="ghost" onClick={() => setSettingsEdits({})}>
+                          Discard
+                        </Button>
+                        <Button size="sm" onClick={saveSettings} disabled={savingSettings}>
+                          {savingSettings ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                          Save
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
               )}
             </motion.div>
