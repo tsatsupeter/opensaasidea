@@ -43,7 +43,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
     ['/profile', '/settings'].some(p => location.pathname.startsWith(p))
   )
 
-  const isAdmin = profile?.is_admin === true
+  const isAdmin = profile?.role === 'admin'
 
   const NavLink = ({ href, icon: Icon, label, color }: { href: string; icon: any; label: string; color?: string }) => {
     const isActive = location.pathname === href

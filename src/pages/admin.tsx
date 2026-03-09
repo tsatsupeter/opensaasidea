@@ -35,7 +35,7 @@ interface UserRow {
   email: string | null
   full_name: string | null
   subscription_tier: string
-  is_admin: boolean
+  role: 'user' | 'admin'
   daily_ideas_generated: number
   last_generation_date: string | null
   created_at: string
@@ -112,7 +112,7 @@ export function AdminPage() {
   const [triggeringCron, setTriggeringCron] = useState(false)
   const [cronResult, setCronResult] = useState<string | null>(null)
 
-  const isAdmin = profile?.is_admin === true
+  const isAdmin = profile?.role === 'admin'
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
@@ -147,7 +147,7 @@ export function AdminPage() {
   const fetchUsers = useCallback(async () => {
     const { data } = await supabase
       .from('profiles')
-      .select('id, email, full_name, subscription_tier, is_admin, daily_ideas_generated, last_generation_date, created_at')
+      .select('id, email, full_name, subscription_tier, role, daily_ideas_generated, last_generation_date, created_at')
       .order('created_at', { ascending: false })
       .limit(100)
     setUsers((data || []) as UserRow[])
@@ -222,11 +222,12 @@ export function AdminPage() {
     toast('Comment deleted')
   }
 
-  const toggleAdmin = async (userId: string, current: boolean) => {
+  const toggleAdmin = async (userId: string, current: boolean) => {  
     if (userId === user?.id) { toast('Cannot modify your own admin status'); return }
-    await (supabase.from('profiles') as any).update({ is_admin: !current }).eq('id', userId)
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, is_admin: !current } : u))
-    toast(`Admin ${!current ? 'granted' : 'revoked'}`)
+    const newRole = current ? 'user' : 'admin'
+    await (supabase.from('profiles') as any).update({ role: newRole }).eq('id', userId)
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole as 'user' | 'admin' } : u))
+    toast(`Role changed to ${newRole}`)
   }
 
   const changeTier = async (userId: string, newTier: string) => {
@@ -452,10 +453,10 @@ export function AdminPage() {
                               </td>
                               <td className="px-4 py-3">{tierBadge(u.subscription_tier)}</td>
                               <td className="px-4 py-3">
-                                {u.is_admin ? (
+                                {u.role === 'admin' ? (
                                   <Badge variant="warning">Admin</Badge>
                                 ) : (
-                                  <span className="text-xs text-text-muted">—</span>
+                                  <Badge variant="secondary">User</Badge>
                                 )}
                               </td>
                               <td className="px-4 py-3">
@@ -476,9 +477,9 @@ export function AdminPage() {
                                   </select>
                                   <Button
                                     size="sm"
-                                    variant={u.is_admin ? 'destructive' : 'ghost'}
+                                    variant={u.role === 'admin' ? 'destructive' : 'ghost'}
                                     className="h-7 px-2 text-xs"
-                                    onClick={() => toggleAdmin(u.id, u.is_admin)}
+                                    onClick={() => toggleAdmin(u.id, u.role === 'admin')}
                                   >
                                     <Shield className="h-3 w-3" />
                                   </Button>
