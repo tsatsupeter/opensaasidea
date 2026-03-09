@@ -230,7 +230,7 @@ async function generateBatch(opts: {
   const { systemPrompt, ideaType, ideaTypeLabel, count, openrouterKey, supabaseClient, existingIdeas, blacklist, marketSection, trustmrrSection, twitterSection, redditSection, g2Section } = opts;
   const generated: string[] = []; const rejected: string[] = []; const errors: string[] = [];
   if (count <= 0) return { generated, rejected, errors };
-  const overGenerate = count + 2;
+  const overGenerate = count + 1;
 
   const ideaPromises = Array.from({ length: overGenerate }, (_, i) =>
     fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -324,8 +324,8 @@ Deno.serve(async (req: Request) => {
 
     const saasToday = saasCountRes.count || 0;
     const projectToday = projectCountRes.count || 0;
-    const saasToGenerate = Math.max(0, 5 - saasToday);
-    const projectToGenerate = Math.max(0, 5 - projectToday);
+    const saasToGenerate = Math.max(0, 1 - saasToday);
+    const projectToGenerate = Math.max(0, 1 - projectToday);
 
     const sharedOpts = { openrouterKey: OPENROUTER_API_KEY, supabaseClient: supabase, existingIdeas, blacklist, marketSection, redditSection, trustmrrSection, g2Section, twitterSection };
 
