@@ -1,20 +1,38 @@
 import { useState, useRef } from 'react'
 import { useAuthModal } from '@/components/ui/auth-modal'
 import { motion } from 'framer-motion'
-import { Settings, Camera, Loader2, Check, Trash2 } from 'lucide-react'
+import { Settings, Camera, Loader2, Check, Trash2, CreditCard, Crown, AlertTriangle, ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/use-auth'
+import { useSubscription } from '@/hooks/use-subscription'
 import { supabase } from '@/lib/supabase'
 import { ProfileManager } from '@/components/profile/profile-manager'
 import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export function SettingsPage() {
   const { openAuthModal } = useAuthModal()
   const { user, profile, loading: authLoading, refreshProfile } = useAuth()
+  const { tier, config, billingPeriod, subscriptionStatus, subscriptionExpiresAt, cancelling, cancelSubscription, isFree } = useSubscription()
+  const navigate = useNavigate()
   const [uploading, setUploading] = useState(false)
   const [avatarMsg, setAvatarMsg] = useState('')
+  const [cancelMsg, setCancelMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  const handleCancelSubscription = async () => {
+    setCancelMsg(null)
+    const result = await cancelSubscription()
+    if (result.success) {
+      setCancelMsg({ type: 'success', text: result.message || 'Subscription cancelled' })
+      setShowCancelConfirm(false)
+    } else {
+      setCancelMsg({ type: 'error', text: result.error || 'Failed to cancel' })
+    }
+  }
 
   useEffect(() => {
     if (!authLoading && !user) openAuthModal('login')
@@ -165,6 +183,154 @@ export function SettingsPage() {
                   )}
                 </div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Subscription & Billing */}
+        <Card className="mb-4">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-brand" />
+              Subscription & Billing
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Current Plan */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold">{config.name} Plan</p>
+                    {!isFree && (
+                      <Badge variant={subscriptionStatus === 'active' ? 'success' : subscriptionStatus === 'cancelled' ? 'error' : 'secondary'} className="text-[10px]">
+                        {subscriptionStatus || 'active'}
+                      </Badge>
+                    )}
+                  </div>
+                  {!isFree && billingPeriod && (
+                    <p className="text-xs text-text-muted mt-0.5">
+                      Billed {billingPeriod}
+                      {subscriptionExpiresAt && (
+                        <> &middot; {subscriptionStatus === 'cancelled' ? 'Access until' : 'Renews'} {new Date(subscriptionExpiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</>
+                      )}
+                    </p>
+                  )}
+                  {isFree && (
+                    <p className="text-xs text-text-muted mt-0.5">Free forever &middot; Upgrade to unlock unlimited features</p>
+                  )}
+                </div>
+                {isFree ? (
+                  <Button size="sm" onClick={() => navigate('/pricing')}>
+                    <Crown className="h-3.5 w-3.5 mr-1" />
+                    Upgrade
+                  </Button>
+                ) : subscriptionStatus !== 'cancelled' ? (
+                  <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
+                    Change Plan
+                    <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                ) : null}
+              </div>
+
+              {/* Cancel Section */}
+              {!isFree && subscriptionStatus === 'active' && (
+                <div className="border-t border-border pt-3">
+                  {!showCancelConfirm ? (
+                    <button
+                      onClick={() => setShowCancelConfirm(true)}
+                      className="text-xs text-text-muted hover:text-rose transition-colors cursor-pointer"
+                    >
+                      Cancel subscription
+                    </button>
+                  ) : (
+                    <div className="bg-rose/5 border border-rose/20 rounded-lg p-3">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="h-4 w-4 text-rose shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-rose">Cancel your subscription?</p>
+                          <p className="text-xs text-text-secondary mt-1">
+                            You'll lose access to {config.name} features at the end of your current billing period.
+                            You can always resubscribe later.
+                          </p>
+                          <div className="flex items-center gap-2 mt-3">
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={handleCancelSubscription}
+                              disabled={cancelling}
+                            >
+                              {cancelling ? (
+                                <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> Cancelling...</>
+                              ) : (
+                                'Yes, cancel'
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowCancelConfirm(false)}
+                              disabled={cancelling}
+                            >
+                              Keep my plan
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* On Hold / Failed payment message */}
+              {(subscriptionStatus === 'on_hold' || subscriptionStatus === 'failed') && (
+                <div className="border-t border-border pt-3">
+                  <div className="bg-rose/5 border border-rose/20 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 text-rose shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-rose">
+                          {subscriptionStatus === 'on_hold' ? 'Payment failed — subscription on hold' : 'Subscription payment failed'}
+                        </p>
+                        <p className="text-xs text-text-secondary mt-1">
+                          Your last payment didn't go through. Please update your payment method or resubscribe to restore access to your plan features.
+                        </p>
+                        <Button
+                          size="sm"
+                          className="mt-2"
+                          onClick={() => navigate('/pricing')}
+                        >
+                          Resubscribe
+                          <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Cancelled message */}
+              {subscriptionStatus === 'cancelled' && (
+                <div className="border-t border-border pt-3">
+                  <div className="bg-amber/5 border border-amber/20 rounded-lg p-3">
+                    <p className="text-xs text-text-secondary">
+                      Your subscription has been cancelled.
+                      {subscriptionExpiresAt && (
+                        <> You'll have access until <strong>{new Date(subscriptionExpiresAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong>.</>
+                      )}
+                      {' '}You can resubscribe anytime from the <button onClick={() => navigate('/pricing')} className="text-brand hover:underline cursor-pointer font-medium">pricing page</button>.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Cancel result message */}
+              {cancelMsg && (
+                <div className={`text-xs flex items-center gap-1 ${cancelMsg.type === 'success' ? 'text-emerald' : 'text-rose'}`}>
+                  {cancelMsg.type === 'success' ? <Check className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
+                  {cancelMsg.text}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
