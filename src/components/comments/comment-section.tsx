@@ -149,7 +149,7 @@ interface CommentThreadProps {
 }
 
 function CommentThread({ comment, depth, onVote, onReply, onEdit, onDelete, submitting }: CommentThreadProps) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { openAuthModal } = useAuthModal()
   const [showReply, setShowReply] = useState(false)
   const [replyText, setReplyText] = useState('')
@@ -159,6 +159,7 @@ function CommentThread({ comment, depth, onVote, onReply, onEdit, onDelete, subm
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const isOwner = user?.id === comment.user_id
+  const canModerate = isOwner || profile?.role === 'admin'
   const score = comment.upvotes - comment.downvotes
   const maxDepth = 6
 
@@ -312,8 +313,8 @@ function CommentThread({ comment, depth, onVote, onReply, onEdit, onDelete, subm
                     </button>
                   )}
 
-                  {/* Owner actions */}
-                  {isOwner && (
+                  {/* Owner / Admin actions */}
+                  {canModerate && (
                     <>
                       <button
                         onClick={() => setEditing(true)}

@@ -249,7 +249,7 @@ export function AdminPage() {
   const fetchComments = useCallback(async () => {
     const { data } = await supabase
       .from('comments')
-      .select('id, content, created_at, user_id, idea_id, profiles(full_name, email), saas_ideas(title, slug)')
+      .select('id, content, created_at, user_id, idea_id, profiles!comments_user_id_profiles_fkey(full_name, email), saas_ideas!comments_idea_id_fkey(title, slug)')
       .order('created_at', { ascending: false })
       .limit(50)
     setComments((data || []) as unknown as CommentRow[])
@@ -258,7 +258,7 @@ export function AdminPage() {
   const fetchRevenue = useCallback(async () => {
     const { data } = await supabase
       .from('subscriptions')
-      .select('id, user_id, tier, status, billing_period, current_period_start, current_period_end, created_at, profiles(full_name, email)')
+      .select('id, user_id, tier, status, billing_period, current_period_start, current_period_end, created_at, profiles!subscriptions_user_id_profiles_fkey(full_name, email)')
       .order('created_at', { ascending: false })
       .limit(50)
     setSubs((data || []) as unknown as SubRow[])

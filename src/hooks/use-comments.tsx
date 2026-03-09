@@ -12,7 +12,8 @@ export interface CommentWithAuthor extends Comment {
 }
 
 export function useComments(ideaId: string) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
+  const isAdmin = profile?.role === 'admin'
   const [comments, setComments] = useState<CommentWithAuthor[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -107,32 +108,36 @@ export function useComments(ideaId: string) {
   const editComment = useCallback(async (commentId: string, content: string) => {
     if (!user || !content.trim()) return false
 
-    const { error } = await (supabase.from('comments') as any)
+    let query = (supabase.from('comments') as any)
       .update({ content: sanitizeInput(content), is_edited: true, updated_at: new Date().toISOString() })
       .eq('id', commentId)
-      .eq('user_id', user.id)
+    // Non-admin can only edit their own
+    if (!isAdmin) query = query.eq('user_id', user.id)
 
+    const { error } = await query
     if (!error) {
       await fetchComments()
       return true
     }
     return false
-  }, [user, fetchComments])
+  }, [user, isAdmin, fetchComments])
 
   const deleteComment = useCallback(async (commentId: string) => {
     if (!user) return false
 
-    const { error } = await (supabase.from('comments') as any)
+    let query = (supabase.from('comments') as any)
       .delete()
       .eq('id', commentId)
-      .eq('user_id', user.id)
+    // Non-admin can only delete their own
+    if (!isAdmin) query = query.eq('user_id', user.id)
 
+    const { error } = await query
     if (!error) {
       await fetchComments()
       return true
     }
     return false
-  }, [user, fetchComments])
+  }, [user, isAdmin, fetchComments])
 
   const voteComment = useCallback(async (commentId: string, voteType: 'up' | 'down') => {
     if (!user) return
