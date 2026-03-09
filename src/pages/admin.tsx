@@ -112,7 +112,7 @@ export function AdminPage() {
   const [triggeringCron, setTriggeringCron] = useState(false)
   const [cronResult, setCronResult] = useState<string | null>(null)
 
-  const isAdmin = (profile as any)?.is_admin === true
+  const isAdmin = profile?.is_admin === true
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {

@@ -18,6 +18,8 @@ export interface Database {
           subscription_id: string | null
           subscription_status: string | null
           subscription_expires_at: string | null
+          is_admin: boolean
+          team_id: string | null
           daily_ideas_generated: number
           last_generation_date: string | null
           created_at: string
