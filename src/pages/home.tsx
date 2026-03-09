@@ -8,7 +8,26 @@ import { Logo } from '@/components/ui/logo'
 import { SortDropdown, type SortBy } from '@/components/ui/sort-dropdown'
 import { FeedSkeleton } from '@/components/ui/skeleton'
 import { siteConfig } from '@/lib/site-config'
+import { SEO } from '@/components/seo'
 import type { SaasIdea } from '@/types/database'
+
+const PAGE_SEO: Record<string, { title: string; description: string; url: string }> = {
+  '/': {
+    title: 'Discover AI-Generated SaaS Business Ideas',
+    description: 'Browse hundreds of AI-generated SaaS and startup ideas with revenue projections, execution plans, and market analysis. Find your next profitable business idea.',
+    url: '/',
+  },
+  '/popular': {
+    title: 'Most Popular SaaS Ideas',
+    description: 'Explore the most popular and highest-voted SaaS business ideas. Community-curated startup concepts with revenue breakdowns and execution plans.',
+    url: '/popular',
+  },
+  '/trending': {
+    title: 'Trending SaaS Ideas',
+    description: 'Discover trending SaaS and startup ideas gaining momentum right now. Hot business concepts with market analysis and revenue projections.',
+    url: '/trending',
+  },
+}
 
 function getDefaultSort(path: string): SortBy {
   if (path === '/popular') return 'top'
@@ -98,8 +117,16 @@ export function HomePage() {
   useEffect(() => { fetchIdeas() }, [fetchIdeas])
   useEffect(() => { fetchUserVotes() }, [fetchUserVotes])
 
+  const seo = PAGE_SEO[location.pathname] || PAGE_SEO['/']
+
   return (
     <div className="w-full">
+      <SEO
+        title={seo.title}
+        description={seo.description}
+        url={seo.url}
+        keywords="SaaS ideas, startup ideas, business ideas, AI generated ideas, side project ideas, micro-SaaS, indie hacker ideas, solopreneur"
+      />
       {/* Next generation countdown */}
       <NextGenCountdown />
 

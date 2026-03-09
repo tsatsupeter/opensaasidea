@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { siteConfig } from '@/lib/site-config'
 import { TIERS } from '@/lib/subscription'
+import { SEO } from '@/components/seo'
 import type { SubscriptionTier } from '@/types/database'
 
 const FEATURES = [
@@ -40,6 +41,12 @@ export function AboutPage() {
 
   return (
     <div className="w-full max-w-5xl">
+      <SEO
+        title="About OpenProjectIdea"
+        description="Learn how OpenProjectIdea uses AI to generate validated SaaS business ideas with revenue projections, market analysis, execution plans, and team recommendations."
+        url="/about"
+        keywords="about OpenProjectIdea, AI SaaS idea generator, how it works, business idea platform, startup idea tool"
+      />
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

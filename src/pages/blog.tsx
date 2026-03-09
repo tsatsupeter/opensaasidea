@@ -7,6 +7,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { siteConfig } from '@/lib/site-config'
+import { SEO } from '@/components/seo'
 import { cn } from '@/lib/utils'
 
 interface BlogPost {
@@ -266,6 +267,12 @@ export function BlogPage() {
 
   return (
     <div className="w-full max-w-5xl">
+      <SEO
+        title="Blog — SaaS Ideas, AI, and Startup Insights"
+        description="Read articles about AI-powered idea generation, SaaS business strategies, startup validation, market analysis, and building profitable software products."
+        url="/blog"
+        keywords="SaaS blog, startup blog, AI idea generation, business ideas blog, indie hacker blog, micro-SaaS insights"
+      />
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

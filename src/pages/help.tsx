@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { siteConfig } from '@/lib/site-config'
+import { SEO, buildFAQSchema } from '@/components/seo'
 import { cn } from '@/lib/utils'
 
 interface FaqItem {
@@ -222,8 +223,17 @@ function AccordionFaq({ section, index }: { section: FaqSection; index: number }
 }
 
 export function HelpPage() {
+  const allFaqs = FAQ_SECTIONS.flatMap(s => s.items.map(i => ({ question: i.q, answer: i.a })))
+
   return (
     <div className="w-full max-w-3xl mx-auto">
+      <SEO
+        title="Help Center & FAQ"
+        description="Get answers to frequently asked questions about OpenProjectIdea. Learn about AI idea generation, subscriptions, team collaboration, API access, and more."
+        url="/help"
+        keywords="OpenProjectIdea help, FAQ, support, how to use, SaaS idea generator help, subscription help"
+        jsonLd={buildFAQSchema(allFaqs.slice(0, 10))}
+      />
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

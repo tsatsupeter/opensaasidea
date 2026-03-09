@@ -3,6 +3,12 @@ Allow: /
 Allow: /explore
 Allow: /popular
 Allow: /trending
+Allow: /pricing
+Allow: /about
+Allow: /blog
+Allow: /help
+Allow: /developer/api
+Allow: /idea/
 Disallow: /dashboard
 Disallow: /settings
 Disallow: /profile
@@ -10,6 +16,8 @@ Disallow: /stats
 Disallow: /admin
 Disallow: /onboarding
 Disallow: /checkout
+Disallow: /notifications
+Disallow: /team
 Disallow: /api/
 
 # Block aggressive scrapers

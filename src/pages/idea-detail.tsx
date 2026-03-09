@@ -20,6 +20,7 @@ import { VoteButton } from '@/components/ideas/vote-button'
 import { ShareMenu } from '@/components/ideas/share-menu'
 import { CommentSection } from '@/components/comments/comment-section'
 import { UpgradePrompt } from '@/components/subscription/upgrade-prompt'
+import { SEO, buildIdeaSchema, buildBreadcrumbSchema } from '@/components/seo'
 import { formatCurrency, formatNumber, timeAgo } from '@/lib/utils'
 import { categoryColor, toSlug, useCategories } from '@/lib/categories'
 import { getAffiliateLink } from '@/lib/affiliates'
@@ -157,8 +158,35 @@ export function IdeaDetailPage() {
   const colors = categoryColor(catSlug)
   const catData = categories.find(c => c.slug === catSlug)
 
+  const ideaDescription = idea.tagline || idea.description || `${idea.title} — a SaaS business idea with revenue breakdown, market analysis, and execution plan.`
+  const truncatedDesc = ideaDescription.length > 160 ? ideaDescription.slice(0, 157) + '...' : ideaDescription
+
   return (
     <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 w-full">
+      <SEO
+        title={idea.title}
+        description={truncatedDesc}
+        url={`/idea/${idea.slug || idea.id}`}
+        type="article"
+        publishedTime={idea.created_at}
+        modifiedTime={idea.updated_at || idea.created_at}
+        keywords={`${idea.title}, ${catLabel} SaaS idea, ${catLabel} startup, SaaS business idea, ${idea.category || ''} software`}
+        jsonLd={[
+          buildIdeaSchema({
+            title: idea.title,
+            slug: idea.slug || idea.id,
+            description: truncatedDesc,
+            category: catLabel,
+            created_at: idea.created_at,
+            updated_at: idea.updated_at || idea.created_at,
+          }),
+          buildBreadcrumbSchema([
+            { name: 'Home', url: '/' },
+            { name: catLabel, url: `/explore/${catSlug}` },
+            { name: idea.title, url: `/idea/${idea.slug || idea.id}` },
+          ]),
+        ]}
+      />
       {/* Main post column */}
       <div className="flex-1 min-w-0">
         <motion.div

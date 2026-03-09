@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
 import { siteConfig } from '@/lib/site-config'
+import { SEO } from '@/components/seo'
 
 const API_BASE = `https://${siteConfig.domain}/v1/api`
 const DOCS_URL = `https://docs.${siteConfig.domain}`
@@ -172,6 +173,12 @@ export function DeveloperApiPage() {
 
   return (
     <div className="w-full max-w-4xl space-y-6">
+      <SEO
+        title="Developer API — Build with SaaS Ideas"
+        description="Access OpenProjectIdea's REST API to integrate AI-generated SaaS ideas into your applications. Browse ideas, manage bookmarks, votes, and comments programmatically."
+        url="/developer/api"
+        keywords="OpenProjectIdea API, SaaS ideas API, startup ideas API, developer API, REST API, business ideas integration"
+      />
       {/* Hero */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">

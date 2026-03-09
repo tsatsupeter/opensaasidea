@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { IdeaCard } from '@/components/ideas/idea-card'
 import { Logo } from '@/components/ui/logo'
 import { SortDropdown, type SortBy } from '@/components/ui/sort-dropdown'
+import { SEO } from '@/components/seo'
 import type { SaasIdea } from '@/types/database'
 import { siteConfig } from '@/lib/site-config'
 import { useCategories, categoryColor, toSlug, type DynamicCategory } from '@/lib/categories'
@@ -53,6 +54,12 @@ function CommunitiesGrid() {
 
   return (
     <div className="w-full">
+      <SEO
+        title="Explore SaaS Ideas by Category"
+        description="Browse AI-generated SaaS and startup ideas organized by category. Find business ideas in AI, DevTools, FinTech, HealthTech, EdTech, and more."
+        url="/explore"
+        keywords="SaaS categories, startup ideas by category, AI business ideas, DevTools ideas, FinTech ideas, HealthTech ideas, EdTech ideas"
+      />
       {/* Header */}
       <h1 className="text-[22px] font-bold mb-4">Explore Categories</h1>
 
@@ -290,6 +297,12 @@ function CategoryFeedPage({ categorySlug }: { categorySlug: string }) {
 
   return (
     <div className="w-full">
+      <SEO
+        title={`${catLabel} SaaS Ideas`}
+        description={`Explore AI-generated ${catLabel} SaaS and startup ideas with revenue projections, market analysis, and execution plans. Find your next ${catLabel.toLowerCase()} business idea.`}
+        url={`/explore/${categorySlug}`}
+        keywords={`${catLabel} SaaS ideas, ${catLabel} startup ideas, ${catLabel.toLowerCase()} business ideas, ${catLabel.toLowerCase()} software`}
+      />
       {/* Category header */}
       <div className="flex items-center gap-3 mb-4">
         <Link to="/explore" className="text-text-muted hover:text-text-primary transition-colors">

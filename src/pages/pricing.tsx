@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useSubscription } from '@/hooks/use-subscription'
 import { useToast } from '@/components/ui/toast'
 import { TIERS, getProductId } from '@/lib/subscription'
+import { SEO, buildFAQSchema } from '@/components/seo'
 import type { SubscriptionTier } from '@/types/database'
 
 const TIER_HIGHLIGHT: Record<SubscriptionTier, string> = {
@@ -69,8 +70,22 @@ export function PricingPage() {
 
   const tiers = (['free', 'pro', 'team'] as SubscriptionTier[]).map(t => TIERS[t])
 
+  const pricingFaqs = [
+    { question: 'Can I cancel anytime?', answer: 'Yes, you can cancel your subscription at any time. You\'ll keep access until the end of your billing period.' },
+    { question: 'What payment methods do you accept?', answer: 'We accept all major credit cards, debit cards, and local payment methods through Dodo Payments.' },
+    { question: 'Is there a free trial?', answer: 'The Free tier is always available with 3 ideas per day. Upgrade when you\'re ready to unlock unlimited features.' },
+    { question: 'Can I switch plans?', answer: 'Yes, you can upgrade or downgrade at any time. Changes take effect immediately with prorated billing.' },
+  ]
+
   return (
     <div className="w-full max-w-5xl">
+      <SEO
+        title="Pricing — Free, Pro & Team Plans"
+        description="Choose the right plan for your needs. Start free with 3 AI-generated ideas per day, or upgrade to Pro or Team for unlimited ideas, PDF exports, team collaboration, and API access."
+        url="/pricing"
+        keywords="OpenProjectIdea pricing, SaaS idea generator pricing, AI business idea generator plans, startup idea generator free"
+        jsonLd={buildFAQSchema(pricingFaqs)}
+      />
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

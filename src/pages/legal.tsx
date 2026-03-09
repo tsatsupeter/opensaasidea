@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { siteConfig } from '@/lib/site-config'
+import { SEO } from '@/components/seo'
 
 function LegalLayout({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -21,6 +22,7 @@ export function PrivacyPage() {
 
   return (
     <LegalLayout title="Privacy Policy">
+      <SEO title="Privacy Policy" description="Read OpenProjectIdea's privacy policy. Learn how we collect, use, and protect your data when using our AI-powered SaaS idea generator." url="/privacy" noindex />
       <p>Last updated: March 5, 2026</p>
       <p>This Privacy Policy describes how {siteConfig.name} ("{siteConfig.domain}") collects, uses, stores, and protects your personal information when you use our website, applications, and services (collectively, the "Service"). By using the Service, you consent to the practices described below.</p>
 
@@ -103,6 +105,7 @@ export function TermsPage() {
 
   return (
     <LegalLayout title="Terms & Conditions">
+      <SEO title="Terms & Conditions" description="Read the terms and conditions for using OpenProjectIdea, including acceptable use, intellectual property, and subscription terms." url="/terms" noindex />
       <p>Last updated: March 5, 2026</p>
       <p>These Terms & Conditions ("Terms") govern your access to and use of {siteConfig.name} ("{siteConfig.domain}"), including all related services, features, and content (collectively, the "Service"). By creating an account or using the Service, you agree to be bound by these Terms. If you do not agree, do not use the Service.</p>
 
@@ -219,6 +222,7 @@ export function TermsPage() {
 export function AccessibilityPage() {
   return (
     <LegalLayout title="Accessibility">
+      <SEO title="Accessibility" description="OpenProjectIdea's commitment to web accessibility and inclusive design." url="/accessibility" noindex />
       <p>Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
 
       <h2>Our Commitment</h2>

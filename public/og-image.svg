@@ -1,0 +1,44 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f0f23;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a1a3e;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <!-- Decorative circles -->
+  <circle cx="100" cy="100" r="200" fill="#6366f1" opacity="0.05"/>
+  <circle cx="1100" cy="530" r="250" fill="#8b5cf6" opacity="0.05"/>
+  <circle cx="900" cy="100" r="150" fill="#6366f1" opacity="0.03"/>
+  <!-- Brand bar top -->
+  <rect x="0" y="0" width="1200" height="4" fill="url(#brand)"/>
+  <!-- Logo area -->
+  <rect x="80" y="180" width="56" height="56" rx="14" fill="url(#brand)"/>
+  <text x="108" y="218" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="white" text-anchor="middle">O</text>
+  <!-- Title -->
+  <text x="80" y="300" font-family="Arial, sans-serif" font-size="52" font-weight="bold" fill="white">OpenProjectIdea</text>
+  <!-- Subtitle -->
+  <text x="80" y="360" font-family="Arial, sans-serif" font-size="26" fill="#a0a0c0">AI-Powered SaaS Idea Generator</text>
+  <!-- Description -->
+  <text x="80" y="420" font-family="Arial, sans-serif" font-size="20" fill="#7070a0">Revenue breakdowns, execution plans, market analysis,</text>
+  <text x="80" y="450" font-family="Arial, sans-serif" font-size="20" fill="#7070a0">and team planning. Discover profitable business ideas.</text>
+  <!-- URL -->
+  <text x="80" y="540" font-family="Arial, sans-serif" font-size="18" fill="#6366f1">openprojectidea.com</text>
+  <!-- Feature pills -->
+  <rect x="700" y="260" width="160" height="36" rx="18" fill="#6366f1" opacity="0.15"/>
+  <text x="780" y="284" font-family="Arial, sans-serif" font-size="14" fill="#8b8bf8" text-anchor="middle">AI-Powered</text>
+  <rect x="880" y="260" width="160" height="36" rx="18" fill="#6366f1" opacity="0.15"/>
+  <text x="960" y="284" font-family="Arial, sans-serif" font-size="14" fill="#8b8bf8" text-anchor="middle">Market Analysis</text>
+  <rect x="700" y="310" width="160" height="36" rx="18" fill="#6366f1" opacity="0.15"/>
+  <text x="780" y="334" font-family="Arial, sans-serif" font-size="14" fill="#8b8bf8" text-anchor="middle">Revenue Data</text>
+  <rect x="880" y="310" width="160" height="36" rx="18" fill="#6366f1" opacity="0.15"/>
+  <text x="960" y="334" font-family="Arial, sans-serif" font-size="14" fill="#8b8bf8" text-anchor="middle">Execution Plans</text>
+  <rect x="700" y="360" width="160" height="36" rx="18" fill="#6366f1" opacity="0.15"/>
+  <text x="780" y="384" font-family="Arial, sans-serif" font-size="14" fill="#8b8bf8" text-anchor="middle">Team Planning</text>
+  <rect x="880" y="360" width="160" height="36" rx="18" fill="#6366f1" opacity="0.15"/>
+  <text x="960" y="384" font-family="Arial, sans-serif" font-size="14" fill="#8b8bf8" text-anchor="middle">Free to Start</text>
+</svg>
