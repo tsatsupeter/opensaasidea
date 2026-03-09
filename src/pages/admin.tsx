@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Shield, Loader2, Zap, BarChart3, Clock, Users, MessageSquare,
-  CreditCard, Cpu, Trash2, Eye, EyeOff, Settings, Save,
+  CreditCard, Cpu, Trash2, Eye, EyeOff, Settings, Save, Upload, ImageIcon, Link2,
   RefreshCw, Globe, Lock, Crown, CheckCircle2,
   ArrowUpRight, Search, ExternalLink, TrendingUp, DollarSign,
 } from 'lucide-react'
@@ -138,6 +138,31 @@ export function AdminPage() {
   const [settingsEdits, setSettingsEdits] = useState<Record<string, string>>({})
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsCat, setSettingsCat] = useState('general')
+  const [uploadingKey, setUploadingKey] = useState<string | null>(null)
+  const [imageInputMode, setImageInputMode] = useState<Record<string, 'upload' | 'url'>>({})
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+
+  const uploadImage = async (file: File, settingKey: string) => {
+    setUploadingKey(settingKey)
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'png'
+      const fileName = `${settingKey}-${Date.now()}.${ext}`
+      const { error } = await supabase.storage
+        .from('site-assets')
+        .upload(fileName, file, { upsert: true })
+      if (error) throw error
+      const { data: urlData } = supabase.storage
+        .from('site-assets')
+        .getPublicUrl(fileName)
+      const publicUrl = urlData.publicUrl
+      setSettingsEdits(prev => ({ ...prev, [settingKey]: publicUrl }))
+      toast('Image uploaded — click Save to apply')
+    } catch (err: any) {
+      toast(err.message || 'Upload failed', 'error')
+    } finally {
+      setUploadingKey(null)
+    }
+  }
 
   const isAdmin = profile?.role === 'admin'
 
@@ -944,12 +969,15 @@ export function AdminPage() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-4">
+                      <div className="space-y-5">
                         {settingsRows
                           .filter(r => r.category === settingsCat)
                           .map(row => {
                             const currentValue = settingsEdits[row.key] ?? row.value
                             const isEdited = row.key in settingsEdits && settingsEdits[row.key] !== row.value
+                            const isUploading = uploadingKey === row.key
+                            const mode = imageInputMode[row.key] || 'upload'
+
                             return (
                               <div key={row.key} className="space-y-1.5">
                                 <label className="flex items-center gap-2 text-sm font-medium text-text-primary">
@@ -958,7 +986,107 @@ export function AdminPage() {
                                     <span className="text-[10px] font-normal text-amber px-1.5 py-0.5 rounded bg-amber/10">modified</span>
                                   )}
                                 </label>
-                                {row.type === 'textarea' ? (
+
+                                {/* Image type: upload + URL + preview */}
+                                {row.type === 'image' ? (
+                                  <div className="space-y-2">
+                                    {/* Toggle: Upload vs URL */}
+                                    <div className="flex gap-1">
+                                      <button
+                                        onClick={() => setImageInputMode(prev => ({ ...prev, [row.key]: 'upload' }))}
+                                        className={cn(
+                                          'flex items-center gap-1 px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer',
+                                          mode === 'upload' ? 'bg-brand/10 text-brand' : 'bg-surface-2 text-text-muted hover:text-text-primary'
+                                        )}
+                                      >
+                                        <Upload className="h-3 w-3" /> Upload File
+                                      </button>
+                                      <button
+                                        onClick={() => setImageInputMode(prev => ({ ...prev, [row.key]: 'url' }))}
+                                        className={cn(
+                                          'flex items-center gap-1 px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer',
+                                          mode === 'url' ? 'bg-brand/10 text-brand' : 'bg-surface-2 text-text-muted hover:text-text-primary'
+                                        )}
+                                      >
+                                        <Link2 className="h-3 w-3" /> Paste URL
+                                      </button>
+                                    </div>
+
+                                    {mode === 'upload' ? (
+                                      <div
+                                        onClick={() => fileInputRefs.current[row.key]?.click()}
+                                        onDragOver={e => { e.preventDefault(); e.stopPropagation() }}
+                                        onDrop={e => {
+                                          e.preventDefault(); e.stopPropagation()
+                                          const file = e.dataTransfer.files?.[0]
+                                          if (file && file.type.startsWith('image/')) uploadImage(file, row.key)
+                                          else toast('Please drop an image file', 'error')
+                                        }}
+                                        className={cn(
+                                          'flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed transition-colors cursor-pointer',
+                                          isUploading
+                                            ? 'border-brand/40 bg-brand/5'
+                                            : 'border-border hover:border-brand/30 hover:bg-surface-2/50'
+                                        )}
+                                      >
+                                        <input
+                                          ref={el => { fileInputRefs.current[row.key] = el }}
+                                          type="file"
+                                          accept="image/*"
+                                          className="hidden"
+                                          onChange={e => {
+                                            const file = e.target.files?.[0]
+                                            if (file) uploadImage(file, row.key)
+                                            e.target.value = ''
+                                          }}
+                                        />
+                                        {isUploading ? (
+                                          <>
+                                            <Loader2 className="h-6 w-6 animate-spin text-brand" />
+                                            <span className="text-xs text-brand">Uploading...</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Upload className="h-6 w-6 text-text-muted" />
+                                            <span className="text-xs text-text-muted">Click or drag & drop an image</span>
+                                            <span className="text-[10px] text-text-muted/60">PNG, JPG, SVG, ICO · Max 5MB</span>
+                                          </>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <input
+                                        type="url"
+                                        value={currentValue}
+                                        onChange={e => setSettingsEdits(prev => ({ ...prev, [row.key]: e.target.value }))}
+                                        placeholder="https://example.com/image.png"
+                                        className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-surface-0 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-brand/30"
+                                      />
+                                    )}
+
+                                    {/* Preview */}
+                                    {currentValue && (
+                                      <div className="flex items-start gap-3 p-3 rounded-lg bg-surface-2/50 border border-border/50">
+                                        <div className="w-16 h-16 rounded-lg border border-border bg-surface-0 flex items-center justify-center overflow-hidden shrink-0">
+                                          <img
+                                            src={currentValue}
+                                            alt={row.label}
+                                            className="max-w-full max-h-full object-contain"
+                                            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                                          />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                          <p className="text-xs text-text-muted truncate">{currentValue}</p>
+                                          <button
+                                            onClick={() => setSettingsEdits(prev => ({ ...prev, [row.key]: '' }))}
+                                            className="text-[11px] text-rose hover:underline mt-1 cursor-pointer"
+                                          >
+                                            Remove
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : row.type === 'textarea' ? (
                                   <textarea
                                     value={currentValue}
                                     onChange={e => setSettingsEdits(prev => ({ ...prev, [row.key]: e.target.value }))}
