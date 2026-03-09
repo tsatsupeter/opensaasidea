@@ -275,14 +275,18 @@ export async function generateSaasIdea(options?: {
   report('preparing')
   const existingIdeasPromise = fetchExistingIdeas().catch(() => [] as Array<{ title: string; description: string | null; category: string | null }>)
 
+  // Get access token for authenticated insight function calls
+  const { data: sessionForInsights } = await supabase.auth.getSession()
+  const insightToken = sessionForInsights?.session?.access_token || ''
+
   report('researching')
   const [existingIdeas, marketData, redditContext, trustmrrContext, g2Context, twitterContext] = await Promise.all([
     existingIdeasPromise,
     getMarketIntelligence().catch(() => ({ trending: [], categories: [] })),
-    getRedditInsights().catch(() => ''),
-    getTrustMRRInsights().catch(() => ''),
-    getG2Insights().catch(() => ''),
-    getTwitterInsights().catch(() => ''),
+    getRedditInsights(insightToken).catch(() => ''),
+    getTrustMRRInsights(insightToken).catch(() => ''),
+    getG2Insights(insightToken).catch(() => ''),
+    getTwitterInsights(insightToken).catch(() => ''),
   ])
 
   report('building_context')

@@ -139,14 +139,20 @@ export function buildMarketContext(data: {
 
 // === Reddit Community Insights (via proxy Edge Function) ===
 
-export async function getRedditInsights(): Promise<string> {
+export async function getRedditInsights(accessToken?: string): Promise<string> {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
     if (!supabaseUrl) return ''
     const controller = new AbortController()
     const id = setTimeout(() => controller.abort(), 15000)
+    const headers: Record<string, string> = {}
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`
+      headers['apikey'] = import.meta.env.VITE_SUPABASE_ANON_KEY
+    }
     const res = await fetch(`${supabaseUrl}/functions/v1/reddit-insights`, {
       signal: controller.signal,
+      headers,
     })
     clearTimeout(id)
     if (!res.ok) return ''
@@ -159,14 +165,20 @@ export async function getRedditInsights(): Promise<string> {
 
 // === Twitter/X Real-Time SaaS Pulse (via proxy Edge Function) ===
 
-export async function getTwitterInsights(): Promise<string> {
+export async function getTwitterInsights(accessToken?: string): Promise<string> {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
     if (!supabaseUrl) return ''
     const controller = new AbortController()
     const id = setTimeout(() => controller.abort(), 20000)
+    const headers: Record<string, string> = {}
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`
+      headers['apikey'] = import.meta.env.VITE_SUPABASE_ANON_KEY
+    }
     const res = await fetch(`${supabaseUrl}/functions/v1/twitter-insights`, {
       signal: controller.signal,
+      headers,
     })
     clearTimeout(id)
     if (!res.ok) return ''
@@ -179,14 +191,20 @@ export async function getTwitterInsights(): Promise<string> {
 
 // === G2 Software Market Intelligence (via proxy Edge Function) ===
 
-export async function getG2Insights(): Promise<string> {
+export async function getG2Insights(accessToken?: string): Promise<string> {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
     if (!supabaseUrl) return ''
     const controller = new AbortController()
     const id = setTimeout(() => controller.abort(), 25000)
+    const headers: Record<string, string> = {}
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`
+      headers['apikey'] = import.meta.env.VITE_SUPABASE_ANON_KEY
+    }
     const res = await fetch(`${supabaseUrl}/functions/v1/g2-insights`, {
       signal: controller.signal,
+      headers,
     })
     clearTimeout(id)
     if (!res.ok) return ''
@@ -199,14 +217,20 @@ export async function getG2Insights(): Promise<string> {
 
 // === TrustMRR Verified Startup Data (via proxy Edge Function) ===
 
-export async function getTrustMRRInsights(): Promise<string> {
+export async function getTrustMRRInsights(accessToken?: string): Promise<string> {
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
     if (!supabaseUrl) return ''
     const controller = new AbortController()
     const id = setTimeout(() => controller.abort(), 20000)
+    const headers: Record<string, string> = {}
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`
+      headers['apikey'] = import.meta.env.VITE_SUPABASE_ANON_KEY
+    }
     const res = await fetch(`${supabaseUrl}/functions/v1/trustmrr-insights`, {
       signal: controller.signal,
+      headers,
     })
     clearTimeout(id)
     if (!res.ok) return ''
