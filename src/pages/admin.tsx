@@ -115,6 +115,20 @@ interface SubRow {
   profiles: { full_name: string | null; email: string | null } | null
 }
 
+interface PaymentRow {
+  id: string
+  user_id: string
+  dodo_payment_id: string | null
+  amount: number
+  currency: string
+  status: string
+  product_type: string
+  product_id: string | null
+  metadata: Record<string, unknown> | null
+  created_at: string
+  profiles: { full_name: string | null; email: string | null } | null
+}
+
 export function AdminPage() {
   const navigate = useNavigate()
   const { user, profile, loading: authLoading } = useAuth()
@@ -143,6 +157,7 @@ export function AdminPage() {
 
   // Revenue state
   const [subs, setSubs] = useState<SubRow[]>([])
+  const [payments, setPayments] = useState<PaymentRow[]>([])
 
   // Generation state
   const [generating, setGenerating] = useState(false)
@@ -262,6 +277,15 @@ export function AdminPage() {
       .order('created_at', { ascending: false })
       .limit(50)
     setSubs((data || []) as unknown as SubRow[])
+  }, [])
+
+  const fetchPayments = useCallback(async () => {
+    const { data } = await (supabase
+      .from('payments') as any)
+      .select('id, user_id, dodo_payment_id, amount, currency, status, product_type, product_id, metadata, created_at, profiles!payments_user_id_profiles_fkey(full_name, email)')
+      .order('created_at', { ascending: false })
+      .limit(100)
+    setPayments((data || []) as unknown as PaymentRow[])
   }, [])
 
   const fetchSettingsRows = useCallback(async () => {
@@ -408,14 +432,14 @@ export function AdminPage() {
         case 'users': await fetchUsers(); break
         case 'ideas': await fetchIdeas(); break
         case 'comments': await fetchComments(); break
-        case 'revenue': await fetchRevenue(); break
+        case 'revenue': await Promise.all([fetchRevenue(), fetchPayments()]); break
         case 'affiliates': await fetchAffiliatesAdmin(); break
         case 'settings': await fetchSettingsRows(); break
       }
       setLoading(false)
     }
     load()
-  }, [tab, isAdmin, fetchOverview, fetchUsers, fetchIdeas, fetchComments, fetchRevenue, fetchAffiliatesAdmin, fetchSettingsRows])
+  }, [tab, isAdmin, fetchOverview, fetchUsers, fetchIdeas, fetchComments, fetchRevenue, fetchPayments, fetchAffiliatesAdmin, fetchSettingsRows])
 
   // Re-fetch ideas when sort changes
   useEffect(() => { if (tab === 'ideas') fetchIdeas() }, [ideaSort, fetchIdeas, tab])
@@ -889,23 +913,25 @@ export function AdminPage() {
                     </Card>
                     <Card>
                       <CardContent className="p-4 text-center">
-                        <Crown className="h-4 w-4 text-brand mx-auto mb-1" />
-                        <p className="text-2xl font-bold">{stats.proUsers}</p>
-                        <p className="text-xs text-text-muted">Pro Users</p>
+                        <CreditCard className="h-4 w-4 text-brand mx-auto mb-1" />
+                        <p className="text-2xl font-bold">{payments.filter(p => p.status === 'succeeded').length}</p>
+                        <p className="text-xs text-text-muted">Total Payments</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="p-4 text-center">
-                        <Users className="h-4 w-4 text-accent mx-auto mb-1" />
-                        <p className="text-2xl font-bold">{stats.teamUsers}</p>
-                        <p className="text-xs text-text-muted">Team Users</p>
+                        <Zap className="h-4 w-4 text-accent mx-auto mb-1" />
+                        <p className="text-2xl font-bold">{payments.filter(p => p.product_type === 'one_time' && p.status === 'succeeded').length}</p>
+                        <p className="text-xs text-text-muted">One-Time Purchases</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="p-4 text-center">
                         <TrendingUp className="h-4 w-4 text-amber mx-auto mb-1" />
-                        <p className="text-2xl font-bold">{subs.length}</p>
-                        <p className="text-xs text-text-muted">Total Subscriptions</p>
+                        <p className="text-2xl font-bold">
+                          {payments.filter(p => p.status === 'succeeded').reduce((sum, p) => sum + (p.amount || 0), 0) / 100}
+                        </p>
+                        <p className="text-xs text-text-muted">Total Revenue (mixed currencies)</p>
                       </CardContent>
                     </Card>
                   </div>
@@ -949,6 +975,57 @@ export function AdminPage() {
                           ))}
                           {subs.length === 0 && (
                             <tr><td colSpan={6} className="px-4 py-8 text-center text-text-muted">No subscriptions yet</td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </Card>
+
+                  {/* Payments Table */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">All Payments</CardTitle>
+                    </CardHeader>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-border text-left">
+                            <th className="px-4 py-3 font-semibold text-text-muted text-xs uppercase tracking-wider">User</th>
+                            <th className="px-4 py-3 font-semibold text-text-muted text-xs uppercase tracking-wider">Type</th>
+                            <th className="px-4 py-3 font-semibold text-text-muted text-xs uppercase tracking-wider">Amount</th>
+                            <th className="px-4 py-3 font-semibold text-text-muted text-xs uppercase tracking-wider">Status</th>
+                            <th className="px-4 py-3 font-semibold text-text-muted text-xs uppercase tracking-wider">Payment ID</th>
+                            <th className="px-4 py-3 font-semibold text-text-muted text-xs uppercase tracking-wider">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {payments.map(p => (
+                            <tr key={p.id} className="border-b border-border/50 hover:bg-surface-2/50 transition-colors">
+                              <td className="px-4 py-3">
+                                <p className="font-medium">{p.profiles?.full_name || 'Unknown'}</p>
+                                <p className="text-xs text-text-muted">{p.profiles?.email || '—'}</p>
+                              </td>
+                              <td className="px-4 py-3">
+                                <Badge variant={p.product_type === 'one_time' ? 'accent' : 'default'}>
+                                  {p.product_type === 'one_time' ? 'One-Time' : p.product_type || 'Unknown'}
+                                </Badge>
+                              </td>
+                              <td className="px-4 py-3 font-medium">
+                                {(p.amount / 100).toFixed(2)} {p.currency?.toUpperCase()}
+                              </td>
+                              <td className="px-4 py-3">
+                                <Badge variant={p.status === 'succeeded' ? 'success' : p.status === 'failed' ? 'error' : 'warning'}>
+                                  {p.status}
+                                </Badge>
+                              </td>
+                              <td className="px-4 py-3 text-text-muted text-xs font-mono max-w-[150px] truncate" title={p.dodo_payment_id || ''}>
+                                {p.dodo_payment_id || '—'}
+                              </td>
+                              <td className="px-4 py-3 text-text-muted text-xs">{timeAgo(p.created_at)}</td>
+                            </tr>
+                          ))}
+                          {payments.length === 0 && (
+                            <tr><td colSpan={6} className="px-4 py-8 text-center text-text-muted">No payments yet</td></tr>
                           )}
                         </tbody>
                       </table>
