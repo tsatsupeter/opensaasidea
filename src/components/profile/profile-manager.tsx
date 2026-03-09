@@ -168,9 +168,14 @@ export function ProfileManager() {
       })
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = sessionData?.session?.access_token || ''
       const res = await fetch(`${supabaseUrl}/functions/v1/extract-cv`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({ file: base64, mimeType: file.type }),
       })
 

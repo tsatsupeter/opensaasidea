@@ -499,7 +499,12 @@ export function AdminPage() {
     setCronResult(null)
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const res = await fetch(`${supabaseUrl}/functions/v1/generate-daily`, { method: 'POST' })
+      const { data: sessionData } = await supabase.auth.getSession()
+      const accessToken = sessionData?.session?.access_token || ''
+      const res = await fetch(`${supabaseUrl}/functions/v1/generate-daily`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}` },
+      })
       const data = await res.json()
       setCronResult(JSON.stringify(data, null, 2))
     } catch (err) {

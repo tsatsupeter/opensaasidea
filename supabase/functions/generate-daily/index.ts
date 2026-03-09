@@ -293,10 +293,45 @@ Deno.serve(async (req: Request) => {
     const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+    const CRON_SECRET = Deno.env.get("CRON_SECRET");
     const apiKeys = getApiKeys();
     if (!OPENROUTER_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       return new Response(JSON.stringify({ error: "Missing env vars" }), { status: 500 });
     }
+
+    // Auth guard: require admin JWT or CRON_SECRET
+    const authHeader = req.headers.get("Authorization") || "";
+    const cronHeader = req.headers.get("x-cron-secret") || "";
+    let authorized = false;
+
+    // Check CRON_SECRET (for scheduled invocations)
+    if (CRON_SECRET && cronHeader === CRON_SECRET) {
+      authorized = true;
+    }
+
+    // Check admin JWT
+    if (!authorized && authHeader && SUPABASE_ANON_KEY) {
+      const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: { user } } = await authClient.auth.getUser();
+      if (user) {
+        const svc = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        const { data: profile } = await svc.from("profiles").select("role").eq("id", user.id).single();
+        if (profile?.role === "admin") authorized = true;
+      }
+    }
+
+    // If no CRON_SECRET is configured, allow (backwards compatible with existing cron setup)
+    if (!authorized && !CRON_SECRET && !authHeader) {
+      authorized = true;
+    }
+
+    if (!authorized) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    }
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const [existingRes, marketContext, redditContext, trustmrrContext, g2Context, twitterContext] = await Promise.all([
