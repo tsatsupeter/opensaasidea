@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   BookOpen, ArrowLeft, Loader2, ExternalLink, Copy, Check,
-  Link2, Share2, Trash2, Globe, Lock, Clock, Sparkles, Play
+  Share2, Trash2, Globe, Lock, Clock, Play
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
@@ -96,7 +96,7 @@ export function SharedPlanPage() {
             }}
             className="flex items-center gap-1.5 text-[12px] text-text-muted hover:text-text-primary px-3 py-1.5 rounded-lg hover:bg-surface-2 transition-colors cursor-pointer"
           >
-            {copied ? <Check className="h-3.5 w-3.5 text-emerald" /> : <Link2 className="h-3.5 w-3.5" />}
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald" /> : <Share2 className="h-3.5 w-3.5" />}
             {copied ? 'Copied' : 'Share'}
           </button>
         </div>
@@ -122,9 +122,7 @@ export function SharedPlanPage() {
         {/* Recommended tools */}
         {plan.recommended_affiliates?.length > 0 && (
           <div className="rounded-xl border border-brand/20 bg-brand/5 p-4 mt-4">
-            <h3 className="text-[13px] font-semibold text-brand mb-3 flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5" /> Recommended Tools
-            </h3>
+            <h3 className="text-[13px] font-semibold text-brand mb-3">Recommended Tools</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {plan.recommended_affiliates.map((aff: any, i: number) => (
                 <a
@@ -347,7 +345,7 @@ export function MyPlansPage() {
                       onClick={() => copyShareLink(plan)}
                       className="flex items-center gap-1 text-[11px] text-text-muted hover:text-text-primary px-2 py-1 rounded hover:bg-surface-2 transition-colors cursor-pointer"
                     >
-                      {copiedId === plan.id ? <Check className="h-3 w-3 text-emerald" /> : <Link2 className="h-3 w-3" />}
+                      {copiedId === plan.id ? <Check className="h-3 w-3 text-emerald" /> : <Share2 className="h-3 w-3" />}
                       {copiedId === plan.id ? 'Copied' : 'Share'}
                     </button>
                     <button

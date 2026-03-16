@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X, Loader2, Sparkles, ChevronRight, ChevronLeft,
-  Check, Share2, Link2, Copy, ExternalLink, BookOpen
+  Check, Share2, Copy, ExternalLink, BookOpen
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
@@ -596,7 +596,7 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
                 {/* Recommended affiliates */}
                 {plan.recommended_affiliates && plan.recommended_affiliates.length > 0 && (
                   <div className="rounded-xl border border-brand/20 bg-brand/5 p-4">
-                    <h3 className="text-[13px] font-semibold text-brand mb-3">Recommended Tools & Services</h3>
+                    <h3 className="text-[13px] font-semibold text-brand mb-3">Recommended Tools</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {plan.recommended_affiliates.map((aff: any, i: number) => (
                         <a
@@ -682,8 +682,8 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
                   onClick={copyShareLink}
                   className="flex items-center gap-1.5 text-[13px] text-text-muted hover:text-text-primary cursor-pointer"
                 >
-                  {copied ? <Check className="h-3.5 w-3.5 text-emerald" /> : <Link2 className="h-3.5 w-3.5" />}
-                  {copied ? 'Copied!' : 'Share Link'}
+                  {copied ? <Check className="h-3.5 w-3.5 text-emerald" /> : <Share2 className="h-3.5 w-3.5" />}
+                  {copied ? 'Copied!' : 'Share'}
                 </button>
                 <button
                   onClick={() => {

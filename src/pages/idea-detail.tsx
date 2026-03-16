@@ -3,7 +3,7 @@ import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, Loader2, Globe, Smartphone, Monitor,
-  Puzzle, Code2, Layers, Bookmark, BookmarkCheck, Calendar, Eye, Users, TrendingUp, DollarSign, Zap, Lock, MessageSquare, Crown, BookOpen, Sparkles
+  Puzzle, Code2, Layers, Bookmark, BookmarkCheck, Calendar, Eye, Users, TrendingUp, DollarSign, Zap, Lock, MessageSquare, Crown, BookOpen
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
@@ -822,8 +822,8 @@ export function IdeaDetailPage() {
             return matched.length > 0 ? (
               <div className="rounded-xl border border-brand/20 bg-surface-0 overflow-hidden">
                 <div className="px-4 py-3 border-b border-brand/20 bg-brand/5">
-                  <h4 className="text-[12px] font-semibold uppercase tracking-wider text-brand flex items-center gap-1.5">
-                    <Sparkles className="h-3 w-3" /> Recommended Tools
+                  <h4 className="text-[12px] font-semibold uppercase tracking-wider text-brand">
+                    Recommended Tools
                   </h4>
                 </div>
                 <div className="px-4 py-3 space-y-2">
