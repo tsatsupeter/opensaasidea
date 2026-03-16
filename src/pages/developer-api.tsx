@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -41,15 +41,7 @@ export function DeveloperApiPage() {
   // Transaction history
   const [transactions, setTransactions] = useState<any[]>([])
 
-  useEffect(() => {
-    if (user) {
-      fetchCredits()
-      fetchApiKeys()
-      fetchTransactions()
-    }
-  }, [user])
-
-  const fetchCredits = async () => {
+  const fetchCredits = useCallback(async () => {
     if (!user) return
     setLoadingCredits(true)
     const { data } = await (supabase.from('api_credits') as any)
@@ -58,18 +50,18 @@ export function DeveloperApiPage() {
       .single()
     setCredits(data)
     setLoadingCredits(false)
-  }
+  }, [user])
 
-  const fetchApiKeys = async () => {
+  const fetchApiKeys = useCallback(async () => {
     if (!user) return
     const { data } = await (supabase.from('api_keys') as any)
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
     setApiKeys(data || [])
-  }
+  }, [user])
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     if (!user) return
     const { data } = await (supabase.from('api_credit_transactions') as any)
       .select('*')
@@ -77,7 +69,15 @@ export function DeveloperApiPage() {
       .order('created_at', { ascending: false })
       .limit(10)
     setTransactions(data || [])
-  }
+  }, [user])
+
+  useEffect(() => {
+    if (user) {
+      fetchCredits()
+      fetchApiKeys()
+      fetchTransactions()
+    }
+  }, [user, fetchCredits, fetchApiKeys, fetchTransactions])
 
   const generateApiKey = async () => {
     if (!user || !newKeyName.trim()) return
