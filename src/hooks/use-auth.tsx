@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import type { Profile } from '@/types/database'
@@ -21,6 +21,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Track current user ID to avoid unnecessary state updates on token refresh.
+  // Token refresh fires onAuthStateChange with a NEW user object (different reference,
+  // same ID). Without this guard, every refresh cascades through useCallback/useEffect
+  // chains across the app, triggering loading states on every page.
+  const userIdRef = useRef<string | null>(null)
 
   const fetchProfile = useCallback(async (userId: string) => {
     try {
@@ -57,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       settled = true
       clearTimeout(timeout)
       setSession(s)
+      userIdRef.current = s?.user?.id ?? null
       setUser(s?.user ?? null)
       if (s?.user) {
         try { await fetchProfile(s.user.id) } catch (e) { console.error('Profile fetch failed:', e) }
@@ -71,14 +78,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, s) => {
+      // Always keep session fresh (supabase client uses it for API calls)
       setSession(s)
-      setUser(s?.user ?? null)
-      if (s?.user) {
-        try { await fetchProfile(s.user.id) } catch (e) { console.error('Profile fetch failed:', e) }
-      } else {
-        setProfile(null)
-        setLoading(false)
+
+      const newUserId = s?.user?.id ?? null
+      const userChanged = newUserId !== userIdRef.current
+      userIdRef.current = newUserId
+
+      if (userChanged) {
+        // Actual sign-in / sign-out — update user + profile
+        setUser(s?.user ?? null)
+        if (s?.user) {
+          try { await fetchProfile(s.user.id) } catch (e) { console.error('Profile fetch failed:', e) }
+        } else {
+          setProfile(null)
+          setLoading(false)
+        }
       }
+      // Token refresh (same user ID) — session updated above, skip user/profile
+      // to avoid cascading re-renders and loading flashes across all pages
     })
 
     return () => {
@@ -86,6 +104,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe()
     }
   }, [fetchProfile])
+
+  // Proactively refresh session when tab becomes visible after idle.
+  // Browsers throttle background timers, so the supabase auto-refresh may
+  // have missed a tick. This ensures API calls work immediately on tab focus.
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        supabase.auth.getSession()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
 
   const signUp = async (email: string, password: string, fullName: string) => {
     const { error } = await supabase.auth.signUp({
