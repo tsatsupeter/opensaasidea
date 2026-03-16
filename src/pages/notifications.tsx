@@ -49,7 +49,7 @@ export function NotificationsPage() {
 
   if (!user) {
     return (
-      <div className="w-full max-w-2xl mx-auto py-20 text-center space-y-3">
+      <div className="w-full max-w-5xl mx-auto py-20 text-center space-y-3">
         <Bell className="h-10 w-10 text-text-muted mx-auto" />
         <h2 className="text-xl font-bold">Sign in to view notifications</h2>
         <p className="text-sm text-text-muted">You need to be logged in to see your notifications.</p>
@@ -79,7 +79,7 @@ export function NotificationsPage() {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-4">
+    <div className="w-full max-w-5xl space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Notifications</h1>

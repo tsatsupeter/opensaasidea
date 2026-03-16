@@ -226,7 +226,7 @@ export function HelpPage() {
   const allFaqs = FAQ_SECTIONS.flatMap(s => s.items.map(i => ({ question: i.q, answer: i.a })))
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
+    <div className="w-full max-w-5xl">
       <SEO
         title="Help Center & FAQ"
         description="Get answers to frequently asked questions about OpenProjectIdea. Learn about AI idea generation, subscriptions, team collaboration, API access, and more."

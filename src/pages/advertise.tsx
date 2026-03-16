@@ -6,7 +6,7 @@ import { siteConfig } from '@/lib/site-config'
 
 export function AdvertisePage() {
   return (
-    <div className="w-full max-w-3xl space-y-6 sm:space-y-8">
+    <div className="w-full max-w-5xl space-y-6 sm:space-y-8">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 rounded-xl bg-brand/10 flex items-center justify-center">

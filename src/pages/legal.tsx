@@ -5,7 +5,7 @@ import { SEO } from '@/components/seo'
 
 function LegalLayout({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="w-full max-w-3xl mx-auto py-6 px-4">
+    <div className="w-full max-w-5xl py-6">
       <Link to="/" className="inline-flex items-center gap-1.5 text-[13px] text-text-muted hover:text-text-primary mb-6">
         <ArrowLeft className="h-4 w-4" /> Back to Feed
       </Link>

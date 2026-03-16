@@ -76,7 +76,7 @@ export function SharedPlanPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="w-full max-w-5xl">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
@@ -249,7 +249,7 @@ export function MyPlansPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="w-full max-w-5xl">
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
         <div className="flex items-center gap-3 mb-6">
           <Link to="/dashboard" className="text-text-muted hover:text-text-primary transition-colors">

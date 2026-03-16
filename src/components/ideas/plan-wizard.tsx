@@ -340,7 +340,7 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          className="bg-surface-0 border border-border rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
+          className="bg-surface-0 border border-border rounded-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
