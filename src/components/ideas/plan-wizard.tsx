@@ -95,6 +95,7 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
             headers,
             body: JSON.stringify({ action: 'generate', plan_id: planData.id }),
           })
+          if (!resp.ok) { const e = await resp.text().catch(() => resp.statusText); throw new Error(e || `HTTP ${resp.status}`) }
           const data = await resp.json()
           if (data.error) { setError(data.error); setStep('error'); return }
           setPlan(prev => prev ? {
@@ -139,6 +140,7 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
           headers,
           body: JSON.stringify({ action: 'get', plan_id: existingPlanId }),
         })
+        if (!resp.ok) { const e = await resp.text().catch(() => resp.statusText); throw new Error(e || `HTTP ${resp.status}`) }
         const data = await resp.json()
         if (data.error) { setError(data.error); setStep('error'); return }
         if (data.plan) {
@@ -153,6 +155,7 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
         headers,
         body: JSON.stringify({ action: 'init', idea_id: idea.id }),
       })
+      if (!resp.ok) { const e = await resp.text().catch(() => resp.statusText); throw new Error(e || `HTTP ${resp.status}`) }
       const data = await resp.json()
       if (data.error) { setError(data.error); setStep('error'); return }
 
@@ -189,6 +192,7 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
         headers,
         body: JSON.stringify({ action: 'answer', plan_id: plan.id, answers }),
       })
+      if (!resp.ok) { const e = await resp.text().catch(() => resp.statusText); throw new Error(e || `HTTP ${resp.status}`) }
       const data = await resp.json()
       if (data.error) { setError(data.error); setStep('error'); return }
 
@@ -221,6 +225,7 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
         headers,
         body: JSON.stringify({ action: 'generate', plan_id: plan.id }),
       })
+      if (!resp.ok) { const e = await resp.text().catch(() => resp.statusText); throw new Error(e || `HTTP ${resp.status}`) }
       const data = await resp.json()
       if (data.error) { setError(data.error); setStep('error'); return }
 
