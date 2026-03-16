@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -54,6 +54,7 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const [otherText, setOtherText] = useState<Record<string, string>>({})
+  const initCalledRef = useRef(false)
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 
@@ -178,7 +179,13 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
   }, [user, idea.id, supabaseUrl, getHeaders, openAuthModal, onClose, existingPlanId, resumePlan])
 
   useEffect(() => {
-    if (open && user) initPlan()
+    if (open && user && !initCalledRef.current) {
+      initCalledRef.current = true
+      initPlan()
+    }
+    if (!open) {
+      initCalledRef.current = false
+    }
   }, [open, user, initPlan])
 
   // Submit answers
