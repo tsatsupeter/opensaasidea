@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useAuthModal } from '@/components/ui/auth-modal'
 import { useToast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
+import { renderMarkdown } from '@/lib/markdown'
 import type { SaasIdea } from '@/types/database'
 
 interface PlanQuestion {
@@ -586,16 +587,7 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
               <div className="space-y-4">
                 {/* Plan markdown rendered */}
                 <div
-                  className="prose prose-sm prose-invert max-w-none
-                    prose-headings:text-text-primary prose-headings:font-bold
-                    prose-h2:text-[16px] prose-h2:border-b prose-h2:border-border prose-h2:pb-1 prose-h2:mt-5
-                    prose-h3:text-[14px] prose-h3:mt-3
-                    prose-p:text-[13px] prose-p:text-text-secondary prose-p:leading-relaxed
-                    prose-li:text-[13px] prose-li:text-text-secondary
-                    prose-strong:text-text-primary
-                    prose-a:text-brand prose-a:no-underline hover:prose-a:underline
-                    prose-code:text-[12px] prose-code:bg-surface-2 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-                  "
+                  className="plan-markdown"
                   dangerouslySetInnerHTML={{
                     __html: renderMarkdown(plan.plan_content)
                   }}
@@ -721,23 +713,3 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
   )
 }
 
-// Simple markdown to HTML renderer
-function renderMarkdown(md: string): string {
-  return md
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-    .replace(/^(\d+)\. (.+)$/gm, '<oli>$2</oli>')
-    .replace(/^- (.+)$/gm, '<uli>$1</uli>')
-    .replace(/(<uli>.*<\/uli>\n?)+/gs, (m) => `<ul>${m.replace(/<\/?uli>/g, (t) => t.replace('uli', 'li'))}</ul>`)
-    .replace(/(<oli>.*<\/oli>\n?)+/gs, (m) => `<ol>${m.replace(/<\/?oli>/g, (t) => t.replace('oli', 'li'))}</ol>`)
-    .replace(/^---$/gm, '<hr />')
-    .replace(/\n{2,}/g, '</p><p>')
-    .replace(/\n/g, '<br />')
-    .replace(/^/, '<p>')
-    .replace(/$/, '</p>')
-}
