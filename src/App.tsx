@@ -30,6 +30,7 @@ import { AboutPage } from '@/pages/about'
 import { HelpPage } from '@/pages/help'
 import { BlogPage } from '@/pages/blog'
 import { NotificationsPage } from '@/pages/notifications'
+import { MyPlansPage, SharedPlanPage } from '@/pages/plans'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -67,6 +68,8 @@ function App() {
                   <Route path="/stats" element={<StatsPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/idea/:slug" element={<IdeaDetailPage />} />
+                  <Route path="/plans" element={<MyPlansPage />} />
+                  <Route path="/plan/:token" element={<SharedPlanPage />} />
                   <Route path="/admin" element={<AdminPage />} />
                   <Route path="/pricing" element={<PricingPage />} />
                   <Route path="/team" element={<TeamPage />} />

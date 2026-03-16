@@ -1,11 +1,22 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-function getApiKeys(): string[] {
+// Resolve secret: admin_secrets first, env var fallback
+async function resolveSecret(key: string, supabase: any): Promise<string | null> {
+  try {
+    const { data } = await supabase.from('admin_secrets').select('value').eq('key', key).single();
+    if (data?.value) return data.value;
+  } catch {}
+  const envVal = Deno.env.get(key);
+  if (envVal) return envVal;
+  return null;
+}
+
+async function resolveApiKeys(supabase: any): Promise<string[]> {
   const keys: string[] = [];
-  const multi = Deno.env.get('RAPIDAPI_KEYS');
-  if (multi) keys.push(...multi.split(',').map((k: string) => k.trim()).filter(Boolean));
-  const single = Deno.env.get('RAPIDAPI_KEY');
+  const multi = await resolveSecret('RAPIDAPI_KEYS', supabase);
+  if (multi) keys.push(...multi.split(',').map(k => k.trim()).filter(Boolean));
+  const single = await resolveSecret('RAPIDAPI_KEY', supabase);
   if (single && !keys.includes(single)) keys.push(single);
   return keys;
 }
@@ -54,9 +65,42 @@ async function collectMarketData(): Promise<string> {
 async function collectRedditData(keys: string[]): Promise<string> {
   if (!keys.length) return '';
   const HOST = 'reddit34.p.rapidapi.com';
-  const SUBS = ['SaaS', 'microsaas', 'startups', 'AppIdeas', 'SomebodyMakeThis', 'SideProject', 'Entrepreneur', 'smallbusiness', 'business_ideas'];
+
+  // Massively expanded subreddit list
+  const SUBS = [
+    // Core SaaS & startup
+    'SaaS', 'microsaas', 'startups', 'AppIdeas', 'SomebodyMakeThis', 'SideProject',
+    'Entrepreneur', 'smallbusiness', 'business_ideas', 'indiehackers',
+    'EntrepreneurRideAlong', 'sweatystartup', 'GrowMyBusiness', 'IMadeThis',
+    // Tech & dev
+    'webdev', 'reactjs', 'node', 'python', 'nocode', 'lowcode', 'automation',
+    'selfhosted', 'ChatGPT', 'LocalLLaMA', 'MachineLearning', 'vibecoding', 'lovable',
+    // Business & marketing
+    'digitalnomad', 'passive_income', 'ecommerce', 'SEO', 'marketing', 'Affiliatemarketing',
+    // Niche verticals
+    'fintech', 'healthIT', 'edtech', 'legaltech', 'proptech', 'cybersecurity',
+    'gamedev', 'RemoteWork', 'ProductManagement', 'datascience',
+    // Pain point communities
+    'Lightbulb', 'CrazyIdeas', 'productivity', 'LifeProTips',
+  ];
+
+  // Keyword searches for high-value idea posts
+  const SEARCH_QUERIES = [
+    'million dollar app idea',
+    '$100K app idea',
+    'SaaS idea nobody built',
+    'wish there was an app',
+    'someone should build',
+    'micro SaaS profitable',
+    'AI startup idea',
+    'niche SaaS opportunity',
+    'problem nobody solved',
+    'tool I would pay for',
+  ];
+
   try {
-    const fetches = SUBS.map(sub => (async () => {
+    // Fetch top posts from subreddits
+    const subFetches = SUBS.map(sub => (async () => {
       for (const k of keys) {
         try {
           const r = await fetchWithTimeout<any>(`https://${HOST}/getTopPostsBySubreddit?subreddit=${sub}&time=week`, { headers: { 'x-rapidapi-host': HOST, 'x-rapidapi-key': k } }, 10000);
@@ -66,22 +110,60 @@ async function collectRedditData(keys: string[]): Promise<string> {
       }
       return [];
     })());
-    const results = await Promise.all(fetches);
+
+    // Keyword searches
+    const searchFetches = SEARCH_QUERIES.map(q => (async () => {
+      for (const k of keys) {
+        try {
+          const r = await fetchWithTimeout<any>(`https://${HOST}/search?query=${encodeURIComponent(q)}&sort=relevance&time=month`, { headers: { 'x-rapidapi-host': HOST, 'x-rapidapi-key': k } }, 10000);
+          if (!r) continue;
+          const posts = r?.data?.posts || r?.data?.children || [];
+          return posts.map((p: any) => { const d = p.data || p; return { title: d.title || '', selftext: (d.selftext || '').slice(0, 400), subreddit: d.subreddit || '', score: d.score || 0, comments: d.num_comments || 0 }; });
+        } catch { continue; }
+      }
+      return [];
+    })());
+
+    const results = await Promise.all([...subFetches, ...searchFetches]);
     const posts = results.flat();
     const seen = new Set<string>(); const unique = posts.filter((p: any) => { const k = p.title.toLowerCase().trim(); if (seen.has(k)) return false; seen.add(k); return true; });
     unique.sort((a: any, b: any) => (b.score + b.comments * 2) - (a.score + a.comments * 2));
     if (!unique.length) return '';
+
     const lines = ['=== REDDIT COMMUNITY INSIGHTS ===', '', 'TOP DISCUSSIONS:'];
-    for (const p of unique.slice(0, 15)) {
+    for (const p of unique.slice(0, 20)) {
       lines.push(`- [r/${p.subreddit}] "${p.title}" (${p.score} pts, ${p.comments} comments)`);
       if (p.selftext && p.selftext.length > 30) lines.push(`  Context: ${p.selftext.slice(0, 250).replace(/\n/g, ' ')}`);
     }
-    const painPosts = unique.filter((p: any) => /wish|need|looking for|frustrated|anyone built|hate|problem|struggle|alternative to|somebody make/i.test(p.title + ' ' + p.selftext));
+
+    const painPosts = unique.filter((p: any) => /wish|need|looking for|frustrated|anyone built|hate|problem|struggle|alternative to|somebody make|someone make|can.t find|doesn.t exist|tired of|broken|annoying|manual|waste time/i.test(p.title + ' ' + p.selftext));
     if (painPosts.length) {
       lines.push('', 'UNMET NEEDS & PAIN POINTS:');
-      for (const p of painPosts.slice(0, 10)) lines.push(`- "${p.title}" [r/${p.subreddit}, ${p.score}pts]`);
+      for (const p of painPosts.slice(0, 12)) {
+        lines.push(`- "${p.title}" [r/${p.subreddit}, ${p.score}pts]`);
+        if (p.selftext && p.selftext.length > 30) lines.push(`  Detail: ${p.selftext.slice(0, 150).replace(/\n/g, ' ')}`);
+      }
     }
-    lines.push('', `Total posts analyzed: ${unique.length} across ${SUBS.length} subreddits`);
+
+    const ideaPosts = unique.filter((p: any) => /idea|concept|would you use|would you pay|validate|million dollar|\$\d+[KMkm]|app idea|saas idea|startup idea|side project/i.test(p.title + ' ' + p.selftext));
+    if (ideaPosts.length) {
+      lines.push('', 'APP IDEAS & VALIDATION REQUESTS:');
+      for (const p of ideaPosts.slice(0, 10)) lines.push(`- "${p.title}" [r/${p.subreddit}, ${p.score}pts]`);
+    }
+
+    const successPosts = unique.filter((p: any) => /\$\d|revenue|mrr|arr|paying (user|customer)|hit \d|profit|income|first sale|ramen profitable/i.test(p.title + ' ' + p.selftext));
+    if (successPosts.length) {
+      lines.push('', 'SUCCESS STORIES & REVENUE SIGNALS:');
+      for (const p of successPosts.slice(0, 8)) lines.push(`- "${p.title}" [r/${p.subreddit}, ${p.score}pts]`);
+    }
+
+    const monetPosts = unique.filter((p: any) => /monetiz|pricing|charge|subscription|freemium|lifetime deal|how much|churn|convert/i.test(p.title + ' ' + p.selftext));
+    if (monetPosts.length) {
+      lines.push('', 'MONETIZATION & PRICING DISCUSSIONS:');
+      for (const p of monetPosts.slice(0, 6)) lines.push(`- "${p.title}" [r/${p.subreddit}, ${p.score}pts]`);
+    }
+
+    lines.push('', `Total: ${unique.length} unique posts from ${SUBS.length} subreddits + ${SEARCH_QUERIES.length} keyword searches`);
     return lines.join('\n');
   } catch { return ''; }
 }
@@ -98,7 +180,12 @@ async function collectTrustMRRData(): Promise<string> {
 async function collectG2Data(keys: string[]): Promise<string> {
   if (!keys.length) return '';
   const HOST = 'g2-data-api.p.rapidapi.com';
-  const cats = ['project-management', 'crm', 'marketing-automation', 'accounting', 'help-desk', 'ai-writing-assistant', 'email-marketing', 'social-media-management'];
+  const cats = [
+    'project-management', 'crm', 'marketing-automation', 'accounting',
+    'help-desk', 'ai-writing-assistant', 'email-marketing', 'social-media-management',
+    'video-conferencing', 'survey', 'appointment-scheduling', 'invoicing',
+    'employee-engagement', 'data-visualization', 'e-signature',
+  ];
   try {
     const results = await Promise.all(cats.map(async cat => {
       for (const k of keys) {
@@ -125,7 +212,17 @@ async function collectG2Data(keys: string[]): Promise<string> {
 async function collectTwitterData(keys: string[]): Promise<string> {
   if (!keys.length) return '';
   const HOST = 'twitter-search-only.p.rapidapi.com';
-  const queries = ['SaaS startup launch', 'micro saas idea', 'built a SaaS', 'need a tool for', 'someone should build', 'just shipped', 'indie hacker', 'side project revenue'];
+  const queries = [
+    'SaaS startup launch', 'micro saas idea', 'built a SaaS',
+    'need a tool for', 'someone should build', 'just shipped',
+    'indie hacker', 'side project revenue',
+    // Expanded queries
+    'million dollar app idea', '$100K side project',
+    'wish there was an app for', 'AI startup idea',
+    'profitable micro SaaS', 'bootstrapped to',
+    'passive income software', 'gap in the market',
+    'no-code business idea', 'underserved niche',
+  ];
   try {
     const results = await Promise.all(queries.map(async q => {
       for (const k of keys) {
@@ -148,12 +245,25 @@ async function collectTwitterData(keys: string[]): Promise<string> {
     for (const t of unique.slice(0, 18)) {
       lines.push(`- @${t.screen_name} (${t.favorites} likes, ${t.retweets} RTs): "${t.text.slice(0, 260)}"`);
     }
-    const painTweets = unique.filter((t: any) => /need a tool|wish there was|someone should build|looking for|frustrated with/i.test(t.text));
+    const painTweets = unique.filter((t: any) => /need a tool|wish there was|someone should build|looking for|frustrated with|why isn.t there|can.t find|tired of/i.test(t.text));
     if (painTweets.length) {
       lines.push('', 'UNMET NEEDS ON X:');
-      for (const t of painTweets.slice(0, 8)) lines.push(`- @${t.screen_name}: "${t.text.slice(0, 220)}"`);
+      for (const t of painTweets.slice(0, 10)) lines.push(`- @${t.screen_name}: "${t.text.slice(0, 220)}"`);
     }
-    lines.push('', `Total tweets analyzed: ${unique.length}`);
+
+    const bigIdeas = unique.filter((t: any) => /million dollar|\$\d+[MmKk]|\$10M|\$100K|\$1M|untapped|underserved|gap in the market|nobody.s building/i.test(t.text));
+    if (bigIdeas.length) {
+      lines.push('', 'HIGH-VALUE IDEA SIGNALS:');
+      for (const t of bigIdeas.slice(0, 8)) lines.push(`- @${t.screen_name}: "${t.text.slice(0, 220)}"`);
+    }
+
+    const launchTweets = unique.filter((t: any) => /just launched|shipped|built a|\$\d.*mrr|revenue|paying (user|customer)|first sale|bootstrapped/i.test(t.text));
+    if (launchTweets.length) {
+      lines.push('', 'RECENT LAUNCHES & SUCCESS:');
+      for (const t of launchTweets.slice(0, 8)) lines.push(`- @${t.screen_name}: "${t.text.slice(0, 220)}"`);
+    }
+
+    lines.push('', `Total tweets analyzed: ${unique.length} across ${queries.length} search queries`);
     return lines.join('\n');
   } catch { return ''; }
 }
@@ -163,28 +273,22 @@ Deno.serve(async (_req: Request) => {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
-    let CRON_SECRET = Deno.env.get('CRON_SECRET') || '';
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       return new Response(JSON.stringify({ error: 'Missing env vars' }), { status: 500 });
     }
 
-    // Resolve CRON_SECRET from admin_secrets if not in env
-    if (!CRON_SECRET) {
-      try {
-        const svcTmp = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        const { data: secretRow } = await svcTmp.from('admin_secrets').select('value').eq('key', 'CRON_SECRET').single();
-        if (secretRow?.value) CRON_SECRET = secretRow.value;
-      } catch {}
-    }
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Auth guard: require admin JWT or CRON_SECRET
+    let CRON_SECRET = '';
+    const cronSecretResolved = await resolveSecret('CRON_SECRET', supabase);
+    if (cronSecretResolved) CRON_SECRET = cronSecretResolved;
+
+    // Auth guard
     const authHeader = _req.headers.get('Authorization') || '';
     const cronHeader = _req.headers.get('x-cron-secret') || '';
     let authorized = false;
 
-    if (CRON_SECRET && cronHeader === CRON_SECRET) {
-      authorized = true;
-    }
+    if (CRON_SECRET && cronHeader === CRON_SECRET) authorized = true;
 
     if (!authorized && authHeader && SUPABASE_ANON_KEY) {
       const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -192,24 +296,19 @@ Deno.serve(async (_req: Request) => {
       });
       const { data: { user } } = await authClient.auth.getUser();
       if (user) {
-        const svc = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        const { data: profile } = await svc.from('profiles').select('role').eq('id', user.id).single();
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
         if (profile?.role === 'admin') authorized = true;
       }
     }
 
-    // If no CRON_SECRET is configured, allow (backwards compatible with existing cron setup)
-    if (!authorized && !CRON_SECRET && !authHeader) {
-      authorized = true;
-    }
+    if (!authorized && !CRON_SECRET && !authHeader) authorized = true;
+    if (!authorized) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
 
-    if (!authorized) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-    }
-
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const apiKeys = getApiKeys();
+    // Resolve API keys from admin_secrets + env
+    const apiKeys = await resolveApiKeys(supabase);
     const targetDate = new Date().toISOString().split('T')[0];
+
+    console.log(`[collect-intelligence] Starting with ${apiKeys.length} API keys`);
 
     const [marketData, redditData, trustmrrData, g2Data, twitterData] = await Promise.all([
       collectMarketData(),
@@ -236,6 +335,8 @@ Deno.serve(async (_req: Request) => {
       await supabase.from('market_intelligence').insert({ target_date: targetDate, ...updateFields });
     }
 
+    console.log(`[collect-intelligence] Done. market=${marketData.length}ch reddit=${redditData.length}ch twitter=${twitterData.length}ch g2=${g2Data.length}ch`);
+
     return new Response(JSON.stringify({
       success: true, target_date: targetDate,
       collection_run: existing ? (existing.collection_runs || 0) + 1 : 1,
@@ -249,6 +350,7 @@ Deno.serve(async (_req: Request) => {
       api_keys_available: apiKeys.length,
     }), { headers: { 'Content-Type': 'application/json' } });
   } catch (err) {
+    console.error('[collect-intelligence] Error:', String(err));
     return new Response(JSON.stringify({ error: String(err) }), { status: 500 });
   }
 });

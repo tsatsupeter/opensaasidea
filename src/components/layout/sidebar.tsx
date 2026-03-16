@@ -4,7 +4,7 @@ import {
   Compass, LayoutDashboard, Home, Moon, Sun,
   LogIn, LogOut, Shield, ChevronDown, Flame, TrendingUp,
   BarChart3, User, Users, Camera, Settings, ChevronRight, Crown,
-  Bookmark, BookmarkCheck, Megaphone, Code2, Info, HelpCircle, FileText, ShieldCheck, Newspaper
+  Bookmark, BookmarkCheck, Megaphone, Code2, Info, HelpCircle, FileText, ShieldCheck, Newspaper, BookOpen
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/use-auth'
@@ -200,6 +200,7 @@ export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
                     className="overflow-hidden"
                   >
                     <NavLink href="/dashboard" icon={LayoutDashboard} label="Dashboard" />
+                    <NavLink href="/plans" icon={BookOpen} label="My Plans" />
                     <NavLink href="/team" icon={Users} label="Team" />
                     <NavLink href="/stats" icon={BarChart3} label="Stats" />
 

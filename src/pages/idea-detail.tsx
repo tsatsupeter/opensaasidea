@@ -3,7 +3,7 @@ import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, Loader2, Globe, Smartphone, Monitor,
-  Puzzle, Code2, Layers, Bookmark, BookmarkCheck, Calendar, Eye, Users, TrendingUp, DollarSign, Zap, Lock, MessageSquare, Crown
+  Puzzle, Code2, Layers, Bookmark, BookmarkCheck, Calendar, Eye, Users, TrendingUp, DollarSign, Zap, Lock, MessageSquare, Crown, BookOpen, Sparkles
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
@@ -23,7 +23,8 @@ import { UpgradePrompt } from '@/components/subscription/upgrade-prompt'
 import { SEO, useBuildIdeaSchema, useBuildBreadcrumbSchema } from '@/components/seo'
 import { formatCurrency, formatNumber, timeAgo } from '@/lib/utils'
 import { categoryColor, toSlug, useCategories } from '@/lib/categories'
-import { getAffiliateLink } from '@/lib/affiliates'
+import { getAffiliateLink, matchAffiliatesForIdea } from '@/lib/affiliates'
+import { PlanWizard } from '@/components/ideas/plan-wizard'
 import { siteConfig } from '@/lib/site-config'
 import type { SaasIdea, PricingTier, TeamRole, TechStack, Competitor } from '@/types/database'
 
@@ -51,6 +52,7 @@ export function IdeaDetailPage() {
   const { isPro, isFree, isTeam, createCheckout } = useSubscription()
   const { team, shareIdeaToTeam } = useTeam()
   const [sharingToTeam, setSharingToTeam] = useState(false)
+  const [planWizardOpen, setPlanWizardOpen] = useState(false)
   const { toast } = useToast()
   const buildIdeaSchema = useBuildIdeaSchema()
   const buildBreadcrumbSchema = useBuildBreadcrumbSchema()
@@ -568,6 +570,12 @@ export function IdeaDetailPage() {
                 exportingPDF={exporting}
                 canExportPDF={canViewPro}
               />
+              <button
+                onClick={() => setPlanWizardOpen(true)}
+                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-brand hover:bg-brand/10 transition-colors cursor-pointer"
+              >
+                <BookOpen className="h-3.5 w-3.5" /> Plan
+              </button>
               {isTeam && team && (
                 <button
                   onClick={async () => {
@@ -808,6 +816,43 @@ export function IdeaDetailPage() {
             </div>
           )}
 
+          {/* Recommended Tools — AI-matched affiliates */}
+          {(() => {
+            const matched = matchAffiliatesForIdea(idea as any)
+            return matched.length > 0 ? (
+              <div className="rounded-xl border border-brand/20 bg-surface-0 overflow-hidden">
+                <div className="px-4 py-3 border-b border-brand/20 bg-brand/5">
+                  <h4 className="text-[12px] font-semibold uppercase tracking-wider text-brand flex items-center gap-1.5">
+                    <Sparkles className="h-3 w-3" /> Recommended Tools
+                  </h4>
+                </div>
+                <div className="px-4 py-3 space-y-2">
+                  {matched.slice(0, 5).map((aff, i) => (
+                    <a
+                      key={i}
+                      href={aff.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2.5 p-2 -mx-1 rounded-lg hover:bg-surface-2 transition-colors group"
+                    >
+                      {aff.logo_url ? (
+                        <img src={aff.logo_url} alt={aff.display_name} className="h-6 w-6 rounded object-contain" />
+                      ) : (
+                        <div className="h-6 w-6 rounded bg-brand/10 flex items-center justify-center shrink-0">
+                          <span className="text-[9px] font-bold text-brand">{aff.display_name[0]}</span>
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-semibold text-text-primary group-hover:text-brand truncate">{aff.display_name}</p>
+                        <p className="text-[9px] text-text-muted truncate">{aff.tag}</p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : null
+          })()}
+
           {/* Footer */}
           <div className="px-1 py-3 space-y-2">
             <div className="flex flex-wrap gap-x-3 gap-y-1">
@@ -821,6 +866,9 @@ export function IdeaDetailPage() {
           </div>
         </div>
       </aside>
+
+      {/* Plan Wizard Modal */}
+      <PlanWizard idea={idea} open={planWizardOpen} onClose={() => setPlanWizardOpen(false)} />
     </div>
   )
 }

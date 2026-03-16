@@ -1,6 +1,7 @@
 import { supabase } from './supabase'
 import { getMarketIntelligence, buildMarketContext, getRedditInsights, getTrustMRRInsights, getG2Insights, getTwitterInsights } from './market-data'
 import { siteConfig } from './site-config'
+import { matchAffiliatesForIdea } from './affiliates'
 
 const MAX_RETRIES = 3
 
@@ -448,6 +449,16 @@ export async function saveIdeaToSupabase(
     pros: idea.pros as string[],
     cons: idea.cons as string[],
     ai_model_used: idea.ai_model_used as string || 'deepseek/deepseek-chat',
+    recommended_affiliates: matchAffiliatesForIdea({
+      title: idea.title as string,
+      description: idea.description as string,
+      category: idea.category as string,
+      platform: idea.platform as string,
+      monetization_model: idea.monetization_model as string,
+      tech_stack: idea.tech_stack as Record<string, string[]>,
+      marketing_strategy: idea.marketing_strategy as any,
+      seo_strategy: idea.seo_strategy as any,
+    }),
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
