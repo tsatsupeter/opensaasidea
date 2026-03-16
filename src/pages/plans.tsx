@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   BookOpen, ArrowLeft, ExternalLink, Copy, Check,
-  Share2, Trash2, Globe, Lock, Clock, Play
+  Share2, Trash2, Clock, Play, X, Link2, Twitter, Linkedin
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
@@ -173,6 +173,7 @@ export function MyPlansPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [resumingPlan, setResumingPlan] = useState<PlanRow | null>(null)
   const [resumeIdea, setResumeIdea] = useState<SaasIdea | null>(null)
+  const [sharingPlan, setSharingPlan] = useState<PlanRow | null>(null)
 
   const fetchPlans = useCallback(async () => {
     if (!user) return
@@ -217,13 +218,6 @@ export function MyPlansPage() {
     await (supabase.from('idea_plans') as any).delete().eq('id', id)
     setPlans(prev => prev.filter(p => p.id !== id))
     toast('Plan deleted')
-  }
-
-  const togglePublic = async (plan: PlanRow) => {
-    const newVal = !plan.is_public
-    await (supabase.from('idea_plans') as any).update({ is_public: newVal }).eq('id', plan.id)
-    setPlans(prev => prev.map(p => p.id === plan.id ? { ...p, is_public: newVal } : p))
-    toast(newVal ? 'Plan is now public' : 'Plan is now private')
   }
 
   const copyShareLink = (plan: PlanRow) => {
@@ -339,11 +333,10 @@ export function MyPlansPage() {
                 {plan.status === 'complete' && (
                   <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border" onClick={e => e.stopPropagation()}>
                     <button
-                      onClick={() => copyShareLink(plan)}
+                      onClick={() => setSharingPlan(plan)}
                       className="flex items-center gap-1 text-[11px] text-text-muted hover:text-text-primary px-2 py-1 rounded hover:bg-surface-2 transition-colors cursor-pointer"
                     >
-                      {copiedId === plan.id ? <Check className="h-3 w-3 text-emerald" /> : <Share2 className="h-3 w-3" />}
-                      {copiedId === plan.id ? 'Copied' : 'Share'}
+                      <Share2 className="h-3 w-3" /> Share
                     </button>
                     <button
                       onClick={() => {
@@ -355,13 +348,6 @@ export function MyPlansPage() {
                       className="flex items-center gap-1 text-[11px] text-text-muted hover:text-text-primary px-2 py-1 rounded hover:bg-surface-2 transition-colors cursor-pointer"
                     >
                       <Copy className="h-3 w-3" /> Copy
-                    </button>
-                    <button
-                      onClick={() => togglePublic(plan)}
-                      className="flex items-center gap-1 text-[11px] text-text-muted hover:text-text-primary px-2 py-1 rounded hover:bg-surface-2 transition-colors cursor-pointer"
-                    >
-                      {plan.is_public ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
-                      {plan.is_public ? 'Public' : 'Private'}
                     </button>
                     <div className="flex-1" />
                     <button
@@ -391,6 +377,92 @@ export function MyPlansPage() {
             fetchPlans()
           }}
         />
+      )}
+
+      {/* Share Modal */}
+      {sharingPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setSharingPlan(null)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="w-full max-w-sm mx-4 rounded-xl border border-border bg-surface-1 shadow-2xl overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <h3 className="text-[15px] font-bold text-text-primary">Share Plan</h3>
+              <button onClick={() => setSharingPlan(null)} className="h-7 w-7 flex items-center justify-center rounded-full hover:bg-surface-2 transition-colors cursor-pointer">
+                <X className="h-4 w-4 text-text-muted" />
+              </button>
+            </div>
+            <div className="p-5 space-y-3">
+              {/* Share link input */}
+              {sharingPlan.share_token && (
+                <div className="flex items-center gap-2">
+                  <input
+                    readOnly
+                    value={`${window.location.origin}/plan/${sharingPlan.share_token}`}
+                    className="flex-1 text-[12px] bg-surface-0 border border-border rounded-lg px-3 py-2 text-text-secondary truncate"
+                    onFocus={e => e.target.select()}
+                  />
+                  <button
+                    onClick={() => copyShareLink(sharingPlan)}
+                    className="shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-brand text-white hover:bg-brand/90 transition-colors cursor-pointer"
+                  >
+                    {copiedId === sharingPlan.id ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
+                  </button>
+                </div>
+              )}
+
+              {/* Share options */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    if (sharingPlan.plan_content) {
+                      navigator.clipboard.writeText(sharingPlan.plan_content)
+                      toast('Plan copied as markdown!')
+                    }
+                  }}
+                  className="flex items-center gap-2 text-[12px] font-medium text-text-secondary px-3 py-2.5 rounded-lg border border-border hover:bg-surface-2 transition-colors cursor-pointer"
+                >
+                  <Copy className="h-3.5 w-3.5" /> Copy Markdown
+                </button>
+                <button
+                  onClick={() => {
+                    if (!sharingPlan.share_token) return
+                    const url = `${window.location.origin}/plan/${sharingPlan.share_token}`
+                    const title = (sharingPlan.idea as any)?.title || 'My Plan'
+                    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out my implementation plan for "${title}"`)}&url=${encodeURIComponent(url)}`, '_blank')
+                  }}
+                  className="flex items-center gap-2 text-[12px] font-medium text-text-secondary px-3 py-2.5 rounded-lg border border-border hover:bg-surface-2 transition-colors cursor-pointer"
+                >
+                  <Twitter className="h-3.5 w-3.5" /> Share on X
+                </button>
+                <button
+                  onClick={() => {
+                    if (!sharingPlan.share_token) return
+                    const url = `${window.location.origin}/plan/${sharingPlan.share_token}`
+                    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank')
+                  }}
+                  className="flex items-center gap-2 text-[12px] font-medium text-text-secondary px-3 py-2.5 rounded-lg border border-border hover:bg-surface-2 transition-colors cursor-pointer"
+                >
+                  <Linkedin className="h-3.5 w-3.5" /> LinkedIn
+                </button>
+                <button
+                  onClick={() => {
+                    if (!sharingPlan.share_token) return
+                    const url = `${window.location.origin}/plan/${sharingPlan.share_token}`
+                    window.open(url, '_blank')
+                  }}
+                  className="flex items-center gap-2 text-[12px] font-medium text-text-secondary px-3 py-2.5 rounded-lg border border-border hover:bg-surface-2 transition-colors cursor-pointer"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" /> Open Plan
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   )
