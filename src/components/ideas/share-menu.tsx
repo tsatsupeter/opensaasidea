@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Share2, Link2, FileText, Eye, ExternalLink, Check,
@@ -49,23 +50,56 @@ export function ShareMenu({ idea, className, onExportPDF, exportingPDF, canExpor
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
   const [showMarkdown, setShowMarkdown] = useState(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null)
 
   const ideaUrl = `${window.location.origin}/idea/${idea.slug || idea.id}`
   const markdown = ideaToMarkdown(idea, ideaUrl)
   const prompt = buildPrompt(idea)
   const encodedPrompt = encodeURIComponent(prompt)
 
+  const updatePosition = useCallback(() => {
+    if (!buttonRef.current) return
+    const rect = buttonRef.current.getBoundingClientRect()
+    const menuWidth = 224 // w-56 = 14rem = 224px
+    const menuHeight = 380 // approximate max height
+    const viewportH = window.innerHeight
+    const viewportW = window.innerWidth
+
+    // Prefer opening upward; if not enough space, open downward
+    let top = rect.top - menuHeight - 8
+    if (top < 8) top = rect.bottom + 8
+
+    // Align right edge to button right; clamp to viewport
+    let left = rect.right - menuWidth
+    if (left < 8) left = 8
+    if (left + menuWidth > viewportW - 8) left = viewportW - menuWidth - 8
+
+    setMenuPos({ top, left })
+  }, [])
+
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (
+        menuRef.current && !menuRef.current.contains(e.target as Node) &&
+        buttonRef.current && !buttonRef.current.contains(e.target as Node)
+      ) {
         setOpen(false)
         setShowMarkdown(false)
       }
     }
-    if (open) document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [open])
+    const handleScroll = () => { if (open) { setOpen(false); setShowMarkdown(false) } }
+    if (open) {
+      document.addEventListener('mousedown', handleClick)
+      window.addEventListener('scroll', handleScroll, true)
+      updatePosition()
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      window.removeEventListener('scroll', handleScroll, true)
+    }
+  }, [open, updatePosition])
 
   const copyText = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
@@ -90,8 +124,9 @@ export function ShareMenu({ idea, className, onExportPDF, exportingPDF, canExpor
   ]
 
   return (
-    <div ref={menuRef} className={cn('relative', className)}>
+    <div className={cn('relative', className)}>
       <button
+        ref={buttonRef}
         onClick={(e) => { e.stopPropagation(); setOpen(!open); setShowMarkdown(false) }}
         className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-text-muted hover:bg-surface-2 transition-colors cursor-pointer"
       >
@@ -99,14 +134,16 @@ export function ShareMenu({ idea, className, onExportPDF, exportingPDF, canExpor
         <span className="hidden sm:inline">Share</span>
       </button>
 
-      <AnimatePresence>
-        {open && (
+      {open && menuPos && createPortal(
+        <AnimatePresence>
           <motion.div
+            ref={menuRef}
             initial={{ opacity: 0, y: -4, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-full mb-2 right-0 z-50 w-56 rounded-xl border border-border bg-surface-1 shadow-xl overflow-hidden"
+            style={{ position: 'fixed', top: menuPos.top, left: menuPos.left }}
+            className="z-[999] w-56 rounded-xl border border-border bg-surface-1 shadow-xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="py-1">
@@ -186,8 +223,9 @@ export function ShareMenu({ idea, className, onExportPDF, exportingPDF, canExpor
               )}
             </AnimatePresence>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   )
 }

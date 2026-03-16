@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/use-auth'
 import { siteConfig, getBrandParts } from '@/lib/site-config'
+import { useSiteSettings } from '@/hooks/use-site-settings'
 
 const navLinks = [
   { href: '/explore', label: 'Explore', icon: Compass },
@@ -14,7 +15,11 @@ const navLinks = [
 export function Navbar() {
   const { user, signOut } = useAuth()
   const location = useLocation()
+  const { getSetting } = useSiteSettings()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const logoUrl = getSetting('logo_url', '/logo.png')
+  const siteName = getSetting('site_name', siteConfig.name)
+  const brandWord = getSetting('brand_word', siteConfig.brandWord)
 
   return (
     <motion.header
@@ -25,9 +30,9 @@ export function Navbar() {
     >
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-2 group">
-          <img src="/logo.png" alt={siteConfig.logoAlt} className="h-9 w-9 rounded-lg object-contain" />
+          <img src={logoUrl} alt={siteName} className="h-9 w-9 rounded-lg object-contain" />
           <span className="text-lg font-bold tracking-tight">
-            {getBrandParts().prefix}<span className="text-brand">{getBrandParts().brand}</span>{getBrandParts().suffix}
+            Open<span className="text-brand">{brandWord}</span>Idea
           </span>
         </Link>
 

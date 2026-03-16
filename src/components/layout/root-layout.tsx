@@ -8,6 +8,7 @@ import { SearchBar } from '@/components/ui/search-bar'
 import { NotificationsBell } from '@/components/ui/notifications-bell'
 import { useAuth } from '@/hooks/use-auth'
 import { useAuthModal } from '@/components/ui/auth-modal'
+import { useSiteSettings } from '@/hooks/use-site-settings'
 import { Button } from '@/components/ui/button'
 
 const NO_SIDEBAR_ROUTES = ['/login', '/register', '/onboarding']
@@ -17,7 +18,11 @@ export function RootLayout() {
   const location = useLocation()
   const { user, profile } = useAuth()
   const { openAuthModal } = useAuthModal()
+  const { getSetting } = useSiteSettings()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const logoUrl = getSetting('logo_url', '/logo.png')
+  const siteName = getSetting('site_name', siteConfig.name)
+  const brandWord = getSetting('brand_word', siteConfig.brandWord)
   const noSidebar = NO_SIDEBAR_ROUTES.includes(location.pathname)
   const noRight = NO_RIGHT_SIDEBAR_ROUTES.includes(location.pathname) || location.pathname.startsWith('/idea/')
 
@@ -44,9 +49,9 @@ export function RootLayout() {
               <Menu className="h-5 w-5 text-text-secondary" />
             </button>
             <Link to="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt={siteConfig.logoAlt} className="h-8 w-8 rounded-lg object-contain" />
+              <img src={logoUrl} alt={siteName} className="h-8 w-8 rounded-lg object-contain" />
               <span className="text-sm font-bold hidden sm:block">
-                {getBrandParts().prefix}<span className="text-brand">{getBrandParts().brand}</span>{getBrandParts().suffix}
+                Open<span className="text-brand">{brandWord}</span>Idea
               </span>
             </Link>
           </div>

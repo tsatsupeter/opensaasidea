@@ -20,7 +20,7 @@ import { VoteButton } from '@/components/ideas/vote-button'
 import { ShareMenu } from '@/components/ideas/share-menu'
 import { CommentSection } from '@/components/comments/comment-section'
 import { UpgradePrompt } from '@/components/subscription/upgrade-prompt'
-import { SEO, buildIdeaSchema, buildBreadcrumbSchema } from '@/components/seo'
+import { SEO, useBuildIdeaSchema, useBuildBreadcrumbSchema } from '@/components/seo'
 import { formatCurrency, formatNumber, timeAgo } from '@/lib/utils'
 import { categoryColor, toSlug, useCategories } from '@/lib/categories'
 import { getAffiliateLink } from '@/lib/affiliates'
@@ -52,6 +52,8 @@ export function IdeaDetailPage() {
   const { team, shareIdeaToTeam } = useTeam()
   const [sharingToTeam, setSharingToTeam] = useState(false)
   const { toast } = useToast()
+  const buildIdeaSchema = useBuildIdeaSchema()
+  const buildBreadcrumbSchema = useBuildBreadcrumbSchema()
 
   // Determines if user can view Pro content (Pro subscriber OR purchased report for this idea)
   const canViewPro = isPro || hasPurchasedReport

@@ -46,13 +46,13 @@ interface SettingRow {
 }
 
 const SETTING_CATEGORIES = [
-  { id: 'general', label: 'General', icon: Globe },
-  { id: 'seo', label: 'SEO & Meta', icon: Search },
-  { id: 'branding', label: 'Branding', icon: Zap },
-  { id: 'social', label: 'Social Links', icon: ExternalLink },
-  { id: 'payments', label: 'Payments', icon: CreditCard },
-  { id: 'advanced', label: 'Advanced', icon: Cpu },
-  { id: 'security', label: 'Security', icon: Lock },
+  { id: 'general', label: 'General', icon: Globe, desc: 'Site name, tagline, domain, and contact info. Changes here update the site header, footer, and all branding references.' },
+  { id: 'seo', label: 'SEO & Meta', icon: Search, desc: 'Meta title, description, keywords, OG tags, and canonical URL. Changes propagate to all page meta tags, social cards, and structured data.' },
+  { id: 'branding', label: 'Branding', icon: Zap, desc: 'Logo, favicon, hero text, brand colors, and visual identity. Changes update the header, hero section, and all UI components.' },
+  { id: 'social', label: 'Social Links', icon: ExternalLink, desc: 'Social media profiles and handles. Shown in the footer and used in Twitter card meta tags.' },
+  { id: 'payments', label: 'Payments', icon: CreditCard, desc: 'Payment gateway config (Dodo Payments). Product IDs, API keys, and live/test mode toggle.' },
+  { id: 'advanced', label: 'Advanced', icon: Cpu, desc: 'Google Analytics, custom scripts, maintenance mode, and announcement banners.' },
+  { id: 'security', label: 'Security', icon: Lock, desc: 'Webhook secrets and cron job authentication tokens used by Edge Functions.' },
 ]
 
 interface AffiliateRow {
@@ -1501,9 +1501,12 @@ export function AdminPage() {
                   <Card>
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">
-                          {SETTING_CATEGORIES.find(c => c.id === settingsCat)?.label || 'Settings'}
-                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                          {(() => { const CatIcon = SETTING_CATEGORIES.find(c => c.id === settingsCat)?.icon || Globe; return <CatIcon className="h-4 w-4 text-brand" /> })()}
+                          <CardTitle className="text-base">
+                            {SETTING_CATEGORIES.find(c => c.id === settingsCat)?.label || 'Settings'}
+                          </CardTitle>
+                        </div>
                         <Button
                           size="sm"
                           onClick={saveSettings}
@@ -1513,6 +1516,12 @@ export function AdminPage() {
                           {savingSettings ? 'Saving...' : 'Save Changes'}
                         </Button>
                       </div>
+                      {SETTING_CATEGORIES.find(c => c.id === settingsCat)?.desc && (
+                        <p className="text-xs text-text-muted mt-2 flex items-start gap-1.5">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-brand shrink-0 mt-0.5" />
+                          {SETTING_CATEGORIES.find(c => c.id === settingsCat)?.desc}
+                        </p>
+                      )}
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-5">

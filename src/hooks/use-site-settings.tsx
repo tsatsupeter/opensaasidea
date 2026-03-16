@@ -37,62 +37,10 @@ export function SiteSettingsProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Apply SEO meta tags whenever settings change
+  // Apply non-Helmet-managed tags (favicon, GA) when settings change
+  // Meta tags (title, description, OG, canonical, etc.) are managed by the SEO component via react-helmet
   useEffect(() => {
     if (loading) return
-
-    // Title
-    const title = settings.meta_title
-    if (title) document.title = title
-
-    // Meta description
-    const desc = settings.meta_description
-    if (desc) {
-      let el = document.querySelector('meta[name="description"]')
-      if (el) el.setAttribute('content', desc)
-    }
-
-    // Meta keywords
-    const keywords = settings.meta_keywords
-    if (keywords) {
-      let el = document.querySelector('meta[name="keywords"]')
-      if (!el) {
-        el = document.createElement('meta')
-        el.setAttribute('name', 'keywords')
-        document.head.appendChild(el)
-      }
-      el.setAttribute('content', keywords)
-    }
-
-    // OG tags
-    const ogTags: Record<string, string> = {
-      'og:title': settings.og_title || '',
-      'og:description': settings.og_description || '',
-      'og:image': settings.og_image || '',
-      'og:url': settings.canonical_url || '',
-    }
-    for (const [prop, content] of Object.entries(ogTags)) {
-      if (!content) continue
-      let el = document.querySelector(`meta[property="${prop}"]`)
-      if (!el) {
-        el = document.createElement('meta')
-        el.setAttribute('property', prop)
-        document.head.appendChild(el)
-      }
-      el.setAttribute('content', content)
-    }
-
-    // Canonical
-    const canonical = settings.canonical_url
-    if (canonical) {
-      let el = document.querySelector('link[rel="canonical"]')
-      if (!el) {
-        el = document.createElement('link')
-        el.setAttribute('rel', 'canonical')
-        document.head.appendChild(el)
-      }
-      el.setAttribute('href', canonical)
-    }
 
     // Favicon
     const favicon = settings.favicon_url

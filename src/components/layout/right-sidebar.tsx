@@ -3,6 +3,7 @@ import { ThumbsUp } from 'lucide-react'
 import { useRecent } from '@/hooks/use-recent'
 import { categoryColor, toSlug } from '@/lib/categories'
 import { siteConfig } from '@/lib/site-config'
+import { useSiteSettings } from '@/hooks/use-site-settings'
 
 function timeAgoShort(ts: number): string {
   const seconds = Math.floor((Date.now() - ts) / 1000)
@@ -14,6 +15,8 @@ function timeAgoShort(ts: number): string {
 
 export function RightSidebar() {
   const { recentItems, clearRecent } = useRecent()
+  const { getSetting } = useSiteSettings()
+  const copyrightText = getSetting('copyright_text', `${siteConfig.name}, Inc. © ${new Date().getFullYear()}. All rights reserved.`)
 
   return (
     <aside className="fixed right-0 top-14 bottom-0 w-[300px] border-l border-border bg-[var(--sidebar-bg)] z-30 hidden xl:flex flex-col">
@@ -81,7 +84,7 @@ export function RightSidebar() {
           <Link to="/accessibility" className="text-[11px] text-text-muted hover:text-text-secondary hover:underline">Accessibility</Link>
         </div>
         <p className="text-[10px] text-text-muted">
-          {siteConfig.name}, Inc. © {new Date().getFullYear()}. All rights reserved.
+          {copyrightText}
         </p>
       </div>
     </aside>
