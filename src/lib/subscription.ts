@@ -190,6 +190,11 @@ export function getProductId(tier: 'pro' | 'team', billing: 'monthly' | 'yearly'
   return DODO_PRODUCTS[key]
 }
 
+export function getDeepDiveProductId(): string {
+  if (_dodoCacheLoaded && _dodoCache.dodo_product_deep_dive) return _dodoCache.dodo_product_deep_dive
+  return DODO_PRODUCTS.deep_dive_report
+}
+
 export function getRemainingIdeas(tier: SubscriptionTier, dailyCount: number): number | null {
   const config = getTierConfig(tier)
   if (config.limits.dailyIdeas === -1) return null // unlimited

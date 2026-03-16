@@ -14,7 +14,7 @@ import { useSubscription } from '@/hooks/use-subscription'
 import { useTeam } from '@/hooks/use-team'
 import { useToast } from '@/components/ui/toast'
 import { exportIdeaToPDF } from '@/lib/pdf-export'
-import { DODO_PRODUCTS } from '@/lib/subscription'
+import { getDeepDiveProductId } from '@/lib/subscription'
 import { IdeaDetailSkeleton } from '@/components/ui/skeleton'
 import { VoteButton } from '@/components/ideas/vote-button'
 import { ShareMenu } from '@/components/ideas/share-menu'
@@ -120,7 +120,7 @@ export function IdeaDetailPage() {
     if (!idea) return
     setBuyingReport(true)
     try {
-      const url = await createCheckout(DODO_PRODUCTS.deep_dive_report, {
+      const url = await createCheckout(getDeepDiveProductId(), {
         idea_id: idea.id,
         idea_slug: idea.slug || idea.id,
       })
