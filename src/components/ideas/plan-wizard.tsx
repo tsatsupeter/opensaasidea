@@ -38,9 +38,10 @@ interface PlanWizardProps {
   idea: SaasIdea
   open: boolean
   onClose: () => void
+  existingPlanId?: string | null
 }
 
-export function PlanWizard({ idea, open, onClose }: PlanWizardProps) {
+export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardProps) {
   const { user } = useAuth()
   const { openAuthModal } = useAuthModal()
   const { toast } = useToast()
@@ -51,6 +52,7 @@ export function PlanWizard({ idea, open, onClose }: PlanWizardProps) {
   const [currentQ, setCurrentQ] = useState(0)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [otherText, setOtherText] = useState<Record<string, string>>({})
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 
@@ -63,12 +65,91 @@ export function PlanWizard({ idea, open, onClose }: PlanWizardProps) {
     }
   }, [])
 
-  // Init: summarize idea + generate questions
+  // Restore saved answers from questions that already have answers
+  const restoreAnswers = useCallback((questions: PlanQuestion[]) => {
+    const restored: Record<string, string | string[]> = {}
+    let firstUnanswered = 0
+    for (let i = 0; i < questions.length; i++) {
+      if (questions[i].answer !== undefined && questions[i].answer !== null) {
+        restored[questions[i].id] = questions[i].answer!
+      } else if (firstUnanswered === i) {
+        firstUnanswered = i
+      }
+    }
+    // Find first unanswered
+    const idx = questions.findIndex(q => !restored[q.id])
+    return { restored, firstUnanswered: idx >= 0 ? idx : questions.length - 1 }
+  }, [])
+
+  // Resume an existing plan based on its status
+  const resumePlan = useCallback(async (planData: PlanData) => {
+    setPlan(planData)
+    if (planData.status === 'complete' && planData.plan_content) {
+      setStep('plan')
+    } else if (planData.status === 'planning') {
+      // Plan was in generation phase — resume generating
+      setStep('generating')
+      // Trigger generation
+      setTimeout(async () => {
+        try {
+          const headers = await getHeaders()
+          const resp = await fetch(`${supabaseUrl}/functions/v1/plan-idea`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ action: 'generate', plan_id: planData.id }),
+          })
+          const data = await resp.json()
+          if (data.error) { setError(data.error); setStep('error'); return }
+          setPlan(prev => prev ? {
+            ...prev,
+            plan_content: data.plan_content,
+            recommended_affiliates: data.recommended_affiliates || [],
+            status: 'complete',
+            share_token: data.share_token,
+          } : prev)
+          setStep('plan')
+        } catch (err) {
+          setError(String(err))
+          setStep('error')
+        }
+      }, 100)
+    } else if (planData.status === 'questioning' && planData.questions?.length > 0) {
+      // Resume answering questions
+      const { restored, firstUnanswered } = restoreAnswers(planData.questions)
+      setAnswers(restored)
+      setCurrentQ(firstUnanswered)
+      setStep('questions')
+    } else {
+      // Default: show summary
+      setAnswers({})
+      setCurrentQ(0)
+      setStep('summary')
+    }
+  }, [getHeaders, supabaseUrl, restoreAnswers])
+
+  // Init: summarize idea + generate questions OR resume existing plan
   const initPlan = useCallback(async () => {
     if (!user) { openAuthModal('login'); onClose(); return }
     setStep('loading')
     setError('')
+    setOtherText({})
     try {
+      // If resuming an existing plan directly (from My Plans page)
+      if (existingPlanId) {
+        const headers = await getHeaders()
+        const resp = await fetch(`${supabaseUrl}/functions/v1/plan-idea`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ action: 'get', plan_id: existingPlanId }),
+        })
+        const data = await resp.json()
+        if (data.error) { setError(data.error); setStep('error'); return }
+        if (data.plan) {
+          await resumePlan(data.plan)
+          return
+        }
+      }
+
       const headers = await getHeaders()
       const resp = await fetch(`${supabaseUrl}/functions/v1/plan-idea`, {
         method: 'POST',
@@ -79,9 +160,8 @@ export function PlanWizard({ idea, open, onClose }: PlanWizardProps) {
       if (data.error) { setError(data.error); setStep('error'); return }
 
       if (data.existing_plan) {
-        // User already has a complete plan
-        setPlan(data.existing_plan)
-        setStep('plan')
+        // User has an existing plan — resume from wherever they left off
+        await resumePlan(data.existing_plan)
         return
       }
 
@@ -95,7 +175,7 @@ export function PlanWizard({ idea, open, onClose }: PlanWizardProps) {
       setError(String(err))
       setStep('error')
     }
-  }, [user, idea.id, supabaseUrl, getHeaders, openAuthModal, onClose])
+  }, [user, idea.id, supabaseUrl, getHeaders, openAuthModal, onClose, existingPlanId, resumePlan])
 
   useEffect(() => {
     if (open && user) initPlan()
@@ -163,6 +243,26 @@ export function PlanWizard({ idea, open, onClose }: PlanWizardProps) {
 
   const handleAnswer = (questionId: string, value: string | string[]) => {
     setAnswers(prev => ({ ...prev, [questionId]: value }))
+    // Clear other text if switching away from Other
+    if (value !== 'Other') {
+      setOtherText(prev => { const n = { ...prev }; delete n[questionId]; return n })
+    }
+  }
+
+  const handleOtherSelect = (questionId: string) => {
+    // When "Other" is selected for a choice, set a placeholder and show input
+    setAnswers(prev => ({ ...prev, [questionId]: 'Other' }))
+    setOtherText(prev => ({ ...prev, [questionId]: prev[questionId] || '' }))
+  }
+
+  const handleOtherTextChange = (questionId: string, text: string) => {
+    setOtherText(prev => ({ ...prev, [questionId]: text }))
+    // Update the actual answer with the custom text (prefixed so AI knows)
+    if (text.trim()) {
+      setAnswers(prev => ({ ...prev, [questionId]: `Other: ${text}` }))
+    } else {
+      setAnswers(prev => ({ ...prev, [questionId]: 'Other' }))
+    }
   }
 
   const toggleMultiAnswer = (questionId: string, option: string) => {
@@ -175,7 +275,44 @@ export function PlanWizard({ idea, open, onClose }: PlanWizardProps) {
     })
   }
 
-  const unansweredQuestions = plan?.questions?.filter(q => !answers[q.id] && !q.answer) || []
+  const toggleMultiOther = (questionId: string) => {
+    const current = (answers[questionId] as string[]) || []
+    const hasOther = current.some(o => o === 'Other' || o.startsWith('Other: '))
+    if (hasOther) {
+      // Remove "Other" entries
+      setAnswers(prev => ({ ...prev, [questionId]: current.filter(o => o !== 'Other' && !o.startsWith('Other: ')) }))
+      setOtherText(prev => { const n = { ...prev }; delete n[questionId]; return n })
+    } else {
+      setAnswers(prev => ({ ...prev, [questionId]: [...current, 'Other'] }))
+      setOtherText(prev => ({ ...prev, [questionId]: '' }))
+    }
+  }
+
+  const handleMultiOtherText = (questionId: string, text: string) => {
+    setOtherText(prev => ({ ...prev, [questionId]: text }))
+    const current = (answers[questionId] as string[]) || []
+    // Replace the Other entry with the custom text
+    const filtered = current.filter(o => o !== 'Other' && !o.startsWith('Other: '))
+    const val = text.trim() ? `Other: ${text}` : 'Other'
+    setAnswers(prev => ({ ...prev, [questionId]: [...filtered, val] }))
+  }
+
+  // Check if "Other" is effectively selected
+  const isOtherSelected = (questionId: string) => {
+    const val = answers[questionId]
+    if (typeof val === 'string') return val === 'Other' || val.startsWith('Other: ')
+    if (Array.isArray(val)) return val.some(v => v === 'Other' || v.startsWith('Other: '))
+    return false
+  }
+
+  const unansweredQuestions = plan?.questions?.filter(q => {
+    const ans = answers[q.id]
+    if (ans === undefined || ans === null) return !q.answer
+    // "Other" without custom text is not a complete answer
+    if (ans === 'Other') return true
+    if (Array.isArray(ans) && ans.length === 0) return true
+    return false
+  }) || []
   const allQuestionsAnswered = unansweredQuestions.length === 0 && (plan?.questions?.length || 0) > 0
 
   const copyShareLink = () => {
@@ -290,10 +427,10 @@ export function PlanWizard({ idea, open, onClose }: PlanWizardProps) {
                       {currentQuestion.options.map(opt => (
                         <button
                           key={opt}
-                          onClick={() => handleAnswer(currentQuestion.id, opt)}
+                          onClick={() => opt.toLowerCase() === 'other' ? handleOtherSelect(currentQuestion.id) : handleAnswer(currentQuestion.id, opt)}
                           className={cn(
                             'w-full text-left px-4 py-3 rounded-xl border text-[13px] transition-all cursor-pointer',
-                            answers[currentQuestion.id] === opt
+                            (opt.toLowerCase() === 'other' ? isOtherSelected(currentQuestion.id) : answers[currentQuestion.id] === opt)
                               ? 'border-brand bg-brand/10 text-brand font-medium'
                               : 'border-border bg-surface-1 text-text-secondary hover:border-brand/30 hover:bg-surface-2'
                           )}
@@ -301,9 +438,9 @@ export function PlanWizard({ idea, open, onClose }: PlanWizardProps) {
                           <div className="flex items-center gap-2.5">
                             <div className={cn(
                               'h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0',
-                              answers[currentQuestion.id] === opt ? 'border-brand' : 'border-border'
+                              (opt.toLowerCase() === 'other' ? isOtherSelected(currentQuestion.id) : answers[currentQuestion.id] === opt) ? 'border-brand' : 'border-border'
                             )}>
-                              {answers[currentQuestion.id] === opt && (
+                              {(opt.toLowerCase() === 'other' ? isOtherSelected(currentQuestion.id) : answers[currentQuestion.id] === opt) && (
                                 <div className="h-2 w-2 rounded-full bg-brand" />
                               )}
                             </div>
@@ -311,17 +448,55 @@ export function PlanWizard({ idea, open, onClose }: PlanWizardProps) {
                           </div>
                         </button>
                       ))}
+                      {/* "Other" option — always show if not already in options */}
+                      {!currentQuestion.options.some(o => o.toLowerCase() === 'other') && (
+                        <button
+                          onClick={() => handleOtherSelect(currentQuestion.id)}
+                          className={cn(
+                            'w-full text-left px-4 py-3 rounded-xl border text-[13px] transition-all cursor-pointer',
+                            isOtherSelected(currentQuestion.id)
+                              ? 'border-brand bg-brand/10 text-brand font-medium'
+                              : 'border-border bg-surface-1 text-text-secondary hover:border-brand/30 hover:bg-surface-2'
+                          )}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className={cn(
+                              'h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0',
+                              isOtherSelected(currentQuestion.id) ? 'border-brand' : 'border-border'
+                            )}>
+                              {isOtherSelected(currentQuestion.id) && (
+                                <div className="h-2 w-2 rounded-full bg-brand" />
+                              )}
+                            </div>
+                            Other
+                          </div>
+                        </button>
+                      )}
+                      {/* Show text input when Other is selected */}
+                      {isOtherSelected(currentQuestion.id) && (
+                        <input
+                          type="text"
+                          value={otherText[currentQuestion.id] || ''}
+                          onChange={(e) => handleOtherTextChange(currentQuestion.id, e.target.value)}
+                          placeholder="Please specify..."
+                          autoFocus
+                          className="w-full px-4 py-2.5 rounded-xl border border-brand/30 bg-surface-1 text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50"
+                        />
+                      )}
                     </div>
                   )}
 
                   {currentQuestion.type === 'multi' && currentQuestion.options && (
                     <div className="space-y-2">
                       {currentQuestion.options.map(opt => {
-                        const selected = ((answers[currentQuestion.id] as string[]) || []).includes(opt)
+                        const isOtherOpt = opt.toLowerCase() === 'other'
+                        const selected = isOtherOpt
+                          ? isOtherSelected(currentQuestion.id)
+                          : ((answers[currentQuestion.id] as string[]) || []).includes(opt)
                         return (
                           <button
                             key={opt}
-                            onClick={() => toggleMultiAnswer(currentQuestion.id, opt)}
+                            onClick={() => isOtherOpt ? toggleMultiOther(currentQuestion.id) : toggleMultiAnswer(currentQuestion.id, opt)}
                             className={cn(
                               'w-full text-left px-4 py-3 rounded-xl border text-[13px] transition-all cursor-pointer',
                               selected
@@ -341,6 +516,42 @@ export function PlanWizard({ idea, open, onClose }: PlanWizardProps) {
                           </button>
                         )
                       })}
+                      {/* "Other" option — always show if not already in options */}
+                      {!currentQuestion.options.some(o => o.toLowerCase() === 'other') && (() => {
+                        const selected = isOtherSelected(currentQuestion.id)
+                        return (
+                          <button
+                            onClick={() => toggleMultiOther(currentQuestion.id)}
+                            className={cn(
+                              'w-full text-left px-4 py-3 rounded-xl border text-[13px] transition-all cursor-pointer',
+                              selected
+                                ? 'border-brand bg-brand/10 text-brand font-medium'
+                                : 'border-border bg-surface-1 text-text-secondary hover:border-brand/30 hover:bg-surface-2'
+                            )}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div className={cn(
+                                'h-4 w-4 rounded border flex items-center justify-center shrink-0',
+                                selected ? 'border-brand bg-brand' : 'border-border'
+                              )}>
+                                {selected && <Check className="h-3 w-3 text-white" />}
+                              </div>
+                              Other
+                            </div>
+                          </button>
+                        )
+                      })()}
+                      {/* Show text input when Other is selected */}
+                      {isOtherSelected(currentQuestion.id) && (
+                        <input
+                          type="text"
+                          value={otherText[currentQuestion.id] || ''}
+                          onChange={(e) => handleMultiOtherText(currentQuestion.id, e.target.value)}
+                          placeholder="Please specify..."
+                          autoFocus
+                          className="w-full px-4 py-2.5 rounded-xl border border-brand/30 bg-surface-1 text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand/50"
+                        />
+                      )}
                       <p className="text-[11px] text-text-muted">Select all that apply</p>
                     </div>
                   )}
@@ -453,7 +664,7 @@ export function PlanWizard({ idea, open, onClose }: PlanWizardProps) {
                 {!isLastQuestion ? (
                   <button
                     onClick={() => setCurrentQ(c => c + 1)}
-                    disabled={!answers[currentQuestion?.id || '']}
+                    disabled={!answers[currentQuestion?.id || ''] || answers[currentQuestion?.id || ''] === 'Other'}
                     className="flex items-center gap-1.5 bg-brand text-white rounded-lg px-4 py-2 text-[13px] font-semibold hover:bg-brand/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next <ChevronRight className="h-3.5 w-3.5" />

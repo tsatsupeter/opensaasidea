@@ -3,12 +3,14 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   BookOpen, ArrowLeft, Loader2, ExternalLink, Copy, Check,
-  Link2, Share2, Trash2, Globe, Lock, Clock, Sparkles
+  Link2, Share2, Trash2, Globe, Lock, Clock, Sparkles, Play
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import { useToast } from '@/components/ui/toast'
+import { PlanWizard } from '@/components/ideas/plan-wizard'
 import { cn } from '@/lib/utils'
+import type { SaasIdea } from '@/types/database'
 
 interface PlanRow {
   id: string
@@ -182,20 +184,43 @@ export function MyPlansPage() {
   const [plans, setPlans] = useState<PlanRow[]>([])
   const [loading, setLoading] = useState(true)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [resumingPlan, setResumingPlan] = useState<PlanRow | null>(null)
+  const [resumeIdea, setResumeIdea] = useState<SaasIdea | null>(null)
+
+  const fetchPlans = async () => {
+    if (!user) return
+    const { data } = await (supabase
+      .from('idea_plans') as any)
+      .select('*, idea:saas_ideas(id, title, slug, category, tagline, description, platform, monetization_model, tech_stack, estimated_mrr_low, estimated_mrr_high)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+    setPlans((data || []) as PlanRow[])
+    setLoading(false)
+  }
 
   useEffect(() => {
-    if (!user) return
-    const fetchPlans = async () => {
-      const { data } = await (supabase
-        .from('idea_plans') as any)
-        .select('*, idea:saas_ideas(title, slug, category)')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-      setPlans((data || []) as PlanRow[])
-      setLoading(false)
-    }
     fetchPlans()
   }, [user])
+
+  const handleResume = (plan: PlanRow) => {
+    // Build a minimal SaasIdea object from the joined idea data
+    const ideaData = plan.idea as any
+    if (!ideaData) return
+    setResumeIdea({
+      id: ideaData.id || plan.idea_id,
+      title: ideaData.title || 'Untitled',
+      slug: ideaData.slug,
+      category: ideaData.category,
+      tagline: ideaData.tagline || '',
+      description: ideaData.description || '',
+      platform: ideaData.platform || '',
+      monetization_model: ideaData.monetization_model || '',
+      tech_stack: ideaData.tech_stack || {},
+      estimated_mrr_low: ideaData.estimated_mrr_low || 0,
+      estimated_mrr_high: ideaData.estimated_mrr_high || 0,
+    } as SaasIdea)
+    setResumingPlan(plan)
+  }
 
   const deletePlan = async (id: string) => {
     await (supabase.from('idea_plans') as any).delete().eq('id', id)
@@ -267,6 +292,8 @@ export function MyPlansPage() {
                       onClick={() => {
                         if (plan.status === 'complete' && plan.share_token) {
                           navigate(`/plan/${plan.share_token}`)
+                        } else if (plan.status !== 'complete') {
+                          handleResume(plan)
                         }
                       }}
                       className="text-[14px] font-bold text-text-primary hover:text-brand transition-colors text-left cursor-pointer"
@@ -302,6 +329,23 @@ export function MyPlansPage() {
                 </div>
 
                 {/* Actions */}
+                {plan.status !== 'complete' && plan.status !== 'error' && (
+                  <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border">
+                    <button
+                      onClick={() => handleResume(plan)}
+                      className="flex items-center gap-1.5 text-[12px] font-semibold text-brand hover:text-brand/80 px-3 py-1.5 rounded-lg bg-brand/10 hover:bg-brand/15 transition-colors cursor-pointer"
+                    >
+                      <Play className="h-3 w-3" /> Continue Planning
+                    </button>
+                    <div className="flex-1" />
+                    <button
+                      onClick={() => deletePlan(plan.id)}
+                      className="flex items-center gap-1 text-[11px] text-rose hover:text-rose/80 px-2 py-1 rounded hover:bg-rose/10 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="h-3 w-3" /> Delete
+                    </button>
+                  </div>
+                )}
                 {plan.status === 'complete' && (
                   <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border">
                     <button
@@ -343,6 +387,21 @@ export function MyPlansPage() {
           </div>
         )}
       </motion.div>
+
+      {/* Plan Wizard for resuming in-progress plans */}
+      {resumeIdea && resumingPlan && (
+        <PlanWizard
+          idea={resumeIdea}
+          open={!!resumingPlan}
+          existingPlanId={resumingPlan.id}
+          onClose={() => {
+            setResumingPlan(null)
+            setResumeIdea(null)
+            // Refresh the list to pick up status changes
+            fetchPlans()
+          }}
+        />
+      )}
     </div>
   )
 }
