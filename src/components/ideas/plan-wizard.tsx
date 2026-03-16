@@ -68,15 +68,11 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
   // Restore saved answers from questions that already have answers
   const restoreAnswers = useCallback((questions: PlanQuestion[]) => {
     const restored: Record<string, string | string[]> = {}
-    let firstUnanswered = 0
     for (let i = 0; i < questions.length; i++) {
       if (questions[i].answer !== undefined && questions[i].answer !== null) {
         restored[questions[i].id] = questions[i].answer!
-      } else if (firstUnanswered === i) {
-        firstUnanswered = i
       }
     }
-    // Find first unanswered
     const idx = questions.findIndex(q => !restored[q.id])
     return { restored, firstUnanswered: idx >= 0 ? idx : questions.length - 1 }
   }, [])
@@ -311,6 +307,7 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
     // "Other" without custom text is not a complete answer
     if (ans === 'Other') return true
     if (Array.isArray(ans) && ans.length === 0) return true
+    if (Array.isArray(ans) && ans.some(v => v === 'Other')) return true
     return false
   }) || []
   const allQuestionsAnswered = unansweredQuestions.length === 0 && (plan?.questions?.length || 0) > 0
@@ -664,7 +661,13 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
                 {!isLastQuestion ? (
                   <button
                     onClick={() => setCurrentQ(c => c + 1)}
-                    disabled={!answers[currentQuestion?.id || ''] || answers[currentQuestion?.id || ''] === 'Other'}
+                    disabled={(() => {
+                      const a = answers[currentQuestion?.id || '']
+                      if (!a) return true
+                      if (a === 'Other') return true
+                      if (Array.isArray(a) && (a.length === 0 || a.some(v => v === 'Other'))) return true
+                      return false
+                    })()}
                     className="flex items-center gap-1.5 bg-brand text-white rounded-lg px-4 py-2 text-[13px] font-semibold hover:bg-brand/90 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next <ChevronRight className="h-3.5 w-3.5" />
@@ -728,9 +731,10 @@ function renderMarkdown(md: string): string {
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
-    .replace(/(<li>.*<\/li>\n?)+/gs, (m) => `<ul>${m}</ul>`)
+    .replace(/^(\d+)\. (.+)$/gm, '<oli>$2</oli>')
+    .replace(/^- (.+)$/gm, '<uli>$1</uli>')
+    .replace(/(<uli>.*<\/uli>\n?)+/gs, (m) => `<ul>${m.replace(/<\/?uli>/g, (t) => t.replace('uli', 'li'))}</ul>`)
+    .replace(/(<oli>.*<\/oli>\n?)+/gs, (m) => `<ol>${m.replace(/<\/?oli>/g, (t) => t.replace('oli', 'li'))}</ol>`)
     .replace(/^---$/gm, '<hr />')
     .replace(/\n{2,}/g, '</p><p>')
     .replace(/\n/g, '<br />')

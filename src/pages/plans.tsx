@@ -205,7 +205,10 @@ export function MyPlansPage() {
   const handleResume = (plan: PlanRow) => {
     // Build a minimal SaasIdea object from the joined idea data
     const ideaData = plan.idea as any
-    if (!ideaData) return
+    if (!ideaData) {
+      toast('The original idea was deleted. This plan can no longer be resumed.')
+      return
+    }
     setResumeIdea({
       id: ideaData.id || plan.idea_id,
       title: ideaData.title || 'Untitled',
@@ -415,9 +418,10 @@ function renderMarkdown(md: string): string {
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
-    .replace(/(<li>.*<\/li>\n?)+/gs, (m) => `<ul>${m}</ul>`)
+    .replace(/^(\d+)\. (.+)$/gm, '<oli>$2</oli>')
+    .replace(/^- (.+)$/gm, '<uli>$1</uli>')
+    .replace(/(<uli>.*<\/uli>\n?)+/gs, (m) => `<ul>${m.replace(/<\/?uli>/g, (t) => t.replace('uli', 'li'))}</ul>`)
+    .replace(/(<oli>.*<\/oli>\n?)+/gs, (m) => `<ol>${m.replace(/<\/?oli>/g, (t) => t.replace('oli', 'li'))}</ol>`)
     .replace(/^---$/gm, '<hr />')
     .replace(/\n{2,}/g, '</p><p>')
     .replace(/\n/g, '<br />')

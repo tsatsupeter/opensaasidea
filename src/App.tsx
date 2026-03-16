@@ -31,6 +31,7 @@ import { HelpPage } from '@/pages/help'
 import { BlogPage } from '@/pages/blog'
 import { NotificationsPage } from '@/pages/notifications'
 import { MyPlansPage, SharedPlanPage } from '@/pages/plans'
+import { NotFoundPage } from '@/pages/not-found'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -83,6 +84,7 @@ function App() {
                   <Route path="/privacy" element={<PrivacyPage />} />
                   <Route path="/terms" element={<TermsPage />} />
                   <Route path="/accessibility" element={<AccessibilityPage />} />
+                  <Route path="*" element={<NotFoundPage />} />
                 </Route>
               </Routes>
               </AuthModalProvider>
