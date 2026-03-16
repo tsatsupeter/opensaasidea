@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  BookOpen, ArrowLeft, Loader2, ExternalLink, Copy, Check,
+  BookOpen, ArrowLeft, ExternalLink, Copy, Check,
   Share2, Trash2, Globe, Lock, Clock, Play
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/toast'
 import { PlanWizard } from '@/components/ideas/plan-wizard'
 import { cn } from '@/lib/utils'
 import { renderMarkdown } from '@/lib/markdown'
+import { PlansSkeleton, SharedPlanSkeleton } from '@/components/ui/skeleton'
 import type { SaasIdea } from '@/types/database'
 
 interface PlanRow {
@@ -58,11 +59,7 @@ export function SharedPlanPage() {
   }, [token])
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 text-brand animate-spin" />
-      </div>
-    )
+    return <SharedPlanSkeleton />
   }
 
   if (error || !plan) {
@@ -260,9 +257,7 @@ export function MyPlansPage() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-6 w-6 text-brand animate-spin" />
-          </div>
+          <PlansSkeleton />
         ) : plans.length === 0 ? (
           <div className="rounded-xl border border-border bg-surface-0 p-8 text-center">
             <BookOpen className="h-10 w-10 text-text-muted mx-auto mb-3" />
@@ -275,24 +270,25 @@ export function MyPlansPage() {
         ) : (
           <div className="space-y-3">
             {plans.map(plan => (
-              <div key={plan.id} className="rounded-xl border border-border bg-surface-0 p-4 hover:border-brand/20 transition-colors">
+              <div
+                key={plan.id}
+                onClick={() => {
+                  if (plan.status === 'complete' && plan.share_token) {
+                    navigate(`/plan/${plan.share_token}`)
+                  } else if (plan.status !== 'complete') {
+                    handleResume(plan)
+                  }
+                }}
+                className="rounded-xl border border-border bg-surface-0 p-4 hover:border-brand/20 transition-colors cursor-pointer"
+              >
                 <div className="flex items-start gap-3">
                   <div className="h-10 w-10 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
                     <BookOpen className="h-5 w-5 text-brand" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <button
-                      onClick={() => {
-                        if (plan.status === 'complete' && plan.share_token) {
-                          navigate(`/plan/${plan.share_token}`)
-                        } else if (plan.status !== 'complete') {
-                          handleResume(plan)
-                        }
-                      }}
-                      className="text-[14px] font-bold text-text-primary hover:text-brand transition-colors text-left cursor-pointer"
-                    >
+                    <p className="text-[14px] font-bold text-text-primary">
                       {(plan.idea as any)?.title || 'Untitled Plan'}
-                    </button>
+                    </p>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className={cn(
                         'text-[10px] font-semibold px-2 py-0.5 rounded-full',
@@ -321,9 +317,9 @@ export function MyPlansPage() {
                   </div>
                 </div>
 
-                {/* Actions */}
+                {/* Actions — stop propagation so clicks here don't navigate */}
                 {plan.status !== 'complete' && plan.status !== 'error' && (
-                  <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border">
+                  <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border" onClick={e => e.stopPropagation()}>
                     <button
                       onClick={() => handleResume(plan)}
                       className="flex items-center gap-1.5 text-[12px] font-semibold text-brand hover:text-brand/80 px-3 py-1.5 rounded-lg bg-brand/10 hover:bg-brand/15 transition-colors cursor-pointer"
@@ -340,7 +336,7 @@ export function MyPlansPage() {
                   </div>
                 )}
                 {plan.status === 'complete' && (
-                  <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border">
+                  <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border" onClick={e => e.stopPropagation()}>
                     <button
                       onClick={() => copyShareLink(plan)}
                       className="flex items-center gap-1 text-[11px] text-text-muted hover:text-text-primary px-2 py-1 rounded hover:bg-surface-2 transition-colors cursor-pointer"
