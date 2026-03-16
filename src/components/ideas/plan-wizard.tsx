@@ -394,7 +394,7 @@ export function PlanWizard({ idea, open, onClose, existingPlanId }: PlanWizardPr
                 <div className="rounded-xl bg-brand/5 border border-brand/20 p-4">
                   <h3 className="text-[13px] font-semibold text-brand mb-1">Let&apos;s personalize your plan</h3>
                   <p className="text-[12px] text-text-muted">
-                    Answer {plan.questions?.length || 0} quick questions so the AI can create a plan tailored to your skills, preferences, and goals.
+                    Answer {plan.questions?.length === 1 ? '1 quick question' : `a few quick questions`} so the AI can create a plan tailored to your skills, preferences, and goals.
                   </p>
                 </div>
               </div>
