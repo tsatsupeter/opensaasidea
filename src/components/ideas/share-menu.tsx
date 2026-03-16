@@ -10,11 +10,14 @@ import { cn } from '@/lib/utils'
 import type { SaasIdea } from '@/types/database'
 
 interface ShareMenuProps {
-  idea: SaasIdea
+  idea?: SaasIdea
   className?: string
   onExportPDF?: () => Promise<void>
   exportingPDF?: boolean
   canExportPDF?: boolean
+  shareUrl?: string
+  shareTitle?: string
+  shareMarkdown?: string
 }
 
 function ideaToMarkdown(idea: SaasIdea, url: string): string {
@@ -111,7 +114,7 @@ function buildPrompt(idea: SaasIdea): string {
   return `I want to build this SaaS idea. Help me plan and implement it:\n\nTitle: ${idea.title}\nTagline: ${idea.tagline || ''}\nCategory: ${idea.category || ''}\nDescription: ${idea.description || ''}\nProblem: ${d.problem_statement || ''}\nTarget Audience: ${d.target_audience || ''}\nMonetization: ${idea.monetization_model || ''}\nEstimated MRR: ${idea.estimated_mrr_low ? `$${idea.estimated_mrr_low} - $${idea.estimated_mrr_high}` : 'N/A'}\nTech Stack Suggestion: ${d.tech_stack_suggestion || ''}\nMVP Features: ${d.mvp_features?.join(', ') || ''}\n\nPlease help me create a detailed implementation plan with architecture, tech stack choices, and step-by-step build guide.`
 }
 
-export function ShareMenu({ idea, className, onExportPDF, exportingPDF, canExportPDF }: ShareMenuProps) {
+export function ShareMenu({ idea, className, onExportPDF, exportingPDF, canExportPDF, shareUrl, shareTitle, shareMarkdown }: ShareMenuProps) {
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
@@ -119,9 +122,10 @@ export function ShareMenu({ idea, className, onExportPDF, exportingPDF, canExpor
   const menuRef = useRef<HTMLDivElement>(null)
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null)
 
-  const ideaUrl = `${window.location.origin}/idea/${idea.slug || idea.id}`
-  const markdown = ideaToMarkdown(idea, ideaUrl)
-  const prompt = buildPrompt(idea)
+  const ideaUrl = shareUrl || (idea ? `${window.location.origin}/idea/${idea.slug || idea.id}` : '')
+  const title = shareTitle || idea?.title || 'Untitled'
+  const markdown = shareMarkdown || (idea ? ideaToMarkdown(idea, ideaUrl) : '')
+  const prompt = idea ? buildPrompt(idea) : markdown
   const encodedPrompt = encodeURIComponent(prompt)
 
   const updatePosition = useCallback(() => {
@@ -175,7 +179,7 @@ export function ShareMenu({ idea, className, onExportPDF, exportingPDF, canExpor
   const items = [
     { id: 'link', label: 'Copy Link', icon: Link2, action: () => copyText(ideaUrl, 'Link') },
     { id: 'markdown', label: 'Copy Markdown', icon: FileText, action: () => copyText(markdown, 'Markdown') },
-    { id: 'view-md', label: 'View in Markdown', icon: Eye, action: () => openMarkdownTab(idea.title, markdown) },
+    { id: 'view-md', label: 'View in Markdown', icon: Eye, action: () => openMarkdownTab(title, markdown) },
     ...(onExportPDF ? [{ id: 'pdf', label: canExportPDF === false ? 'Export PDF (Pro)' : 'Export PDF', icon: FileDown, action: onExportPDF, disabled: exportingPDF || canExportPDF === false, loading: exportingPDF }] : []),
     { divider: true },
     { id: 'chatgpt', label: 'Open in ChatGPT', icon: MessageSquareText, href: `https://chatgpt.com/?q=${encodedPrompt}` },
