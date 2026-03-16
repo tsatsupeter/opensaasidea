@@ -40,6 +40,72 @@ function ideaToMarkdown(idea: SaasIdea, url: string): string {
   return lines.join('\n')
 }
 
+function openMarkdownTab(title: string, md: string) {
+  // Convert basic markdown to HTML
+  const html = md
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/gs, (m) => `<ul>${m}</ul>`)
+    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/^---$/gm, '<hr />')
+    .replace(/\n{2,}/g, '</p><p>')
+    .replace(/\n/g, '<br />')
+
+  const page = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${title} — Markdown</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;
+    max-width:720px;margin:0 auto;padding:2rem 1.5rem;background:#0e0e10;color:#e0e0e0;line-height:1.7}
+  h1{font-size:1.75rem;margin-bottom:.5rem;color:#fff}
+  h2{font-size:1.25rem;margin-top:1.75rem;margin-bottom:.5rem;color:#f97316;border-bottom:1px solid #222;padding-bottom:.35rem}
+  h3{font-size:1.05rem;margin-top:1.25rem;margin-bottom:.25rem;color:#ddd}
+  p{margin:.75rem 0;color:#bbb}
+  blockquote{border-left:3px solid #f97316;padding:.5rem 1rem;margin:1rem 0;background:#1a1a1e;border-radius:0 8px 8px 0;color:#ccc;font-style:italic}
+  strong{color:#fff}
+  ul{margin:.5rem 0 .5rem 1.5rem}
+  li{margin:.25rem 0;color:#bbb}
+  a{color:#f97316;text-decoration:none}
+  a:hover{text-decoration:underline}
+  hr{border:none;border-top:1px solid #333;margin:1.5rem 0}
+  .actions{display:flex;gap:.5rem;margin-bottom:1.5rem}
+  button{background:#f97316;color:#fff;border:none;padding:.45rem 1rem;border-radius:6px;font-size:.8rem;font-weight:600;cursor:pointer}
+  button:hover{background:#ea6c08}
+  button.secondary{background:#222;color:#ccc}
+  button.secondary:hover{background:#333}
+  .badge{display:inline-block;font-size:.65rem;background:#f97316;color:#fff;padding:.15rem .5rem;border-radius:4px;margin-bottom:1rem;font-weight:600;letter-spacing:.03em}
+</style>
+</head>
+<body>
+<div class="badge">MARKDOWN EXPORT</div>
+<div class="actions">
+  <button onclick="copyMd()">Copy Markdown</button>
+  <button class="secondary" onclick="copyHtml()">Copy HTML</button>
+</div>
+<article id="content">${html}</article>
+<script>
+const rawMd = ${JSON.stringify(md)};
+function copyMd(){navigator.clipboard.writeText(rawMd);event.target.textContent='Copied!';setTimeout(()=>event.target.textContent='Copy Markdown',1500)}
+function copyHtml(){const h=document.getElementById('content').innerHTML;navigator.clipboard.writeText(h);event.target.textContent='Copied!';setTimeout(()=>event.target.textContent='Copy HTML',1500)}
+</script>
+</body>
+</html>`
+
+  const blob = new Blob([page], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  window.open(url, '_blank')
+  // Clean up the blob URL after a short delay
+  setTimeout(() => URL.revokeObjectURL(url), 5000)
+}
+
 function buildPrompt(idea: SaasIdea): string {
   const d = idea as any
   return `I want to build this SaaS idea. Help me plan and implement it:\n\nTitle: ${idea.title}\nTagline: ${idea.tagline || ''}\nCategory: ${idea.category || ''}\nDescription: ${idea.description || ''}\nProblem: ${d.problem_statement || ''}\nTarget Audience: ${d.target_audience || ''}\nMonetization: ${idea.monetization_model || ''}\nEstimated MRR: ${idea.estimated_mrr_low ? `$${idea.estimated_mrr_low} - $${idea.estimated_mrr_high}` : 'N/A'}\nTech Stack Suggestion: ${d.tech_stack_suggestion || ''}\nMVP Features: ${d.mvp_features?.join(', ') || ''}\n\nPlease help me create a detailed implementation plan with architecture, tech stack choices, and step-by-step build guide.`
@@ -49,7 +115,6 @@ export function ShareMenu({ idea, className, onExportPDF, exportingPDF, canExpor
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
-  const [showMarkdown, setShowMarkdown] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null)
@@ -86,10 +151,9 @@ export function ShareMenu({ idea, className, onExportPDF, exportingPDF, canExpor
         buttonRef.current && !buttonRef.current.contains(e.target as Node)
       ) {
         setOpen(false)
-        setShowMarkdown(false)
       }
     }
-    const handleScroll = () => { if (open) { setOpen(false); setShowMarkdown(false) } }
+    const handleScroll = () => { if (open) setOpen(false) }
     if (open) {
       document.addEventListener('mousedown', handleClick)
       window.addEventListener('scroll', handleScroll, true)
@@ -111,7 +175,7 @@ export function ShareMenu({ idea, className, onExportPDF, exportingPDF, canExpor
   const items = [
     { id: 'link', label: 'Copy Link', icon: Link2, action: () => copyText(ideaUrl, 'Link') },
     { id: 'markdown', label: 'Copy Markdown', icon: FileText, action: () => copyText(markdown, 'Markdown') },
-    { id: 'view-md', label: 'View in Markdown', icon: Eye, action: () => setShowMarkdown(!showMarkdown) },
+    { id: 'view-md', label: 'View in Markdown', icon: Eye, action: () => openMarkdownTab(idea.title, markdown) },
     ...(onExportPDF ? [{ id: 'pdf', label: canExportPDF === false ? 'Export PDF (Pro)' : 'Export PDF', icon: FileDown, action: onExportPDF, disabled: exportingPDF || canExportPDF === false, loading: exportingPDF }] : []),
     { divider: true },
     { id: 'chatgpt', label: 'Open in ChatGPT', icon: MessageSquareText, href: `https://chatgpt.com/?q=${encodedPrompt}` },
@@ -127,7 +191,7 @@ export function ShareMenu({ idea, className, onExportPDF, exportingPDF, canExpor
     <div className={cn('relative', className)}>
       <button
         ref={buttonRef}
-        onClick={(e) => { e.stopPropagation(); setOpen(!open); setShowMarkdown(false) }}
+        onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
         className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-text-muted hover:bg-surface-2 transition-colors cursor-pointer"
       >
         <Share2 className="h-3.5 w-3.5" />
@@ -196,32 +260,6 @@ export function ShareMenu({ idea, className, onExportPDF, exportingPDF, canExpor
               })}
             </div>
 
-            {/* Markdown preview */}
-            <AnimatePresence>
-              {showMarkdown && (
-                <motion.div
-                  initial={{ height: 0 }}
-                  animate={{ height: 'auto' }}
-                  exit={{ height: 0 }}
-                  className="overflow-hidden border-t border-border"
-                >
-                  <div className="p-3 max-h-60 overflow-y-auto">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">Markdown Preview</p>
-                      <button
-                        onClick={() => copyText(markdown, 'Markdown')}
-                        className="text-[11px] text-accent hover:underline cursor-pointer"
-                      >
-                        {copied === 'Markdown' ? 'Copied!' : 'Copy'}
-                      </button>
-                    </div>
-                    <pre className="text-[11px] text-text-secondary whitespace-pre-wrap break-words font-mono bg-surface-2 rounded-lg p-2.5 leading-relaxed">
-                      {markdown}
-                    </pre>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </motion.div>
         </AnimatePresence>,
         document.body
