@@ -1428,6 +1428,38 @@ export function AdminPage() {
                         <p className="text-xs text-text-muted mb-4">
                           These secrets are used by Edge Functions to verify webhook signatures and authenticate cron jobs. Only admins can view or edit them.
                         </p>
+
+                        {/* Endpoint URLs for easy reference */}
+                        <div className="mb-6 rounded-lg border border-border bg-surface-0 p-4 space-y-3">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">Webhook & API Endpoints</p>
+                          {[
+                            { label: 'Dodo Webhook', url: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dodo-webhook`, desc: 'Paste this URL in the Dodo Payments dashboard → Developers → Webhooks' },
+                            { label: 'Daily Cron', url: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-daily`, desc: 'Use with your cron scheduler (e.g. cron-job.org) — requires CRON_SECRET header' },
+                          ].map(ep => (
+                            <div key={ep.label} className="space-y-1">
+                              <p className="text-xs font-medium text-text-primary">{ep.label}</p>
+                              <div className="flex items-center gap-2">
+                                <code className="flex-1 text-[11px] font-mono text-accent bg-surface-2 rounded px-2 py-1.5 break-all select-all">
+                                  {ep.url}
+                                </code>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="shrink-0"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(ep.url)
+                                    toast(`${ep.label} URL copied`)
+                                  }}
+                                >
+                                  <Link2 className="h-3.5 w-3.5" />
+                                  Copy
+                                </Button>
+                              </div>
+                              <p className="text-[10px] text-text-muted">{ep.desc}</p>
+                            </div>
+                          ))}
+                        </div>
+
                         <div className="space-y-5">
                           {secretsRows.map(row => {
                             const currentValue = secretsEdits[row.key] ?? row.value
