@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { DollarSign, ArrowRight, Globe, Lock, Bookmark, BookmarkCheck, MessageSquare } from 'lucide-react'
@@ -21,7 +21,7 @@ interface IdeaCardProps {
   onPublicToggle?: () => void
 }
 
-export function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicToggle }: IdeaCardProps) {
+export const IdeaCard = memo(function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicToggle }: IdeaCardProps) {
   const navigate = useNavigate()
   const { openAuthModal } = useAuthModal()
   const { user } = useAuth()
@@ -182,4 +182,4 @@ export function IdeaCard({ idea, index = 0, currentVote, onVoteChange, onPublicT
       </article>
     </motion.div>
   )
-}
+})

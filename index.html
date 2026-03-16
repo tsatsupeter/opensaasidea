@@ -32,9 +32,17 @@
     <meta name="twitter:image" content="https://openprojectidea.com/og-image.png" />
 
     <title>OpenProjectIdea — AI-Powered SaaS Idea Generator</title>
+
+    <!-- Preconnect to critical origins for faster first requests -->
+    <link rel="preconnect" href="https://qpfmnheghocfcckferum.supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://qpfmnheghocfcckferum.supabase.co" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+    <!-- Fonts: only load weights we actually use (400,500,600,700,800) and defer with media trick -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" /></noscript>
 
     <!-- Structured Data: Organization + WebSite + SoftwareApplication -->
     <script type="application/ld+json">
