@@ -43,6 +43,11 @@ export function HomePage() {
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState<SortBy>(getDefaultSort(location.pathname))
 
+  // Sync sortBy when navigating between /, /popular, /trending (same component, no remount)
+  useEffect(() => {
+    setSortBy(getDefaultSort(location.pathname))
+  }, [location.pathname])
+
   const fetchIdeas = useCallback(async () => {
     setLoading(true)
     try {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -174,8 +174,9 @@ export function MyPlansPage() {
   const [resumingPlan, setResumingPlan] = useState<PlanRow | null>(null)
   const [resumeIdea, setResumeIdea] = useState<SaasIdea | null>(null)
 
-  const fetchPlans = async () => {
+  const fetchPlans = useCallback(async () => {
     if (!user) return
+    setLoading(true)
     const { data } = await (supabase
       .from('idea_plans') as any)
       .select('*, idea:saas_ideas(id, title, slug, category, tagline, description, platform, monetization_model, tech_stack, estimated_mrr_low, estimated_mrr_high)')
@@ -183,11 +184,11 @@ export function MyPlansPage() {
       .order('created_at', { ascending: false })
     setPlans((data || []) as PlanRow[])
     setLoading(false)
-  }
+  }, [user])
 
   useEffect(() => {
     fetchPlans()
-  }, [user])
+  }, [fetchPlans])
 
   const handleResume = (plan: PlanRow) => {
     // Build a minimal SaasIdea object from the joined idea data

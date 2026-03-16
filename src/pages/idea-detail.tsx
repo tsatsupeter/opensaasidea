@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -60,8 +60,9 @@ export function IdeaDetailPage() {
   // Determines if user can view Pro content (Pro subscriber OR purchased report for this idea)
   const canViewPro = isPro || hasPurchasedReport
 
-  const fetchIdeaData = async () => {
+  const fetchIdeaData = useCallback(async () => {
     if (!slug) return
+    setLoading(true)
     try {
       // Use secure RPC that strips Pro-only fields server-side
       const { data } = await (supabase.rpc as any)('get_idea_by_slug', { p_slug: slug })
@@ -95,11 +96,11 @@ export function IdeaDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [slug, user, addRecent])
 
   useEffect(() => {
     fetchIdeaData()
-  }, [slug, user, addRecent])
+  }, [fetchIdeaData])
 
   // Handle return from successful report purchase
   useEffect(() => {
